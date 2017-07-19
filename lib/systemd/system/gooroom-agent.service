@@ -1,0 +1,14 @@
+[Unit]
+Description=Instance Job Agent
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py
+ExecStop=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py stop
+ExecReload=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py reload
+RestartSec=5
+TimeoutSec=10
+KillMode=none
+
+[Install]
+WantedBy=multi-user.target
+

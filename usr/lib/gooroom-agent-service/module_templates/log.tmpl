@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="log" version="1.0" xmlns="http://www.gooroom.kr/job">
+    <desc>
+    </desc>
+
+    <param name="module_name" type="string"/>
+
+    <task name="summary_log" polltime="600" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="error_reason" type="string"/>
+
+			<!-- terminalInfo -->
+			<param name="terminal_info" type="csv_string">
+				<col name="mac" type="string"/>
+				<col name="os" type="string"/>
+				<col name="kernel" type="string"/>
+				<col name="ip" type="string"/>
+			</param>
+
+			<!-- safeScore -->
+			<param name="safe_score" type="csv_string">
+				<col name="package_count" type="string"/>
+				<col name="score" type="int"/>
+			</param>
+
+			<!-- summary update log -->
+			<param name="update_status" type="string"/>
+
+			<param name="update_log" type="csv_array">
+				<col name="timestamp" type="string"/>
+				<col name="data" type="string"/>
+			</param>
+
+			<!-- summary boot_protector_status log -->
+			<param name="boot_protector_status" type="string"/>
+
+			<param name="boot_protector_log" type="csv_array">
+				<col name="timestamp" type="string"/>
+				<col name="type" type="string"/>
+				<col name="data" type="string"/>
+			</param>
+
+			<!-- summary exe_protector_status log -->
+			<param name="exe_protector_status" type="string"/>
+
+			<param name="exe_protector_log" type="csv_array">
+				<col name="timestamp" type="string"/>
+				<col name="type" type="string"/>
+				<col name="data" type="string"/>
+			</param>
+
+			<!-- summary os_protector_status log -->
+			<param name="os_protector_status" type="string"/>
+
+			<param name="os_protector_log" type="csv_array">
+				<col name="timestamp" type="string"/>
+				<col name="type" type="string"/>
+				<col name="data" type="string"/>
+			</param>
+        </out>
+    </task>
+
+</module>

@@ -1,0 +1,5 @@
+[D-BUS Service] 
+Name=kr.gooroom.agent 
+Exec=/usr/lib/gooroom-agent-service/Agent.py 
+User=root 
+SystemdService=gooroom-agent.service 

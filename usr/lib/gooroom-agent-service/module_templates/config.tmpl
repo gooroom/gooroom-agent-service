@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="config" version="1.0" xmlns="http://www.gooroom.kr/job">
+
+	<param name="module_name" type="string"/>
+
+	<!-- CONFIG_FILE TYPE -->
+	<simpleType name="CONFIG_FILE">
+		<restriction base="string">
+			<enum value="/etc/apt/sources.list.d/official-package-repositories.list"/>
+			<enum value="/etc/apt/preferences.d/official-extra-repositories.pref"/>
+			<enum value="/etc/hosts"/>
+			<enum value="/etc/gooroom/agent/server_certificate.crt"/>
+		</restriction>
+	</simpleType>
+
+	<!-- GET CLIENT CONFIG FILE -->
+    <task name="get_client_config">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="file_name" type="CONFIG_FILE"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="error_reason" type="string"/>
+			<param name="file_contents" type="string"/>
+        </out>
+	</task>
+
+	<!-- REPLACE CLIENT CONFIG FILE -->
+    <task name="replace_client_config">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="file_name" type="CONFIG_FILE"/>
+			<param name="file_contents" type="string"/>
+			<param name="signature" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="error_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- GET UPDATE SERVER CONFIG FILE -->
+    <task name="get_update_server_config" bootable="yes">
+		<param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+		<request id="null" seq="null">
+		</request>
+		<response>
+			<param name="file_name_list" type="string_array"/>
+			<param name="file_contents_list" type="string_array"/>
+			<param name="signature_list" type="string_array"/>
+		</response>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="error_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- APPEND CONTENTS HOSTS -->
+    <task name="append_contents_etc_hosts" bootable="yes">
+		<param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+		<request id='null' seq="null">
+		</request>
+		<response>
+			<param name="file_contents" type="string"/>
+			<param name="signature" type="string"/>
+		</response>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="error_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- GET SERVER CERTIFICATE -->
+    <task name="get_server_certificate" bootable="yes" priority="-1">
+		<param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+		<request id='null' seq="null">
+		</request>
+		<response>
+			<param name="file_contents" type="string"/>
+			<param name="signature" type="string"/>
+		</response>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="error_reason" type="string"/>
+        </out>
+	</task>
+</module>

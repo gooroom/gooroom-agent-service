@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="daemon_control" version="1.0" xmlns="http://www.gooroom.kr/job">
+
+	<param name="module_name" type="string"/>
+
+	<!-- DAEMON START -->
+    <task name="daemon_start">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="service" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="errer_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- DAEMON STOP -->
+    <task name="daemon_stop">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="service" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="errer_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- DAEMON RESTART -->
+    <task name="daemon_restart">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="service" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="errer_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- DAEMON RELOAD -->
+    <task name="daemon_reload">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="service" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="errer_reason" type="string"/>
+        </out>
+	</task>
+
+	<!-- DAEMON STATUS -->
+    <task name="daemon_status">
+		<param name="task_name" type="string"/>
+
+        <in>
+			<param name="service" type="string"/>
+        </in>
+
+        <out>
+			<param name="status" type="string"/>
+			<param name="errer_reason" type="string"/>
+			<param name="daemon_status" type="csv_string">
+				<col name="ActiveState" type="string"/>
+				<col name="SubState" type="string"/>
+				<col name="LoadState" type="string"/>
+				<col name="CanStart" type="string"/>
+				<col name="CanStop" type="string"/>
+				<col name="CanReload" type="string"/>
+			</param>
+        </out>
+	</task>
+</module>
