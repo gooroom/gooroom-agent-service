@@ -18,152 +18,152 @@ SD_BUS_UNIT='org.freedesktop.systemd1.Unit'
 
 #-----------------------------------------------------------------------
 def do_task(task, data_center):
-	"""
-	do task
-	"""
+    """
+    do task
+    """
 
-	task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_ERR_REASON : ''}
+    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_ERR_REASON : ''}
 
-	try:
-		eval('task_%s(task, data_center)' % task[J_MOD][J_TASK][J_TASKN])
+    try:
+        eval('task_%s(task, data_center)' % task[J_MOD][J_TASK][J_TASKN])
 
-	except:
-		task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
-		e = traceback.format_exc()
-		task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = e
+    except:
+        task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
+        e = traceback.format_exc()
+        task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = e
 
-		AgentLog.get_logger().error(e)
+        AgentLog.get_logger().error(e)
 
 
-	if J_IN in task[J_MOD][J_TASK]:
-		task[J_MOD][J_TASK].pop(J_IN)
-	if J_REQUEST in task[J_MOD][J_TASK]:
-		task[J_MOD][J_TASK].pop(J_REQUEST)
-	if J_RESPONSE in task[J_MOD][J_TASK]:
-		task[J_MOD][J_TASK].pop(J_RESPONSE)
+    if J_IN in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_IN)
+    if J_REQUEST in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_REQUEST)
+    if J_RESPONSE in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_RESPONSE)
 
-	return task
+    return task
 
 #-----------------------------------------------------------------------
 def task_daemon_status(task, data_center):
-	"""
-	systemctl status service
-	"""
+    """
+    systemctl status service
+    """
 
-	service = task[J_MOD][J_TASK][J_IN]['service']
+    service = task[J_MOD][J_TASK][J_IN]['service']
 
-	bus = dbus.SystemBus()
-	systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
-	manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
 
-	daemon_status = ','.join(str(state) for state in service_state(bus, manager, service, all_state=True)) 
-	task[J_MOD][J_TASK][J_OUT]['daemon_status'] = daemon_status
+    daemon_status = ','.join(str(state) for state in service_state(bus, manager, service, all_state=True)) 
+    task[J_MOD][J_TASK][J_OUT]['daemon_status'] = daemon_status
 
 #-----------------------------------------------------------------------
 def task_daemon_start(task, data_center):
-	"""
-	systemctl start service
-	"""
+    """
+    systemctl start service
+    """
 
-	service = task[J_MOD][J_TASK][J_IN]['service']
+    service = task[J_MOD][J_TASK][J_IN]['service']
 
-	bus = dbus.SystemBus()
-	systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
-	manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
 
-	manager.StartUnit(service, "fail")
+    manager.StartUnit(service, "fail")
 
-	return wait_status_updated(bus, manager, service, 'active', 10)
+    return wait_status_updated(bus, manager, service, 'active', 10)
 
 #-----------------------------------------------------------------------
 def task_daemon_stop(task, data_center):
-	"""
-	systemctl start service
-	"""
+    """
+    systemctl start service
+    """
 
-	service = task[J_MOD][J_TASK][J_IN]['service']
+    service = task[J_MOD][J_TASK][J_IN]['service']
 
-	bus = dbus.SystemBus()
-	systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
-	manager = dbus.Interface(systemd1, SD_BUS_IFACE)
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, SD_BUS_IFACE)
 
-	manager.StopUnit(service, "fail")
+    manager.StopUnit(service, "fail")
 
-	return wait_status_updated(bus, manager, service, 'inactive', 10)
+    return wait_status_updated(bus, manager, service, 'inactive', 10)
 
 #-----------------------------------------------------------------------
 def task_daemon_restart(task, data_center):
-	"""
-	systemctl start service
-	"""
+    """
+    systemctl start service
+    """
 
-	service = task[J_MOD][J_TASK][J_IN]['service']
+    service = task[J_MOD][J_TASK][J_IN]['service']
 
-	bus = dbus.SystemBus()
-	systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
-	manager = dbus.Interface(systemd1, SD_BUS_IFACE)
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, SD_BUS_IFACE)
 
-	manager.RestartUnit(service, "fail")
+    manager.RestartUnit(service, "fail")
 
-	return wait_status_updated(bus, manager, service, 'active', 10)
+    return wait_status_updated(bus, manager, service, 'active', 10)
 
 #-----------------------------------------------------------------------
 def task_daemon_reload(task, data_center):
-	"""
-	systemctl start service
-	"""
+    """
+    systemctl start service
+    """
 
-	service = task[J_MOD][J_TASK][J_IN]['service']
+    service = task[J_MOD][J_TASK][J_IN]['service']
 
-	bus = dbus.SystemBus()
-	systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
-	manager = dbus.Interface(systemd1, SD_BUS_IFACE)
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, SD_BUS_IFACE)
 
-	manager.ReloadUnit(service, "fail")
+    manager.ReloadUnit(service, "fail")
 
-	return wait_status_updated(bus, manager, service, 'active', 10)
+    return wait_status_updated(bus, manager, service, 'active', 10)
 
 #-----------------------------------------------------------------------
 def service_state(bus, manager, service, all_state=False):
-	"""
-	systemctl status service
-	"""
+    """
+    systemctl status service
+    """
 
-	unit = manager.GetUnit(service)
-	unit_obj = bus.get_object(SD_BUS_NAME, unit)
-	unit_prop = dbus.Interface(unit_obj, SD_BUS_PROP)
+    unit = manager.GetUnit(service)
+    unit_obj = bus.get_object(SD_BUS_NAME, unit)
+    unit_prop = dbus.Interface(unit_obj, SD_BUS_PROP)
 
-	active = unit_prop.Get(SD_BUS_UNIT, 'ActiveState')
+    active = unit_prop.Get(SD_BUS_UNIT, 'ActiveState')
 
-	if not all_state:
-		return (active,)
+    if not all_state:
+        return (active,)
 
-	#for task_daemon_status
-	sub = None
-	load = None
+    #for task_daemon_status
+    sub = None
+    load = None
 
-	sub = unit_prop.Get('org.freedesktop.systemd1.Unit', 'SubState')
-	load = unit_prop.Get('org.freedesktop.systemd1.Unit', 'LoadState')
+    sub = unit_prop.Get('org.freedesktop.systemd1.Unit', 'SubState')
+    load = unit_prop.Get('org.freedesktop.systemd1.Unit', 'LoadState')
 
-	can_start = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanStart')
-	can_stop = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanStop')
-	can_reload = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanReload')
+    can_start = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanStart')
+    can_stop = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanStop')
+    can_reload = unit_prop.Get('org.freedesktop.systemd1.Unit', 'CanReload')
 
-	return (active,sub,load,can_start,can_stop,can_reload)
+    return (active,sub,load,can_start,can_stop,can_reload)
 
 #-----------------------------------------------------------------------
 def wait_status_updated(bus, manager, service, status, timeout):
-	"""
-	action 후에 daemon 상태가 timeout기간동안
-	정상적으로 변경이 되는 지 확인
-	"""
+    """
+    action 후에 daemon 상태가 timeout기간동안
+    정상적으로 변경이 되는 지 확인
+    """
 
-	for i in range(timeout):
-		if service_state(bus, manager, service)[0] == status:
-			return 'OK'
+    for i in range(timeout):
+        if service_state(bus, manager, service)[0] == status:
+            return 'OK'
 
-		time.sleep(1)
+        time.sleep(1)
 
-	#return 'TIMEOUT'
-	raise Exception('TIMEOUT')
+    #return 'TIMEOUT'
+    raise Exception('TIMEOUT')
 
