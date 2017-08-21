@@ -14,7 +14,7 @@ def do_task(task, data_center):
     do task
     """
 
-    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_ERR_REASON : ''}
+    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_MESSAGE : ''}
 
     cache = None
 
@@ -25,7 +25,7 @@ def do_task(task, data_center):
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
         e = traceback.format_exc()
-        task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = e
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
 
@@ -60,7 +60,7 @@ def task_install_or_upgrade_package(task, data_center, cache):
 
         pkg.mark_install()
 
-    cache.commit()
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
 def task_remove_package(task, data_center, cache):
@@ -73,7 +73,13 @@ def task_remove_package(task, data_center, cache):
     for pkg_name in pkg_list:
         pkg = cache[pkg_name]
         pkg.mark_delete()
-    cache.commit()
+
+    mark_status = get_mark_status(cache)
+    aap = AgentAcquireProgress()
+    aip = AgentInstallProgress()
+    m = ''
+
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
 def task_upgrade_all(task, data_center, cache):
@@ -82,7 +88,7 @@ def task_upgrade_all(task, data_center, cache):
     """
 
     cache.upgrade()
-    cache.commit()
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
 def task_upgrade_package_with_label(task, data_center, cache):
@@ -111,8 +117,7 @@ def task_upgrade_package_with_label(task, data_center, cache):
                     cnt += 1
                     pkg.mark_upgrade()
 
-    #print('cnt=', cnt)
-    cache.commit()
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
 def task_insert_all_packages_to_server(task, data_center, cache):
@@ -147,7 +152,7 @@ def task_insert_all_packages_to_server(task, data_center, cache):
         data_center.module_request(task, mustbedata=False)
 
     #print('cnt=', cnt)
-    task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = SKEEP_SERVER_REQUEST
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_update_package_version_to_server(task, data_center, cache):
@@ -222,8 +227,6 @@ def task_update_package_version_to_server(task, data_center, cache):
             
         #업데이트할 패키지가 있으면(없으면 끝)
         if len(unmatched_pkg_list) > 0:
-            #print('(update_package_version) unmatched_pkg_list=%s' % str(unmatched_pkg_list)[:LOG_TEXT_LIMIT])
-
             task[J_MOD][J_TASK][J_REQUEST] = {}
             task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'updating'
             task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = unmatched_pkg_list
@@ -236,7 +239,7 @@ def task_update_package_version_to_server(task, data_center, cache):
             with open(fullpath, 'w') as f:
                 f.write('\n'.join(package_list))
 
-    task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = SKEEP_SERVER_REQUEST
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
     return task
 
 #-----------------------------------------------------------------------
@@ -275,7 +278,8 @@ def read_all_pkgs_list_in_cache(cache):
             if not label:
                 label = 'null'
 
-        cache_packages.append('%s,%s,%s,%s' % (pkg.name, pkg.architecture(), label, pkg.candidate.version))
+        cache_packages.append('%s,%s,%s,%s' 
+            % (pkg.name, pkg.architecture(), label, pkg.candidate.version))
 
     return cache_packages
 
@@ -305,7 +309,8 @@ def read_installed_pkgs_in_cache(cache):
                 if not label:
                     label = 'null'
 
-            cache_packages[pkg.name] = [pkg.installed.version, candi_ver, pkg.architecture(), label]
+            cache_packages[pkg.name] = \
+                [pkg.installed.version, candi_ver, pkg.architecture(), label]
 
     return cache_packages
 
@@ -338,4 +343,91 @@ def create_pkglist_file():
         os.makedirs(fullpath)
     fullpath += 'package_version_enum'
     return fullpath
+
+#-----------------------------------------------------------------------
+def agent_commit(task, cache):
+    """
+    commit
+    """
+
+    mark_status = get_mark_status(cache)
+    aap = AgentAcquireProgress()
+    aip = AgentInstallProgress()
+    m = ''
+
+    if cache.commit(fetch_progress=aap, install_progress=aip):
+        m += 'install[%d] upgrade[%d] delete[%d]\n' \
+            % (len(mark_status['I']), 
+                len(mark_status['U']), 
+                len(mark_status['D']))
+
+        for action in ('I', 'U', 'D'):
+            m += '[%s] %s\n' % (action, '\n'.join(mark_status[action]))
+    else:
+        m += '%s\n%s' % (aap.get_message(), aip.get_message())
+        task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = m
+
+    cache.commit()
+
+#-----------------------------------------------------------------------
+def get_mark_status(cache):
+    """
+    return marking status of packages in cache
+    """
+
+    #[ [install], [upgrade], [delete] ]
+    ms = {'I':[], 'U':[], 'D':[]}
+
+    for pkg in cache:
+        if pkg.marked_install:
+            ms['I'].append(pkg.name)    
+        elif pkg.marked_upgrade:
+            ms['U'].append(pkg.name)    
+        elif pkg.marked_delete:
+            ms['D'].append(pkg.name)    
+
+    return ms
+
+#-----------------------------------------------------------------------
+from apt.progress.base import InstallProgress, AcquireProgress
+
+class AgentInstallProgress(InstallProgress):
+    """
+    apt package install progress 
+    """
+    
+    message = []
+
+    def error(self, pkg, errormsg):
+        """
+        invoked when apt's action is failed 
+        """
+
+        super().error(pkg, errormsg)
+        self.message.append('%s: %s' % (pkg, errormsg))
+
+    def get_message(self):
+        """ get message """
+        return '\n'.join(self.message)
+
+
+class AgentAcquireProgress(AcquireProgress):
+    """
+    apt package acquire progress
+    """
+
+    message = []
+
+    def fail(self, item):
+        """
+        invoked when it is failed to download packages
+        """
+
+        self.message.append(item.description)
+
+    def get_message(self):
+        """ get message """
+        return '\n'.join(self.message)
 

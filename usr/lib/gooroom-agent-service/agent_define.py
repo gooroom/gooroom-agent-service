@@ -57,12 +57,12 @@ J_RESPONSE=T_RESPONSE
 J_ID=T_ID
 J_SEQ=T_SEQ
 
-J_AGENT_STATUS='agentStatus'
+J_AGENT_STATUS='status'
 J_AGENT_STATUS_RESULT='result'
 J_AGENT_STATUS_RESULTCODE='resultCode'
 J_AGENT_STATUS_MESSAGE='message'
 
-J_AGENT_DATA='agentData'
+J_AGENT_DATA='data'
 J_AGENT_DATA_JOBNO='jobNo'
 J_AGENT_DATA_CLIENTID='clientId'
 J_AGENT_DATA_JOBDATA='job'
@@ -70,7 +70,7 @@ J_AGENT_DATA_JOBDATA='job'
 J_PKG='pkg_name'
 J_STATUS='status'
 J_OUTPUT='output'
-J_ERR_REASON='error_reason'
+J_MESSAGE='message'
 
 #IN HEADER
 H_TOKEN='gooroom-client-token'

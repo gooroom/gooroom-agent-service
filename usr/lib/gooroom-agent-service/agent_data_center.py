@@ -6,6 +6,7 @@ import threading
 import importlib
 import httplib2
 import OpenSSL
+import struct
 import ctypes
 import queue
 import glob
@@ -101,12 +102,11 @@ class AgentDataCenter:
             self.auth_api = self.conf.get('REST_API', 'AUTH_TOKEN')
             self.rest_timeout = float(self.conf.get('MAIN', 'REST_TIMEOUT'))
 
-            self.agent_http = httplib2.Http(timeout=self.rest_timeout)
             self.agent_http = httplib2.Http(ca_certs=self.agent_ca_cert, timeout=self.rest_timeout)
             self.agent_http.add_certificate(key=self.agent_key, cert=self.agent_cert, domain='')
 
             #MUTUAL SSL RESTFUL
-            self.restful = AgentMsslRest(self)# self.client_id, self.server_domain, self.auth_api, self.agent_http)
+            self.restful = AgentMsslRest(self)
 
             self.logger.info('END SHOW()')
 
@@ -121,7 +121,7 @@ class AgentDataCenter:
         restful.request wrapper for module
         """
 
-        agent_data = self.create_agentdata(job_no, self.client_id, [task])
+        agent_data = self.create_agentdata(job_no, [task])
         server_rsp, status_code, err_msg = self.restful.request(self.client_api,
             body=json.dumps({J_AGENT_DATA:agent_data}))
 
@@ -143,7 +143,7 @@ class AgentDataCenter:
         restful.request wrapper for clientjob worker
         """
 
-        agent_data = self.create_agentdata(job_no, self.client_id, [task])
+        agent_data = self.create_agentdata(job_no, [task])
         return self.restful.request(self.client_api,
             body=json.dumps({J_AGENT_DATA:agent_data}))
 
@@ -153,7 +153,7 @@ class AgentDataCenter:
         """
 
         agent_status, agent_data = \
-            self.create_agentbody('', AGENT_OK, '', job_no, self.client_id, task_list)
+            self.create_agentbody('', AGENT_OK, '', job_no, task_list)
 
         return self.restful.request(self.server_api,
             body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}))
@@ -163,9 +163,18 @@ class AgentDataCenter:
         restful.request wrapper for jobs
         """
 
-        return self.restful.request(self.jobs_api, method='GET')
+        user_id = None
+        try:
+            user_id = self.catch_user_id()
+        except:
+            user_id = '***TERMINAL ERROR***'
+            raise
 
-    def create_agentbody(self, agent, code, err, job_no, client_id, module_rsp):
+        b = {'user_id':user_id, 'type:':0}
+        return self.restful.request(self.jobs_api, body=json.dumps(b))
+        #return self.restful.request(self.jobs_api, method='GET')
+
+    def create_agentbody(self, agent, code, err, job_no, module_rsp):
         """
         create agent body(agent status + agent data)
         """
@@ -177,11 +186,11 @@ class AgentDataCenter:
         agent_status[J_AGENT_STATUS_RESULTCODE] = code
         agent_status[J_AGENT_STATUS_MESSAGE] = err
 
-        agent_data = self.create_agentdata(job_no, client_id, module_rsp)
+        agent_data = self.create_agentdata(job_no, module_rsp)
 
         return agent_status, agent_data
 
-    def create_agentdata(self, job_no, client_id, module_rsp):
+    def create_agentdata(self, job_no, module_rsp):
         """
         create agent data
         """
@@ -189,10 +198,32 @@ class AgentDataCenter:
         agent_data = [{}]
 
         agent_data[0][J_AGENT_DATA_JOBNO] = job_no
-        agent_data[0][J_AGENT_DATA_CLIENTID] = client_id
+        agent_data[0][J_AGENT_DATA_CLIENTID] = self.client_id
         agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
 
         return agent_data
+
+    def catch_user_id(self):
+        """
+        read current logined user_id from /var/run/utmp
+        """
+
+        with open('/var/run/utmp', 'rb') as f:
+            fc = memoryview(f.read())
+
+        utmp_fmt = '<ii32s4s32s'
+        user_id = '-'
+
+        for i in range(int(len(fc)/384)):
+            ut_type, ut_pid, ut_line, ut_id, ut_user = \
+                struct.unpack(utmp_fmt, fc[384*i:76+(384*i)])
+            ut_line = ut_line.decode('utf8').strip('\00')
+            ut_id = ut_id.decode('utf8').strip('\00')
+
+            if ut_type == 7 and ut_line == ':0':
+                user_id = ut_user.decode('utf8').strip('\00')
+
+        return user_id
 
     def get_serverjob_dispatch_time(self):
         """

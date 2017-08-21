@@ -113,7 +113,8 @@ class AgentMsslRest:
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
-        rsp_headers, rsp_body = self.data_center.agent_http.request(uri, method=method, headers=headers, body=body)
+        rsp_headers, rsp_body = self.data_center.agent_http.request(
+            uri, method=method, headers=headers, body=body)
         self.logger.debug('RESPONSE=%s' % str(rsp_body)[:LOG_TEXT_LIMIT])
 
         return rsp_headers, rsp_body

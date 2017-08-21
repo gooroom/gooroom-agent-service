@@ -4,6 +4,7 @@
 import subprocess
 import importlib
 import traceback
+import datetime
 import sys
 import os
 
@@ -17,7 +18,7 @@ def do_task(task, data_center):
     do task
     """
 
-    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_ERR_REASON : ''}
+    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_MESSAGE : ''}
 
     try:
         eval('task_%s(task, data_center)' % task[J_MOD][J_TASK][J_TASKN])
@@ -25,7 +26,7 @@ def do_task(task, data_center):
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
         e = traceback.format_exc()
-        task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = e
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
 
@@ -39,6 +40,24 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_clear_security_alarm(task, data_center):
+    """
+    clear_cecurity_alarm
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    data_center.module_request(task, mustbedata=False)
+
+    logparser_path = \
+        AgentConfig.get_config().get('MAIN', 'LOGPARSER_SEEKTIME_PATH')
+
+    seek_time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')
+    with open(logparser_path, 'w') as f:
+        f.write(str(seek_time))
+    
+#-----------------------------------------------------------------------
 def task_summary_log(task, data_center):
     """
     summary_log
@@ -47,7 +66,7 @@ def task_summary_log(task, data_center):
     motherboard_serial = read_boardserial()
     os_ver = read_os()
     kernel = read_kernel()
-    ip = read_ip()
+    ip = ''
     
     task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
         '%s,%s,%s,%s' % (motherboard_serial, os_ver, kernel, ip)
@@ -92,6 +111,13 @@ def write_last_seek_time(backup_path, next_seek_time):
 
 
 #-----------------------------------------------------------------------
+match_strings = (
+    'SYSLOG_IDENTIFIER=gbp-daemon', 
+    'SYSLOG_IDENTIFIER=gep-daemon',
+    'SYSLOG_IDENTIFIER=gop-daemon', 
+    'SYSLOG_IDENTIFIER=grac-daemon',
+    'PRIORITY=3', '_TRANSPORT=audit')
+
 def load_security_log(task):
     """
     load security log on journal
@@ -117,12 +143,15 @@ def load_security_log(task):
     
     logs = []
 
+    for match in match_strings:
+        j.add_match(match)
+        j.add_disjunction()
+
     for entry in j:
-        #tuple로 교체 제안
-        #logs.append((entry['__REALTIME_TIMESTAMP'], entry['_TRANSPORT'], entry['MESSAGE']))
-        logs.append({"timestamp": entry["__REALTIME_TIMESTAMP"], 
-            "daemon" : entry["_TRANSPORT"], 
-            "message" : entry["MESSAGE"]})
+        if type(entry['MESSAGE']) is bytes:
+            entry['MESSAGE'] = \
+                str(entry['MESSAGE'].decode('unicode_escape').encode('utf-8'))
+        logs.append(entry)
 
         last_seek_time = entry['__REALTIME_TIMESTAMP'].timestamp()
 
@@ -178,14 +207,4 @@ def read_os():
             info['DISTRIB_ID'], 
             info['DISTRIB_CODENAME'], 
             info['DISTRIB_RELEASE'])
-
-#-----------------------------------------------------------------------
-def read_ip():
-    """
-    return ip address
-    """
-    
-    #should modify to read ip from file
-    ip = subprocess.check_output('hostname -I'.split()).decode('utf8').rstrip('\n')
-    return ip
 

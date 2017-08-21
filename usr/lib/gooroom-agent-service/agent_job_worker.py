@@ -117,14 +117,17 @@ class AgentJobWorker(threading.Thread):
 
         self.logger.debug('A WORKER(%s) EMPLOYED' % self.role)
 
-    def do_task(self, module_name, task):
+    def do_task(self, task):
         """
         do task
         """
 
+        module_name = task[J_MOD][J_MODN]
+        task_name = task[J_MOD][J_TASK][J_TASKN]
+
         module = self.data_center.modules[module_name]
         do_task = getattr(module, 'do_task')
-        self.logger.debug('DOING TASK(%s)' % str(task)[:LOG_TEXT_LIMIT])
+        self.logger.debug('DOING TASK(%s)' % task_name)
 
         rsp = None
 
@@ -140,7 +143,7 @@ class AgentJobWorker(threading.Thread):
         else:
             rsp = do_task(task, self.data_center)
 
-        self.logger.debug('DONE TASK(%s)' % str(rsp)[:LOG_TEXT_LIMIT])
+        self.logger.debug('DONE TASK(%s)' % task_name)
         return rsp
 
     def make_outtask(self, task, status, err_reason):
@@ -151,7 +154,7 @@ class AgentJobWorker(threading.Thread):
         if J_RESPONSE in task[J_MOD][J_TASK]:
             task[J_MOD][J_TASK].pop(J_RESPONSE)
 
-        task[J_MOD][J_TASK][J_OUT] = {J_STATUS:status, J_ERR_REASON:err_reason}
+        task[J_MOD][J_TASK][J_OUT] = {J_STATUS:status, J_MESSAGE:err_reason}
         return task
 
     def do_clientjob(self, task):
@@ -163,7 +166,7 @@ class AgentJobWorker(threading.Thread):
             task_name = task[J_MOD][J_TASK][J_TASKN]
 
             #call module
-            task_rsp =  self.do_task(task[J_MOD][J_MODN], task)
+            task_rsp =  self.do_task(task)
 
             #error
             m = '[CLIENT FIN] ({:<8}) ({:<30}) {}'.format('no shoot', task_name, task_rsp)
@@ -174,7 +177,7 @@ class AgentJobWorker(threading.Thread):
 
             #if module do not need to request to server, 
             #it returns SKEEP_SERVER_REQUEST in error_reason.
-            if task_rsp[J_MOD][J_TASK][J_OUT][J_ERR_REASON] == SKEEP_SERVER_REQUEST:
+            if task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
                 self.logger.debug(m)
                 #print(m)
                 return task_rsp
@@ -220,7 +223,9 @@ class AgentJobWorker(threading.Thread):
         task_rsp_list = []
 
         for task in job:
-            task_rsp_list.append(self.do_task(task[J_MOD][J_MODN], task))
+            task_rsp_list.append(self.do_task(task))
+            if task[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                break
 
         server_rsp, status_code, err_msg = self.data_center.serverjob_request(task_rsp_list, job_no)
         m = '[SERVER FIN] ({:<8}) ({:<10}) rsp={} code={} err={}'.format(

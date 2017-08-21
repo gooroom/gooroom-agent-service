@@ -17,7 +17,7 @@ def do_task(task, data_center):
     do task
     """
 
-    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_ERR_REASON : ''}
+    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_MESSAGE : ''}
 
     try:
         eval('task_%s(task,data_center)' % task[J_MOD][J_TASK][J_TASKN])
@@ -25,7 +25,7 @@ def do_task(task, data_center):
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
         e = traceback.format_exc()
-        task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = e
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
 
@@ -84,7 +84,7 @@ def task_get_update_server_config(task, data_center):
         
         replace_file(n, c, s)
 
-    task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = SKEEP_SERVER_REQUEST
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_append_contents_etc_hosts(task, data_center):
@@ -94,7 +94,6 @@ def task_append_contents_etc_hosts(task, data_center):
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {}
-    task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'first'
 
     server_rsp = data_center.module_request(task)
 
@@ -106,7 +105,7 @@ def task_append_contents_etc_hosts(task, data_center):
 
     remake_etc_hosts(parse_etc_hosts(server_contents), signature)
 
-    task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = SKEEP_SERVER_REQUEST
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_get_server_certificate(task, data_center):
@@ -116,7 +115,6 @@ def task_get_server_certificate(task, data_center):
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {}
-    task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'first'
 
     server_rsp = data_center.module_request(task)
 
@@ -124,7 +122,7 @@ def task_get_server_certificate(task, data_center):
 
     replace_file('/etc/gooroom/agent/server_certificate.crt', file_contents)
 
-    task[J_MOD][J_TASK][J_OUT][J_ERR_REASON] = SKEEP_SERVER_REQUEST
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_get_config(task, data_center):
