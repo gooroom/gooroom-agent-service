@@ -4,11 +4,10 @@
 import xml.etree.ElementTree as etree
 import os
 import shutil
-import traceback
 
 from collections import OrderedDict
 
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -24,7 +23,7 @@ def do_task(task, data_center):
 
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
-        e = traceback.format_exc()
+        e = agent_format_exc()
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
@@ -61,7 +60,6 @@ def task_get_update_server_config(task, data_center):
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {}
-    task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'first'
 
     server_rsp = data_center.module_request(task)
 
@@ -81,7 +79,6 @@ def task_get_update_server_config(task, data_center):
     for n, c, s in zip(filenames, filecontents, signatures):
         #if verifying is failed, exception occur
         verify_signature(s, c)
-        
         replace_file(n, c, s)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
@@ -121,6 +118,51 @@ def task_get_server_certificate(task, data_center):
     file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
 
     replace_file('/etc/gooroom/agent/server_certificate.crt', file_contents)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def chown_file(fname, fuser=None, fgroup=None):
+    """
+    chown of file
+    """
+
+    if fuser and fgroup:
+        shutil.chown(fname, user=fuser, group=fgroup)
+
+#-----------------------------------------------------------------------
+def task_set_authority_config(task, data_center):
+    """
+    set_authority_config
+    """
+
+    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+
+    file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
+    file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
+    signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+    fuser = None
+    fgroup = None
+
+    for idx in range(len(file_name_list)):
+        file_name = file_name_list[idx]
+        if '$(HOME)' in file_name:
+            file_name = \
+                file_name.replace('$(HOME)', '/home/%s' % login_id)
+            fuser = fgroup = login_id
+
+        file_contents = file_contents_list[idx]
+        signature = signature_list[idx]
+        
+        #if verifying is failed, exception occur
+        verify_signature(signature, file_contents)
+
+        replace_file(file_name, file_contents)
+        chown_file(file_name, fuser, fgroup)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -180,6 +222,18 @@ def get_enumvalues_from_xml(xmlpath, typename):
     return values
 
 #-----------------------------------------------------------------------
+def allowed_filename(fname, allowed_list):
+    """
+    check whether fname is allowed in list or not
+    """
+
+    import fnmatch
+    for allowed in allowed_list:
+        if fnmatch.fnmatch(fname, allowed):
+            return True
+    return False
+        
+#-----------------------------------------------------------------------
 def replace_file(file_name, file_contents, signature=None):
     """
     replace file
@@ -188,7 +242,7 @@ def replace_file(file_name, file_contents, signature=None):
     tmpl_path = get_tmpl_path()
     config_file_list = get_enumvalues_from_xml(tmpl_path, 'CONFIG_FILE')
 
-    if not file_name in config_file_list:
+    if not allowed_filename(file_name, config_file_list):
         raise Exception('invalid file_name, check config.tmpl')
 
     splited_filename = file_name.split('/')[-1]

@@ -10,6 +10,7 @@
             <enum value="/etc/apt/preferences.d/official-extra-repositories.pref"/>
             <enum value="/etc/hosts"/>
             <enum value="/etc/gooroom/agent/server_certificate.crt"/>
+            <enum value="/home/*/.grac.conf"/>
         </restriction>
     </simpleType>
 
@@ -97,6 +98,29 @@
         <response>
             <param name="file_contents" type="string"/>
             <param name="signature" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SET AUTHORITY CONFIG -->
+    <task name="set_authority_config">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="file_name_list" type="string_array"/>
+            <param name="file_contents_list" type="string_array"/>
+            <param name="signature_list" type="string_array"/>
         </response>
 
         <out>

@@ -8,14 +8,13 @@ import dbus.service
 import time
 import multiprocessing
 import simplejson as json
-import traceback
 import OpenSSL
 
 from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
 
 from agent_define import AGENT_OK,AGENT_NOK
-from agent_util import AgentLog,AgentConfig
+from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_clientjob_dispatcher import AgentClientJobDispatcher
 from agent_serverjob_dispatcher import AgentServerJobDispatcher
 from agent_data_center import AgentDataCenter
@@ -75,6 +74,22 @@ class Agent(dbus.service.Object):
 
         self.logger.info('AGENT QUIT')
 
+    def shield_do_task(self, sender):
+        """
+        protect invoking do_task from unprivileged process
+        """
+
+        pid = self.get_sender_pid(sender)
+
+        import psutil
+        ps = psutil.Process(pid)
+        path = ps.exe()
+        cmds = ps.cmdline()
+
+        self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
+
+        return True #path in allowed_path
+
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
         """
@@ -86,12 +101,16 @@ class Agent(dbus.service.Object):
         try:
             self.logger.info('DBUS CLIENTJOB -> %s' % args)
             task = json.loads(args)
+
+            #testing
+            self.shield_do_task(sender)
+
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
             return ret
 
         except: 
-            e = traceback.format_exc()
+            e = agent_format_exc()
             AgentLog.get_logger().error(e)
 
             return args
@@ -118,9 +137,9 @@ class Agent(dbus.service.Object):
 
             self.logger.info('AGENT STOPPED BY DBUS')
         except:
-            m = traceback.format_exc()
-            self.logger.error(m)
-            return m
+            e = agent_format_exc()
+            self.logger.error(e)
+            return e
 
         return AGENT_OK
 
@@ -149,9 +168,9 @@ class Agent(dbus.service.Object):
             self.data_center.show()
             self.logger.info('AGENT RELOADED BY DBUS')
         except:
-            m = traceback.format_exc()
-            self.logger.error(m)
-            return m
+            e = agent_format_exc()
+            self.logger.error(e)
+            return e
 
         return AGENT_OK
 
@@ -184,7 +203,7 @@ class Agent(dbus.service.Object):
             pid = bus_interface.GetConnectionUnixProcessID(sender)
 
         except:
-            AgentLog.get_logger().error('(do_task) %s' % traceback.format_exc())
+            AgentLog.get_logger().error('(do_task) %s' % agent_format_exc())
 
         return pid
 
@@ -210,7 +229,7 @@ if __name__ == '__main__':
         me.run()
 
     except:
-        AgentLog.get_logger().error('(main) %s' % traceback.format_exc())
+        AgentLog.get_logger().error('(main) %s' % agent_format_exc())
 
         if me:
             me.stop('')

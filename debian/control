@@ -8,6 +8,6 @@ Homepage: http://www.gooroom.kr
 
 Package: gooroom-agent-service
 Architecture: all
-Depends: python3-dbus, python3-openssl, python3-simplejson, python3-httplib2, python3-apt, python3-systemd
+Depends: python3-dbus, python3-openssl, python3-simplejson, python3-httplib2, python3-apt, python3-systemd, python3-psutil
 Description: gooroom terminal management agent service
  

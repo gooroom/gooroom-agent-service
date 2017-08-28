@@ -2,9 +2,9 @@
 
 #-----------------------------------------------------------------------
 import dbus
-import traceback
+import time
 
-from agent_util import AgentConfig
+from agent_util import AgentConfig,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -29,7 +29,7 @@ def do_task(task, data_center):
 
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
-        e = traceback.format_exc()
+        e = agent_format_exc()
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
@@ -165,5 +165,5 @@ def wait_status_updated(bus, manager, service, status, timeout):
         time.sleep(1)
 
     #return 'TIMEOUT'
-    raise Exception('TIMEOUT')
+    raise Exception('SYSTEMD TIMEOUT')
 

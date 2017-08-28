@@ -5,9 +5,8 @@ import threading
 import time
 import multiprocessing
 import simplejson as json
-import traceback
 
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_job_worker import AgentJobManager,AgentJobWorker
 from agent_simple_parser import SimpleParser
 from agent_define import *
@@ -62,9 +61,8 @@ class AgentClientJobDispatcher(threading.Thread):
                 self._special_worker.do_clientjob(task)
             journal.send('[GOOROOM AGENT] INIT TASKS SUCCESS')
         except:
-            m = traceback.format_exc()
-            self.logger.error(m)
-            #print(m)
+            e = agent_format_exc()
+            self.logger.error(e)
             journal.send('[GOOROOM AGENT] INIT TASKS FAILURE')
 
         self.data_center.serverjob_looping_on[0] = True
@@ -82,7 +80,7 @@ class AgentClientJobDispatcher(threading.Thread):
             self.init_agent()
 
         except:
-            self.logger.error('%s' % traceback.format_exc())
+            self.logger.error('%s' % agent_format_exc())
         ###############################################################
 
         intervals = 0
@@ -103,7 +101,7 @@ class AgentClientJobDispatcher(threading.Thread):
                                 self._job_manager.put_job(copy.deepcopy(task))
 
                 except:
-                    self.logger.error('%s' % traceback.format_exc())
+                    self.logger.error('%s' % agent_format_exc())
 
                 finally:
                     #self.data_center.center_lock.release()

@@ -1,11 +1,10 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
-import traceback
 import apt
 import os
 
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -24,7 +23,7 @@ def do_task(task, data_center):
 
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
-        e = traceback.format_exc()
+        e = agent_format_exc()
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)

@@ -170,7 +170,7 @@ class AgentDataCenter:
             user_id = '***TERMINAL ERROR***'
             raise
 
-        b = {'user_id':user_id, 'type:':0}
+        b = {'client_id':self.client_id, 'user_id':user_id, 'type:':0}
         return self.restful.request(self.jobs_api, body=json.dumps(b))
         #return self.restful.request(self.jobs_api, method='GET')
 

@@ -11,13 +11,12 @@ import sys
 import simplejson as json
 import re
 import ctypes
-import traceback
 
 from ctypes import util
 from socket import timeout as SOCKET_TIMEOUT
 
 from agent_msslrest import AgentMsslRest
-from agent_util import AgentConfig,AgentLog
+from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -82,7 +81,7 @@ class AgentJobManager:
             Q.put(job)
 
         except:
-            self.logger.error(traceback.format_exc())
+            self.logger.error(agent_format_exc())
         
     def allkill(cls):
         """
@@ -205,10 +204,10 @@ class AgentJobWorker(threading.Thread):
                 return self.make_outtask(task, status_code, err_msg)
 
         except SOCKET_TIMEOUT:
-            AgentLog.get_logger().error('%s' % traceback.format_exc())
+            AgentLog.get_logger().error('%s' % agent_format_exc())
             return self.make_outtask(task, AGENT_NOK, 'TIMEOUT')
         except:
-            AgentLog.get_logger().error('%s' % traceback.format_exc())
+            AgentLog.get_logger().error('%s' % agent_format_exc())
             return self.make_outtask(task, AGENT_NOK, 'CLIENTJOB INTERNAL ERROR')
 
     def do_serverjob(self, agent_data):
@@ -273,7 +272,7 @@ class AgentJobWorker(threading.Thread):
                     break
 
             except:
-                self.logger.error('%s' % traceback.format_exc())
+                self.logger.error('%s' % agent_format_exc())
                 break
 
         self.logger.debug('A WORKER(%s) RETIRED' % self.role)

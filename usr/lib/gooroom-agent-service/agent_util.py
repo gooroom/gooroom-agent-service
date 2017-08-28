@@ -136,6 +136,19 @@ class AgentLog:
         return logger
 
 #-----------------------------------------------------------------------
+import traceback
+import reprlib
+def agent_format_exc():
+    """
+    reprlib version of format_exc of traceback
+    """
+
+    e = traceback.format_exc()
+    rp = reprlib.Repr()
+    rp.maxstring = 512
+    return rp.repr(e)
+
+#-----------------------------------------------------------------------
 import dbus
 
 DBUS_NAME = 'kr.gooroom.agent'

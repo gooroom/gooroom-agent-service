@@ -5,10 +5,9 @@ import threading
 import time
 import multiprocessing
 import simplejson as json
-import traceback
 from socket import timeout as SOCKET_TIMEOUT
 
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_msslrest import AgentMsslRest
 from agent_job_worker import AgentJobManager
 from agent_simple_parser import SimpleParser
@@ -78,7 +77,7 @@ class AgentServerJobDispatcher(threading.Thread):
                     #print(waiting_time, timeout_cnt)
 
                 except: 
-                    AgentLog.get_logger().error('%s' % traceback.format_exc())
+                    AgentLog.get_logger().error('%s' % agent_format_exc())
 
             self._dispatch_event.wait(timeout=waiting_time)#self.dispatch_time)
 
