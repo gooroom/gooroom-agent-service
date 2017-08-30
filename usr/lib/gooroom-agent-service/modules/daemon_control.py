@@ -110,7 +110,7 @@ def task_daemon_restart(task, data_center):
 #-----------------------------------------------------------------------
 def task_daemon_reload(task, data_center):
     """
-    systemctl start service
+    systemctl reload service
     """
 
     service = task[J_MOD][J_TASK][J_IN]['service']

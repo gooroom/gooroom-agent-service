@@ -147,7 +147,7 @@ def load_security_log(task):
         j.add_disjunction()
 
     for entry in j:
-        if type(entry['MESSAGE']) is bytes:
+        if 'MESSAGE' in entry and type(entry['MESSAGE']) is bytes:
             entry['MESSAGE'] = \
                 str(entry['MESSAGE'].decode('unicode_escape').encode('utf-8'))
         logs.append(entry)
@@ -159,14 +159,19 @@ def load_security_log(task):
     sys.path.append(module_path)
     #invoke get_summary
     for sf in ('os', 'exe', 'boot', 'media'):
-        m = importlib.import_module('security.'+sf)
-        status, log = getattr(m, 'get_summary')(logs)
+        try:
+            m = importlib.import_module('security.'+sf)
+            status, log = getattr(m, 'get_summary')(logs)
 
-        if not log:
-            continue
+            if not log:
+                continue
 
-        task[J_MOD][J_TASK][J_OUT][sf+'_status'] = status
-        task[J_MOD][J_TASK][J_OUT][sf+'_log'] = '\n'.join(log)
+            task[J_MOD][J_TASK][J_OUT][sf+'_status'] = status
+            task[J_MOD][J_TASK][J_OUT][sf+'_log'] = '\n'.join(log)
+
+        except:
+            e = agent_format_exc()
+            AgentLog.get_logger().info(e)
         
     #save lask seek_time to file
     write_last_seek_time(backup_path, last_seek_time)
