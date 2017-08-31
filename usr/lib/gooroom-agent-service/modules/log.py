@@ -119,7 +119,7 @@ def calc_pss():
 
         m = importlib.import_module('pss')
         file_num, score = getattr(m, 'PSS')().run()
-        return score
+        return str(score)
 
     except:
         e = agent_format_exc()
