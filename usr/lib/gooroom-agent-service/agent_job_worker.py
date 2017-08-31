@@ -220,13 +220,16 @@ class AgentJobWorker(threading.Thread):
         job = json.loads(agent_data[J_AGENT_DATA_JOBDATA])
 
         task_rsp_list = []
+        job_status = AGENT_OK
 
         for task in job:
             task_rsp_list.append(self.do_task(task))
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                job_status = AGENT_NOK
                 break
 
-        server_rsp, status_code, err_msg = self.data_center.serverjob_request(task_rsp_list, job_no)
+        server_rsp, status_code, err_msg = \
+            self.data_center.serverjob_request(task_rsp_list, job_no, job_status)
         m = '[SERVER FIN] ({:<8}) ({:<10}) rsp={} code={} err={}'.format(
             'shoot', job_no, server_rsp, status_code, err_msg)
         if status_code == AGENT_OK:

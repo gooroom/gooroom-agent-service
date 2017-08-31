@@ -146,13 +146,13 @@ class AgentDataCenter:
         return self.restful.request(self.client_api,
             body=json.dumps({J_AGENT_DATA:agent_data}))
 
-    def serverjob_request(self, task_list, job_no):
+    def serverjob_request(self, task_list, job_no, job_status):
         """
         restful.request wrapper for serverjob worker
         """
 
         agent_status, agent_data = \
-            self.create_agentbody('', AGENT_OK, '', job_no, task_list)
+            self.create_agentbody('', job_status, '', job_no, task_list)
 
         return self.restful.request(self.server_api,
             body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}))
