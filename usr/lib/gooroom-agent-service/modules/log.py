@@ -190,6 +190,10 @@ def load_security_log(task):
             e = agent_format_exc()
             AgentLog.get_logger().info(e)
         
+    #FOR PERFORMANCE TEST
+    task[J_MOD][J_TASK][J_OUT]['media_status'] = '취약'
+    task[J_MOD][J_TASK][J_OUT]['media_log'] = '*' * 10240
+
     #save lask seek_time to file
     write_last_seek_time(backup_path, last_seek_time)
 
