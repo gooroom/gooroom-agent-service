@@ -269,14 +269,12 @@ def replace_file(file_name, file_contents, signature=None):
         if not os.path.exists(agent_origin):
             shutil.copyfile(file_name, agent_origin) 
 
+        #백업파일복사
         agent_prev = backupdir_path+splited_filename+'+agent_prev'
 
-        #백업파일(+agent_prev)이 있으면 삭제
-        if os.path.exists(agent_prev):
-            os.remove(agent_prev)
-
-        #현재파일을 백업파일(+agent_prev)으로 이동
-        shutil.move(file_name, agent_prev)
+        with open(agent_prev, 'w') as f:
+            with open(file_name, 'r') as fin:
+                f.write(fin.read())
 
         #설정파일생성
         with open(file_name, 'w') as f:
