@@ -7,7 +7,7 @@ import datetime
 import sys
 import os
 
-from agent_util import AgentConfig,AgentLog,agent_format_exc
+from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_define import *
 from systemd import journal
 
@@ -72,10 +72,8 @@ def task_summary_log(task, data_center):
     
     load_security_log(task)
 
-    task[J_MOD][J_TASK][J_OUT]['safe_score'] = '0'
-    user_id = os.getenv('USER')
-    if not user_id:
-        user_id = 'system'
+    task[J_MOD][J_TASK][J_OUT]['safe_score'] = calc_pss()
+    user_id = catch_user_id()
 
     task[J_MOD][J_TASK][J_OUT]['user_id'] = user_id
 
@@ -108,6 +106,25 @@ def write_last_seek_time(backup_path, next_seek_time):
     with open(backup_path+'security_last_seek_time', 'w') as f:
         f.write(str(next_seek_time))
 
+
+#-----------------------------------------------------------------------
+def calc_pss():
+    """
+    return calculated pss score
+    """
+
+    try:
+        module_path = AgentConfig.get_config().get('SECURITY', 'PSS_MODULE_PATH')
+        sys.path.append(module_path)
+
+        m = importlib.import_module('pss')
+        file_num, score = getattr(m, 'PSS')().run()
+        return score
+
+    except:
+        e = agent_format_exc()
+        AgentLog.get_logger().info(e)
+        return '0'
 
 #-----------------------------------------------------------------------
 match_strings = (

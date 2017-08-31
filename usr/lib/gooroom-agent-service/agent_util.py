@@ -149,6 +149,30 @@ def agent_format_exc():
     return rp.repr(e)
 
 #-----------------------------------------------------------------------
+import struct
+def catch_user_id():
+    """
+    read current logined user_id from /var/run/utmp
+    """
+
+    with open('/var/run/utmp', 'rb') as f:
+        fc = memoryview(f.read())
+
+    utmp_fmt = '<ii32s4s32s'
+    user_id = '-'
+
+    for i in range(int(len(fc)/384)):
+        ut_type, ut_pid, ut_line, ut_id, ut_user = \
+            struct.unpack(utmp_fmt, fc[384*i:76+(384*i)])
+        ut_line = ut_line.decode('utf8').strip('\00')
+        ut_id = ut_id.decode('utf8').strip('\00')
+
+        if ut_type == 7 and ut_id == ':0':
+            user_id = ut_user.decode('utf8').strip('\00')
+
+    return user_id
+
+#-----------------------------------------------------------------------
 import dbus
 
 DBUS_NAME = 'kr.gooroom.agent'

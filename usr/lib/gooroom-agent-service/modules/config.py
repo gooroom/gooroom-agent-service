@@ -245,25 +245,31 @@ def replace_file(file_name, file_contents, signature=None):
     if not allowed_filename(file_name, config_file_list):
         raise Exception('invalid file_name, check config.tmpl')
 
-    splited_filename = file_name.split('/')[-1]
+    splited = file_name.split('/')
+    splited_path = '/'.join(splited[:-1])
+    splited_filename = splited[-1]
+
+    if not os.path.isdir(splited_path):
+        os.makedirs(splited_path)
+
     backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
     if backup_path[-1] != '/':
         backup_path += '/'
 
-    dir_path = '%s%s/' % (backup_path, splited_filename)
+    backupdir_path = '%s%s/' % (backup_path, splited_filename)
 
-    if not os.path.isdir(dir_path):
-        os.makedirs(dir_path)
+    if not os.path.isdir(backupdir_path):
+        os.makedirs(backupdir_path)
 
     if os.path.exists(file_name):
         #최초 원본파일을 보존하기위해서 원본보존파일(+agent_origin)이
         #없으면 현재파일을 복사
-        agent_origin = dir_path+splited_filename+'+agent_origin'
+        agent_origin = backupdir_path+splited_filename+'+agent_origin'
 
         if not os.path.exists(agent_origin):
             shutil.copyfile(file_name, agent_origin) 
 
-        agent_prev = dir_path+splited_filename+'+agent_prev'
+        agent_prev = backupdir_path+splited_filename+'+agent_prev'
 
         #백업파일(+agent_prev)이 있으면 삭제
         if os.path.exists(agent_prev):
@@ -288,7 +294,7 @@ def replace_file(file_name, file_contents, signature=None):
 
     #signature
     if signature:
-        with open(dir_path+splited_filename+'+signature', 'w') as f:
+        with open(backupdir_path+splited_filename+'+signature', 'w') as f:
             f.write(signature)
 
 #-----------------------------------------------------------------------

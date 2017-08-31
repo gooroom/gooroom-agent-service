@@ -6,14 +6,13 @@ import threading
 import importlib
 import httplib2
 import OpenSSL
-import struct
 import ctypes
 import queue
 import glob
 import sys
 import re
 
-from agent_util import AgentConfig,AgentLog
+from agent_util import AgentConfig,AgentLog,catch_user_id
 from agent_simple_parser import SimpleParser
 from agent_msslrest import AgentMsslRest
 from agent_define import *
@@ -165,7 +164,7 @@ class AgentDataCenter:
 
         user_id = None
         try:
-            user_id = self.catch_user_id()
+            user_id = catch_user_id()
         except:
             user_id = '***TERMINAL ERROR***'
             raise
@@ -202,28 +201,6 @@ class AgentDataCenter:
         agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
 
         return agent_data
-
-    def catch_user_id(self):
-        """
-        read current logined user_id from /var/run/utmp
-        """
-
-        with open('/var/run/utmp', 'rb') as f:
-            fc = memoryview(f.read())
-
-        utmp_fmt = '<ii32s4s32s'
-        user_id = '-'
-
-        for i in range(int(len(fc)/384)):
-            ut_type, ut_pid, ut_line, ut_id, ut_user = \
-                struct.unpack(utmp_fmt, fc[384*i:76+(384*i)])
-            ut_line = ut_line.decode('utf8').strip('\00')
-            ut_id = ut_id.decode('utf8').strip('\00')
-
-            if ut_type == 7 and ut_line == ':0':
-                user_id = ut_user.decode('utf8').strip('\00')
-
-        return user_id
 
     def get_serverjob_dispatch_time(self):
         """
