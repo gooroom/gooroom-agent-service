@@ -115,6 +115,15 @@ class AgentDataCenter:
         finally:
             self.center_lock.release()
 
+    def create_httplib2_http(self):
+        """
+        return new httplib2.Http
+        """
+        
+        new_http = httplib2.Http(ca_certs=self.agent_ca_cert, timeout=self.rest_timeout)
+        new_http.add_certificate(key=self.agent_key, cert=self.agent_cert, domain='')
+        return new_http
+        
     def module_request(self, task, job_no=-1, mustbedata=True, remove_request=True):
         """
         restful.request wrapper for module
@@ -155,7 +164,8 @@ class AgentDataCenter:
             self.create_agentbody('', job_status, '', job_no, task_list)
 
         return self.restful.request(self.server_api,
-            body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}))
+            body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}),
+            need_new_http=False)
 
     def jobs_request(self):
         """

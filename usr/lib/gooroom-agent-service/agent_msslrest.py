@@ -27,6 +27,7 @@ class AgentMsslRest:
             body=None,
             method='POST', 
             headers={'Content-Type':'application/json; charset=utf-8'},
+            need_new_http=True,
             expired=False):
         """
         request
@@ -38,7 +39,8 @@ class AgentMsslRest:
             if not is_ok:
                 return None, status_code, err_msg
             
-        rsp_headers, rsp_body = self.shoot(rest_api, body, method, headers)
+        rsp_headers, rsp_body = \
+            self.shoot(rest_api, body, method, headers, need_new_http=need_new_http)
 
         #http status
         http_status_code = rsp_headers['status']
@@ -62,7 +64,9 @@ class AgentMsslRest:
             #token expired
             if not expired and agent_status_code == '401':
                 #ask for new token and resume
-                return self.request(rest_api, body, method, headers, expired=True)
+                return self.request(rest_api, 
+                    body, method, headers, 
+                    need_new_http, need_new_http=need_new_http, expired=True)
             else:
                 err_msg = '!! request [agent] status %s' % agent_status_code
                 self.logger.error(err_msg)
@@ -103,17 +107,25 @@ class AgentMsslRest:
             rest_api, 
             body=None,
             method='POST', 
-            headers={'Content-Type':'application/json; charset=utf-8'}):
+            headers={'Content-Type':'application/json; charset=utf-8'},
+            need_new_http=True):
         """
         shoot
         """
+
+        agent_http = None
+
+        if need_new_http:
+            agent_http = self.data_center.create_httplib2_http()
+        else:
+            agent_http = self.data_center.agent_http
 
         if self._token:
             headers[H_TOKEN] = AgentMsslRest._token
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
-        rsp_headers, rsp_body = self.data_center.agent_http.request(
+        rsp_headers, rsp_body = agent_http.request(
             uri, method=method, headers=headers, body=body)
         self.logger.debug('RESPONSE=%s' % str(rsp_body)[:LOG_TEXT_LIMIT])
 
