@@ -91,7 +91,7 @@ def task_set_security_item_config(task, data_center):
     #screensaver
     screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
 
-    p = Process(target=set_xfconf_dpms_on_ac_off, args=(screen_time,))
+    p = Process(target=set_xfconf_dpms_on_off, args=(screen_time,))
     p.start()
     p.join(timeout=5) 
     if p.is_alive():
@@ -507,8 +507,9 @@ XFCONF_BUS_OBJ = '/org/xfce/Xfconf'
 XFCONF_IFACE = 'org.xfce.Xfconf'
 XFCONF_CHANNEL = 'xfce4-power-manager'
 XFCONF_PROP = '/xfce4-power-manager/dpms-on-ac-off'
+XFCONF_PROP2 = '/xfce4-power-manager/dpms-on-battery-off'
 
-def set_xfconf_dpms_on_ac_off(new_value):
+def set_xfconf_dpms_on_off(new_value):
     """
     set screen-time of security items to xfconf property
     """
@@ -527,6 +528,10 @@ def set_xfconf_dpms_on_ac_off(new_value):
         current_value = remote_interface.GetProperty(XFCONF_CHANNEL, XFCONF_PROP)
         if current_value != new_value:
             remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP, new_value)
+
+        current_value = remote_interface.GetProperty(XFCONF_CHANNEL, XFCONF_PROP2)
+        if current_value != new_value:
+            remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP2, new_value)
 
     except:
         e = agent_format_exc()
