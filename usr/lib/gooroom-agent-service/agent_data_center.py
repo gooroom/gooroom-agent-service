@@ -64,6 +64,7 @@ class AgentDataCenter:
             self.jobs_api = self.conf.get('REST_API', 'JOBS')
             self.server_api = self.conf.get('REST_API', 'SERVER')
             self.serverjob_dispatch_time = self.get_serverjob_dispatch_time()
+            self.serverjob_max_dispatch_time = self.conf.get('SERVERJOB', 'MAX_DISPATCH_TIME')
 
             #CLIENTJOB DISPATCHER VARIABLES
             self.client_api = self.conf.get('REST_API', 'CLIENT')
@@ -211,6 +212,16 @@ class AgentDataCenter:
         agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
 
         return agent_data
+
+    def reload_serverjob_dispatch_time(self):
+        """
+        reload dispatch time from config
+        """
+
+        old_t = self.serverjob_dispatch_time
+        new_t = self.serverjob_dispatch_time = self.get_serverjob_dispatch_time()
+        self.logger.info(
+            'reloaded serverjob_dispatch_time %d -> %d' % (old_t, new_t))
 
     def get_serverjob_dispatch_time(self):
         """

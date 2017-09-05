@@ -2,12 +2,20 @@
 
 #-----------------------------------------------------------------------
 import xml.etree.ElementTree as etree
-import os
+import simplejson as json
+import OpenSSL
+import base64
 import shutil
+import ctypes
+import dbus
+import pwd
+import sys
+import os
 
+from multiprocessing import Process
 from collections import OrderedDict
 
-from agent_util import AgentConfig,AgentLog,agent_format_exc
+from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -36,6 +44,64 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_set_serverjob_dispatch_time_config(task, data_center):
+    """
+    set_serverjob_dispatch_time_config
+    """
+
+    dispatch_time = task[J_MOD][J_TASK][J_IN]['dispatch_time']
+
+    config = AgentConfig.get_config()
+    config.set('SERVERJOB', 'DISPATCH_TIME', dispatch_time)
+
+    with open(CONFIG_FULLPATH, 'w') as f:
+        config.write(f)
+
+    data_center.reload_serverjob_dispatch_time()
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_set_security_item_config(task, data_center):
+    """
+    set_security_item_config
+    """
+
+    #password cycle
+    password_time = task[J_MOD][J_TASK][J_IN]['password_time']
+
+    login_id = catch_user_id()
+    spath = '/home/%s/.grm-user' % login_id
+
+    with open(spath) as f:
+        jsondata = json.loads(f.read().strip('\n'))
+
+    if 'password_time' not in jsondata['data']['loginInfo'] \
+        or password_time != jsondata['data']['loginInfo']['password_time']:
+
+        jsondata['data']['loginInfo']['password_time'] = password_time
+
+        with open(spath, 'w') as f:
+            f.write(json.dumps(jsondata))
+        
+        chown_file(spath, fuser=login_id, fgroup=login_id)
+
+    #screensaver
+    screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
+
+    p = Process(target=set_xfconf_dpms_on_ac_off, args=(screen_time,))
+    p.start()
+    p.join(timeout=5) 
+    if p.is_alive():
+        p.terminate()
+        raise Exception('xfconf process join timeout')
+    else:
+        if p.exitcode != 0:
+            raise Exception('xfont process exitcode=%d' % p.exitcode)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_replace_config(task, data_center):
@@ -145,15 +211,12 @@ def task_set_authority_config(task, data_center):
     file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
     file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
     signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
-    fuser = None
-    fgroup = None
 
     for idx in range(len(file_name_list)):
         file_name = file_name_list[idx]
-        if '$(HOME)' in file_name:
+        if '$(LOGINID)' in file_name:
             file_name = \
-                file_name.replace('$(HOME)', '/home/%s' % login_id)
-            fuser = fgroup = login_id
+                file_name.replace('$(LOGINID)', '%s' % login_id)
 
         file_contents = file_contents_list[idx]
         signature = signature_list[idx]
@@ -162,7 +225,6 @@ def task_set_authority_config(task, data_center):
         verify_signature(signature, file_contents)
 
         replace_file(file_name, file_contents)
-        chown_file(file_name, fuser, fgroup)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -428,12 +490,9 @@ def remake_etc_hosts(server_contents, signature):
 
 #-----------------------------------------------------------------------
 def verify_signature(signature, data):
-    '''
+    """
     verify file signature
-    '''
-
-    import OpenSSL
-    import base64
+    """
 
     cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, 
         open('/etc/gooroom/agent/server_certificate.crt').read())
@@ -442,3 +501,36 @@ def verify_signature(signature, data):
         base64.b64decode(signature.encode('utf8')), 
         data.encode('utf8'), 'sha256')
 
+#-----------------------------------------------------------------------
+XFCONF_BUS_NAME = 'org.xfce.Xfconf'
+XFCONF_BUS_OBJ = '/org/xfce/Xfconf'
+XFCONF_IFACE = 'org.xfce.Xfconf'
+XFCONF_CHANNEL = 'xfce4-power-manager'
+XFCONF_PROP = '/xfce4-power-manager/dpms-on-ac-off'
+
+def set_xfconf_dpms_on_ac_off(new_value):
+    """
+    set screen-time of security items to xfconf property
+    """
+
+    try:
+        #downgrades the privilegde of new process to login_id's 
+        #for using session-bus
+        login_id = catch_user_id()
+        login_uid = pwd.getpwnam(login_id).pw_uid
+        os.setuid(login_uid)
+
+        bus = dbus.SessionBus()
+        remote_object = bus.get_object(XFCONF_BUS_NAME, XFCONF_BUS_OBJ)
+        remote_interface = dbus.Interface(remote_object, XFCONF_IFACE)
+
+        current_value = remote_interface.GetProperty(XFCONF_CHANNEL, XFCONF_PROP)
+        if current_value != new_value:
+            remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP, new_value)
+
+        sys.exit(0)
+
+    except:
+        e = agent_format_exc()
+        AgentLog.get_logger().error(e)
+        sys.exit(1)

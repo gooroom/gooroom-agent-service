@@ -136,6 +136,7 @@ class Agent(dbus.service.Object):
                 self._loop.quit()
 
             self.logger.info('AGENT STOPPED BY DBUS')
+
         except:
             e = agent_format_exc()
             self.logger.error(e)

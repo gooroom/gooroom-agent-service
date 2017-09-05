@@ -171,14 +171,12 @@ class AgentJobWorker(threading.Thread):
             m = '[CLIENT FIN] ({:<8}) ({:<30}) {}'.format('no shoot', task_name, task_rsp)
             if task_rsp[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK: 
                 self.logger.error(m)
-                #print(m)
                 return task_rsp
 
             #if module do not need to request to server, 
-            #it returns SKEEP_SERVER_REQUEST in error_reason.
             if task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
+                task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] = ''
                 self.logger.debug(m)
-                #print(m)
                 return task_rsp
 
             #do_task modulates task and returns task.
@@ -193,7 +191,6 @@ class AgentJobWorker(threading.Thread):
                 self.logger.debug(m)
             else:
                 self.logger.error(m)
-            #print(m)
 
             if server_rsp != None:
                 if len(server_rsp) > 0:
@@ -243,7 +240,7 @@ class AgentJobWorker(threading.Thread):
         run
         """
 
-        #설정파일에 기재된 생존시간동안 JOB이 없으면 Worker는 은퇴...
+        #설정파일에 기재된 생존시간동안 JOB이 없으면 Worker는 은퇴
         self.last_job_time = time.time()
 
         Q = None
@@ -269,7 +266,6 @@ class AgentJobWorker(threading.Thread):
             except queue.Empty:
                 self.retiring()
 
-                #안녕...
                 if time.time() - self.last_job_time > self.data_center.worker_lifetime:
                     self.logger.error('A WORKER(%s) RETIRING' % self.role)
                     break

@@ -67,6 +67,8 @@ class AgentServerJobDispatcher(threading.Thread):
                     agent_data, _, _ = self.data_center.jobs_request()
                     if timeout_cnt:
                         waiting_time, timeout_cnt = self.timeout_off()
+                    else:
+                        waiting_time = self.data_center.serverjob_dispatch_time
 
                     if agent_data:
                         for job in agent_data:
@@ -74,12 +76,11 @@ class AgentServerJobDispatcher(threading.Thread):
 
                 except SOCKET_TIMEOUT:
                     waiting_time, timeout_cnt = self.timeout_on(waiting_time, timeout_cnt)
-                    #print(waiting_time, timeout_cnt)
 
                 except: 
                     AgentLog.get_logger().error('%s' % agent_format_exc())
 
-            self._dispatch_event.wait(timeout=waiting_time)#self.dispatch_time)
+            self._dispatch_event.wait(timeout=waiting_time)
 
         self.logger.debug('(server) dispatcher turnoff')
 
@@ -98,9 +99,10 @@ class AgentServerJobDispatcher(threading.Thread):
         #waiting_time을 2배씩 증가시키고
         waiting_time *= 2
 
-        #dispatch_time이 1시간을 넘으면 1시간으로 고정시킨다.
-        if waiting_time > 3600:
-            return 36000, timeout_cnt
+        # waiting time이 최대값을 넘으면 최대값으로 고정시킨다.
+        max_waiting_time = self.data_center.serverjob_max_dispatch_time
+        if waiting_time > max_waiting_time:
+            return max_waiting_time, timeout_cnt
         else:
             return waiting_time, timeout_cnt
 

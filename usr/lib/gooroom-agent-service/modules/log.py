@@ -114,17 +114,19 @@ def calc_pss():
     """
 
     try:
+        logger= AgentLog.get_logger()
+
         module_path = AgentConfig.get_config().get('SECURITY', 'PSS_MODULE_PATH')
         sys.path.append(module_path)
 
         m = importlib.import_module('pss')
-        file_num, score = getattr(m, 'PSS')().run()
+        file_num, score = getattr(m, 'PSS')(logger).run()
         return str(score)
 
     except:
         e = agent_format_exc()
-        AgentLog.get_logger().info(e)
-        return '0'
+        logger.info(e)
+        return '-1'
 
 #-----------------------------------------------------------------------
 match_strings = (
@@ -190,10 +192,6 @@ def load_security_log(task):
             e = agent_format_exc()
             AgentLog.get_logger().info(e)
         
-    #FOR PERFORMANCE TEST
-    task[J_MOD][J_TASK][J_OUT]['media_status'] = '취약'
-    task[J_MOD][J_TASK][J_OUT]['media_log'] = '*' * 10240
-
     #save lask seek_time to file
     write_last_seek_time(backup_path, last_seek_time)
 

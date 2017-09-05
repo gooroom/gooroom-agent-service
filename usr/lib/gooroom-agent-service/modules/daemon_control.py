@@ -56,7 +56,8 @@ def task_daemon_status(task, data_center):
     systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
     manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
 
-    daemon_status = ','.join(str(state) for state in service_state(bus, manager, service, all_state=True)) 
+    daemon_status = \
+        ','.join(str(state) for state in service_state(bus, manager, service, all_state=True)) 
     task[J_MOD][J_TASK][J_OUT]['daemon_status'] = daemon_status
 
 #-----------------------------------------------------------------------
