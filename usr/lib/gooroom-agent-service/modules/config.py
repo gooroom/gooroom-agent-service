@@ -528,8 +528,6 @@ def set_xfconf_dpms_on_ac_off(new_value):
         if current_value != new_value:
             remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP, new_value)
 
-        sys.exit(0)
-
     except:
         e = agent_format_exc()
         AgentLog.get_logger().error(e)
