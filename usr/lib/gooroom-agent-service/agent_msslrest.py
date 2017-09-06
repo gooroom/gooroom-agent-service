@@ -66,7 +66,7 @@ class AgentMsslRest:
                 #ask for new token and resume
                 return self.request(rest_api, 
                     body, method, headers, 
-                    need_new_http, need_new_http=need_new_http, expired=True)
+                    need_new_http=need_new_http, expired=True)
             else:
                 err_msg = '!! request [agent] status %s' % agent_status_code
                 self.logger.error(err_msg)

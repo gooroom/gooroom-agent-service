@@ -224,7 +224,10 @@ class AgentJobWorker(threading.Thread):
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
                 job_status = AGENT_NOK
                 break
-
+            else:
+                if task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
+                    task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] = ''
+                
         server_rsp, status_code, err_msg = \
             self.data_center.serverjob_request(task_rsp_list, job_no, job_status)
         m = '[SERVER FIN] ({:<8}) ({:<10}) rsp={} code={} err={}'.format(
