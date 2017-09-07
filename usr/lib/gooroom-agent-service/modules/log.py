@@ -62,20 +62,25 @@ def task_summary_log(task, data_center):
     summary_log
     """
 
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
     motherboard_serial = read_boardserial()
     os_ver = read_os()
     kernel = read_kernel()
     ip = ''
     
-    task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
+    task[J_MOD][J_TASK][J_REQUEST]['terminal_info'] = \
         '%s,%s,%s,%s' % (motherboard_serial, os_ver, kernel, ip)
     
-    load_security_log(task)
-
-    task[J_MOD][J_TASK][J_OUT]['safe_score'] = calc_pss()
+    task[J_MOD][J_TASK][J_REQUEST]['safe_score'] = calc_pss()
     user_id = catch_user_id()
 
-    task[J_MOD][J_TASK][J_OUT]['user_id'] = user_id
+    task[J_MOD][J_TASK][J_REQUEST]['user_id'] = user_id
+
+    load_security_log(task, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def read_last_seek_time(backup_path):
@@ -136,7 +141,7 @@ match_strings = (
     'SYSLOG_IDENTIFIER=grac-daemon',
     'PRIORITY=3', '_TRANSPORT=audit')
 
-def load_security_log(task):
+def load_security_log(task, data_center):
     """
     load security log on journal
     """
@@ -185,13 +190,16 @@ def load_security_log(task):
             if not log:
                 continue
 
-            task[J_MOD][J_TASK][J_OUT][sf+'_status'] = status
-            task[J_MOD][J_TASK][J_OUT][sf+'_log'] = '\n'.join(log)
+            task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
+            task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
 
         except:
             e = agent_format_exc()
             AgentLog.get_logger().info(e)
         
+    #if no exception, it's OK
+    data_center.module_request(task, mustbedata=False)
+
     #save lask seek_time to file
     write_last_seek_time(backup_path, last_seek_time)
 
