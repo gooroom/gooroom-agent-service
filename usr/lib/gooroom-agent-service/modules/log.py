@@ -139,7 +139,8 @@ match_strings = (
     'SYSLOG_IDENTIFIER=gep-daemon',
     'SYSLOG_IDENTIFIER=gop-daemon', 
     'SYSLOG_IDENTIFIER=grac-daemon',
-    'PRIORITY=3', '_TRANSPORT=audit')
+    'PRIORITY=3',
+    '_AUDIT_FIELD_OP="appraise_data"')
 
 def load_security_log(task, data_center):
     """
@@ -185,11 +186,12 @@ def load_security_log(task, data_center):
     for sf in ('os', 'exe', 'boot', 'media'):
         try:
             m = importlib.import_module('security.'+sf)
-            status, log = getattr(m, 'get_summary')(logs)
+            run, status, log = getattr(m, 'get_summary')(logs)
 
             if not log:
                 continue
 
+            task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
             task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
             task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
 
