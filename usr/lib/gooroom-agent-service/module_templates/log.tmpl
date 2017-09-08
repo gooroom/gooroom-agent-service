@@ -5,16 +5,10 @@
 
     <param name="module_name" type="string"/>
 
-    <task name="summary_log" polltime="600" bootable="yes">
+    <task name="client_info" polltime="600" bootable="yes">
         <param name="task_name" type="string"/>
 
         <in>
-        </in>
-
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-
             <!-- terminalInfo -->
             <param name="terminal_info" type="csv_string">
                 <col name="mac" type="string"/>
@@ -29,6 +23,22 @@
                 <col name="score" type="int"/>
             </param>
 
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
+    <task name="summary_log" polltime="600" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
             <!-- summary update log -->
             <param name="update_status" type="string"/>
 
@@ -63,6 +73,13 @@
                 <col name="type" type="string"/>
                 <col name="data" type="string"/>
             </param>
+        </request>
+        <response>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
         </out>
     </task>
 

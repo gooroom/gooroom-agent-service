@@ -57,6 +57,22 @@ def task_clear_security_alarm(task, data_center):
         f.write(str(seek_time))
     
 #-----------------------------------------------------------------------
+def task_client_info(task, data_center):
+    """
+    client_info
+    """
+
+    motherboard_serial = read_boardserial()
+    os_ver = read_os()
+    kernel = read_kernel()
+    ip = ''
+    
+    task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
+        '%s,%s,%s,%s' % (motherboard_serial, os_ver, kernel, ip)
+    
+    task[J_MOD][J_TASK][J_OUT]['safe_score'] = ','.join(calc_pss())
+    
+#-----------------------------------------------------------------------
 def task_summary_log(task, data_center):
     """
     summary_log
@@ -65,18 +81,7 @@ def task_summary_log(task, data_center):
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {}
 
-    motherboard_serial = read_boardserial()
-    os_ver = read_os()
-    kernel = read_kernel()
-    ip = ''
-    
-    task[J_MOD][J_TASK][J_REQUEST]['terminal_info'] = \
-        '%s,%s,%s,%s' % (motherboard_serial, os_ver, kernel, ip)
-    
-    task[J_MOD][J_TASK][J_REQUEST]['safe_score'] = calc_pss()
-    user_id = catch_user_id()
-
-    task[J_MOD][J_TASK][J_REQUEST]['user_id'] = user_id
+    task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
 
     load_security_log(task, data_center)
 
@@ -126,12 +131,12 @@ def calc_pss():
 
         m = importlib.import_module('pss')
         file_num, score = getattr(m, 'PSS')(logger).run()
-        return str(score)
+        return str(file_num), str(score)
 
     except:
         e = agent_format_exc()
         logger.info(e)
-        return '-1'
+        return '-1', '-1'
 
 #-----------------------------------------------------------------------
 match_strings = (

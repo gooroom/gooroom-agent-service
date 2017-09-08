@@ -70,7 +70,7 @@ def task_set_security_item_config(task, data_center):
     """
 
     #password cycle
-    password_time = task[J_MOD][J_TASK][J_IN]['password_time']
+    pwd_last_day = task[J_MOD][J_TASK][J_IN]['password_time']
 
     login_id = catch_user_id()
     spath = '/home/%s/.grm-user' % login_id
@@ -78,10 +78,10 @@ def task_set_security_item_config(task, data_center):
     with open(spath) as f:
         jsondata = json.loads(f.read().strip('\n'))
 
-    if 'password_time' not in jsondata['data']['loginInfo'] \
-        or password_time != jsondata['data']['loginInfo']['password_time']:
+    if 'pwd_last_day' not in jsondata['data']['loginInfo'] \
+        or pwd_last_day != jsondata['data']['loginInfo']['pwd_last_day']:
 
-        jsondata['data']['loginInfo']['password_time'] = password_time
+        jsondata['data']['loginInfo']['pwd_last_day'] = pwd_last_day
 
         with open(spath, 'w') as f:
             f.write(json.dumps(jsondata))
