@@ -182,7 +182,6 @@ class AgentDataCenter:
 
         b = {'client_id':self.client_id, 'user_id':user_id, 'type:':0}
         return self.restful.request(self.jobs_api, body=json.dumps(b))
-        #return self.restful.request(self.jobs_api, method='GET')
 
     def create_agentbody(self, agent, code, err, job_no, module_rsp):
         """
@@ -228,11 +227,17 @@ class AgentDataCenter:
         get dispatch time from config
         """
 
-        dt = float(self.conf.get(SERVERJOB, 'DISPATCH_TIME'))
-        if (dt < 3.0):
-            self.logger.error('!! (serverjob) invalid dispatch_time=%f.\
-                replace it from default value' % self.dispatch_time)
-            dt = 3.0
+        min_dt = 5.0
+        dt = None
+        try:
+            dt = float(self.conf.get(SERVERJOB, 'DISPATCH_TIME'))
+            if (dt < min_dt):
+                self.logger.error('!! invalid dispatch_time=%f.\
+                    replace it from default value' % self.dispatch_time)
+                dt = min_dt
+        except Exception as e:
+            self.logger.error(e)
+            dt = min_dt
 
         return dt
 

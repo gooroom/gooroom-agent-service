@@ -160,4 +160,52 @@
         </out>
     </task>
 
+    <!-- GET_SERVERJOB_DISPATCH_TIME -->
+    <task name="get_serverjob_dispatch_time" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+            <param name="dispatch_time" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <task name="set_ntp_list_config">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="ntp_list" type="csv_string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <task name="get_ntp_list_config" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+            <param name="ntp_list" type="csv_string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

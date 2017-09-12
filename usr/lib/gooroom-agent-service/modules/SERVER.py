@@ -32,26 +32,3 @@ def task_grm_heartbit(task, data_center):
 
     pass
     
-#-----------------------------------------------------------------------
-def task_get_serverjob_dispatch_time(task, data_center):
-    """
-    get_serverjob_dispatch_time
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    server_rsp = data_center.module_request(task)
-    dispatch_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['dispatch_time']
-
-    config = AgentConfig.get_config()
-    config.set('SERVERJOB', 'DISPATCH_TIME', dispatch_time)
-
-    with open(CONFIG_FULLPATH, 'w') as f:
-        config.write(f)
-
-    data_center.reload_serverjob_dispatch_time()
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-

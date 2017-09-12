@@ -3,6 +3,7 @@
 #-----------------------------------------------------------------------
 import xml.etree.ElementTree as etree
 import simplejson as json
+import importlib
 import OpenSSL
 import base64
 import shutil
@@ -64,6 +65,85 @@ def task_set_serverjob_dispatch_time_config(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def task_get_serverjob_dispatch_time(task, data_center):
+    """
+    get_serverjob_dispatch_time
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    dispatch_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['dispatch_time']
+
+    config = AgentConfig.get_config()
+    config.set('SERVERJOB', 'DISPATCH_TIME', dispatch_time)
+
+    with open(CONFIG_FULLPATH, 'w') as f:
+        config.write(f)
+
+    data_center.reload_serverjob_dispatch_time()
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_set_ntp_list_config(task, data_center):
+    """
+    set_ntp_list_config
+    """
+
+    ntp_list = task[J_MOD][J_TASK][J_IN]['ntp_list']
+
+    ntp_list_config(ntp_list, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_get_ntp_list_config(task, data_center):
+    """
+    get_ntp_list_config
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    ntp_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['ntp_list']
+
+    ntp_list_config(ntp_list, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def ntp_list_config(ntp_list, data_center):
+    """
+    real procedure to task_ntp_list_configs
+    """
+
+    ntp_conf_path = '/etc/systemd/timesyncd.conf'
+    ntp_config = AgentConfig.get_config(ntp_conf_path)
+    ntp_config.set('Time', 'NTP', ' '.join(ntp_list))
+
+    with open(ntp_conf_path, 'w') as f:
+        ntp_config.write(f)
+
+    #load daemon_control of agent
+    svc = 'systemd-timesyncd.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
+
+    #get daemon status
+    getattr(m, 'task_daemon_status')(tmp_task, data_center)
+    sts = tmp_task[J_MOD][J_TASK][J_OUT]['daemon_status']
+
+    #restart ntp daemon
+    if sts.split(',')[0] == 'active':
+        getattr(m, 'task_daemon_restart')(tmp_task, data_center)
+    else:
+        AgentLog.get_logger().info(
+            '%s is not active (current status=%s)' % (svc, sts))
+
+#-----------------------------------------------------------------------
 def task_set_security_item_config(task, data_center):
     """
     set_security_item_config
@@ -89,6 +169,8 @@ def task_set_security_item_config(task, data_center):
         chown_file(spath, fuser=login_id, fgroup=login_id)
 
     #screensaver
+    #found problem. need more research
+    '''
     screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
 
     p = Process(target=set_xfconf_dpms_on_off, args=(screen_time,))
@@ -100,6 +182,7 @@ def task_set_security_item_config(task, data_center):
     else:
         if p.exitcode != 0:
             raise Exception('xfont process exitcode=%d' % p.exitcode)
+    '''
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 

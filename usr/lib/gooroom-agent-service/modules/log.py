@@ -62,13 +62,13 @@ def task_client_info(task, data_center):
     client_info
     """
 
-    motherboard_serial = read_boardserial()
+    machine_id = read_machine_id()
     os_ver = read_os()
     kernel = read_kernel()
     ip = ''
     
     task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
-        '%s,%s,%s,%s' % (motherboard_serial, os_ver, kernel, ip)
+        '%s,%s,%s,%s' % (machine_id, os_ver, kernel, ip)
     
     task[J_MOD][J_TASK][J_OUT]['safe_score'] = ','.join(calc_pss())
     
@@ -187,7 +187,9 @@ def load_security_log(task, data_center):
     #load modules
     module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
     sys.path.append(module_path)
+
     #invoke get_summary
+    sendable = False
     for sf in ('os', 'exe', 'boot', 'media'):
         try:
             m = importlib.import_module('security.'+sf)
@@ -200,24 +202,27 @@ def load_security_log(task, data_center):
             task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
             task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
 
+            sendable = True
+
         except:
             e = agent_format_exc()
             AgentLog.get_logger().info(e)
         
     #if no exception, it's OK
-    data_center.module_request(task, mustbedata=False)
+    if sendable:
+        data_center.module_request(task, mustbedata=False)
 
     #save lask seek_time to file
     write_last_seek_time(backup_path, last_seek_time)
 
 #-----------------------------------------------------------------------
-def read_boardserial():
+def read_machine_id():
     """
-    return motherboard serial number
+    return /etc/machine_id
     """
 
-    with open('/sys/devices/virtual/dmi/id/product_uuid') as f:
-        return f.read().split('\n')[0]
+    with open('/etc/machine-id') as f:
+        return f.read().strip('\n')
 
 #-----------------------------------------------------------------------
 def read_kernel():
