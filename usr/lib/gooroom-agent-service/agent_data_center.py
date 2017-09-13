@@ -66,7 +66,7 @@ class AgentDataCenter:
             self.jobs_api = self.conf.get('REST_API', 'JOBS')
             self.server_api = self.conf.get('REST_API', 'SERVER')
             self.serverjob_dispatch_time = self.get_serverjob_dispatch_time()
-            self.serverjob_max_dispatch_time = self.conf.get('SERVERJOB', 'MAX_DISPATCH_TIME')
+            self.serverjob_max_dispatch_time = int(self.conf.get('SERVERJOB', 'MAX_DISPATCH_TIME'))
 
             #CLIENTJOB DISPATCHER VARIABLES
             self.client_api = self.conf.get('REST_API', 'CLIENT')
