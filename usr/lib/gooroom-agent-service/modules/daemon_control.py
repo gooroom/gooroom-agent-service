@@ -4,7 +4,7 @@
 import dbus
 import time
 
-from agent_util import AgentConfig,agent_format_exc
+from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
