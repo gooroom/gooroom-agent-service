@@ -153,7 +153,7 @@ def task_set_security_item_config(task, data_center):
     pwd_last_day = task[J_MOD][J_TASK][J_IN]['password_time']
 
     login_id = catch_user_id()
-    spath = '/home/%s/.grm-user' % login_id
+    spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
 
     with open(spath) as f:
         jsondata = json.loads(f.read().strip('\n'))
