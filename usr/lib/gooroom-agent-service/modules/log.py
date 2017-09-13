@@ -62,13 +62,13 @@ def task_client_info(task, data_center):
     client_info
     """
 
-    machine_id = read_machine_id()
+    unique_id = read_unique_id()
     os_ver = read_os()
     kernel = read_kernel()
     ip = ''
     
     task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
-        '%s,%s,%s,%s' % (machine_id, os_ver, kernel, ip)
+        '%s,%s,%s,%s' % (unique_id, os_ver, kernel, ip)
     
     task[J_MOD][J_TASK][J_OUT]['safe_score'] = ','.join(calc_pss())
     
@@ -216,13 +216,13 @@ def load_security_log(task, data_center):
     write_last_seek_time(backup_path, last_seek_time)
 
 #-----------------------------------------------------------------------
-def read_machine_id():
+def read_unique_id():
     """
-    return /etc/machine_id
+    return client unique id
     """
 
-    with open('/etc/machine-id') as f:
-        return f.read().strip('\n')
+    with open('/sys/devices/virtual/dmi/id/product_uuid') as f:
+        return f.read().split('\n')[0]
 
 #-----------------------------------------------------------------------
 def read_kernel():
