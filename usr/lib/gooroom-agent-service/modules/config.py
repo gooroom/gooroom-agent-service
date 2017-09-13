@@ -296,7 +296,7 @@ def task_set_authority_config(task, data_center):
         #if verifying is failed, exception occur
         verify_signature(signature, file_contents)
 
-        replace_file(file_name, file_contents)
+        replace_file(file_name, file_contents, signature)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
