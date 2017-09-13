@@ -23,7 +23,9 @@ class AgentDataCenter:
     DATA CENTER
     """
 
-    def __init__(self):
+    def __init__(self, gooroom_agent):
+
+        self.GOOROOM_AGENT = gooroom_agent
 
         self.conf = AgentConfig.get_config(reload=True)
         self.logger = AgentLog.get_logger()

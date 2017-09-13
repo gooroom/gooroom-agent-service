@@ -60,7 +60,7 @@ class Agent(dbus.service.Object):
 
         self.logger.info('AGENT RUNNING')
 
-        self.data_center = AgentDataCenter()
+        self.data_center = AgentDataCenter(self)
         
         #CLIENT-JOB DISPATCHER
         self.client_dispatcher = AgentClientJobDispatcher(self.data_center)
@@ -207,6 +207,15 @@ class Agent(dbus.service.Object):
             AgentLog.get_logger().error('(do_task) %s' % agent_format_exc())
 
         return pid
+
+    @dbus.service.signal(DBUS_IFACE, signature='i')
+    def dpms_on_x_off(self, tm):
+        """
+        send signal to user session 
+        so as to set dpms_on_ac_off and dpms_on_battery_off
+        """
+
+        pass
 
 #-----------------------------------------------------------------------
 if __name__ == '__main__':

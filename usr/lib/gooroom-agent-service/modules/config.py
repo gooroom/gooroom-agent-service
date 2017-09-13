@@ -170,19 +170,8 @@ def task_set_security_item_config(task, data_center):
 
     #screensaver
     #found problem. need more research
-    '''
     screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
-
-    p = Process(target=set_xfconf_dpms_on_off, args=(screen_time,))
-    p.start()
-    p.join(timeout=5) 
-    if p.is_alive():
-        p.terminate()
-        raise Exception('xfconf process join timeout')
-    else:
-        if p.exitcode != 0:
-            raise Exception('xfont process exitcode=%d' % p.exitcode)
-    '''
+    data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -584,39 +573,3 @@ def verify_signature(signature, data):
         base64.b64decode(signature.encode('utf8')), 
         data.encode('utf8'), 'sha256')
 
-#-----------------------------------------------------------------------
-XFCONF_BUS_NAME = 'org.xfce.Xfconf'
-XFCONF_BUS_OBJ = '/org/xfce/Xfconf'
-XFCONF_IFACE = 'org.xfce.Xfconf'
-XFCONF_CHANNEL = 'xfce4-power-manager'
-XFCONF_PROP = '/xfce4-power-manager/dpms-on-ac-off'
-XFCONF_PROP2 = '/xfce4-power-manager/dpms-on-battery-off'
-
-def set_xfconf_dpms_on_off(new_value):
-    """
-    set screen-time of security items to xfconf property
-    """
-
-    try:
-        #downgrades the privilegde of new process to login_id's 
-        #for using session-bus
-        login_id = catch_user_id()
-        login_uid = pwd.getpwnam(login_id).pw_uid
-        os.setuid(login_uid)
-
-        bus = dbus.SessionBus()
-        remote_object = bus.get_object(XFCONF_BUS_NAME, XFCONF_BUS_OBJ)
-        remote_interface = dbus.Interface(remote_object, XFCONF_IFACE)
-
-        current_value = remote_interface.GetProperty(XFCONF_CHANNEL, XFCONF_PROP)
-        if current_value != new_value:
-            remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP, new_value)
-
-        current_value = remote_interface.GetProperty(XFCONF_CHANNEL, XFCONF_PROP2)
-        if current_value != new_value:
-            remote_interface.SetProperty(XFCONF_CHANNEL, XFCONF_PROP2, new_value)
-
-    except:
-        e = agent_format_exc()
-        AgentLog.get_logger().error(e)
-        sys.exit(1)
