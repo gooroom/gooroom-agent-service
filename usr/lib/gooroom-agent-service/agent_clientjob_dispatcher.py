@@ -54,16 +54,13 @@ class AgentClientJobDispatcher(threading.Thread):
         init agent
         """
 
-        #journal testing
-        from systemd import journal
         try:
             for task in self.data_center.bootable_tasks:
-                self._special_worker.do_clientjob(task)
-            journal.send('[GOOROOM AGENT] INIT TASKS SUCCESS')
+                result = self._special_worker.do_clientjob(task)
+                if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                    raise 
         except:
-            e = agent_format_exc()
-            self.logger.error(e)
-            journal.send('[GOOROOM AGENT] INIT TASKS FAILURE')
+            pass
 
         self.data_center.serverjob_looping_on[0] = True
 
@@ -75,12 +72,7 @@ class AgentClientJobDispatcher(threading.Thread):
         self.logger.debug('(client) dispatcher run')
 
         ###############################################################
-        #think more
-        try:
-            self.init_agent()
-
-        except:
-            self.logger.error('%s' % agent_format_exc())
+        self.init_agent()
         ###############################################################
 
         intervals = 0
