@@ -167,8 +167,7 @@ class AgentDataCenter:
             self.create_agentbody('', job_status, '', job_no, task_list)
 
         return self.restful.request(self.server_api,
-            body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}),
-            need_new_http=False)
+            body=json.dumps({J_AGENT_STATUS:agent_status, J_AGENT_DATA:agent_data}))
 
     def jobs_request(self):
         """
@@ -183,7 +182,8 @@ class AgentDataCenter:
             raise
 
         b = {'client_id':self.client_id, 'user_id':user_id, 'type:':0}
-        return self.restful.request(self.jobs_api, body=json.dumps(b))
+        return self.restful.request(
+            self.jobs_api, body=json.dumps(b))
 
     def create_agentbody(self, agent, code, err, job_no, module_rsp):
         """
