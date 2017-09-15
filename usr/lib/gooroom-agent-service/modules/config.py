@@ -390,7 +390,7 @@ def replace_file(file_name, file_contents, signature=None):
     if backup_path[-1] != '/':
         backup_path += '/'
 
-    backupdir_path = '%s%s/' % (backup_path, splited_filename)
+    backupdir_path = '%s%s/' % (backup_path, '.'.join(splited))
 
     if not os.path.isdir(backupdir_path):
         os.makedirs(backupdir_path)

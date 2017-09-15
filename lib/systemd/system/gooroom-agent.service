@@ -1,5 +1,6 @@
 [Unit]
 Description=Instance Job Agent
+Wants=network-online.target
 
 [Service]
 ExecStart=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py
