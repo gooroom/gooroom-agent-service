@@ -148,6 +148,25 @@
         </out>
     </task>
 
+    <!-- GET SCREEN TIME -->
+    <task name="get_screen_time" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="screen_time" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
     <!-- SET SERVERJOB DISPATCH TIME CONFIG -->
     <task name="set_serverjob_dispatch_time_config">
         <param name="task_name" type="string"/>

@@ -144,6 +144,22 @@ def ntp_list_config(ntp_list, data_center):
             '%s is not active (current status=%s)' % (svc, sts))
 
 #-----------------------------------------------------------------------
+def task_get_screen_time(task, data_center):
+    """
+    get_screen_time
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':catch_user_id()}
+
+    server_rsp = data_center.module_request(task)
+
+    screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
+    data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_security_item_config(task, data_center):
     """
     set_security_item_config
