@@ -54,6 +54,8 @@ def task_gooroom_log(task, data_center):
         backup_path += '/'
 
     j = journal.Reader()
+    j.log_level(journal.LOG_INFO)
+
     last_seek_time = read_last_seek_time(backup_path, 'gooroom-last-seek-time')
 
     if last_seek_time:

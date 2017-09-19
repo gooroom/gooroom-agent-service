@@ -481,21 +481,25 @@ def remake_etc_hosts(contents, signature):
     server_hosts = disassemble_hosts(server_contents, 'server')
 
     for server_line in server_hosts:
+        server_line = [x for x in server_line if x[0] != '#']
+        if len(server_line) < 2:
+            continue
+
+        server_domain = server_line[1:]
+
         for li, local_line in enumerate(local_hosts):
-            try:
-                for si in range(len(server_line)):
-                    if server_line[si][0] != '#' \
-                        and local_line[si][0] != '#' \
-                        and server_line[si] == local_line[si]:
+            local_line = [x for x in local_line if x[0] != '#']
+        
+            if len(local_line) < 2:
+                continue
+                
+            local_domain = local_line[1:]
 
-                        local_hosts.pop(li)
-
-            except IndexError:
-                pass
+            gyo_set = set(local_domain) & set(server_domain)
+            if gyo_set:
+                local_hosts.pop(li)
         
     local_hosts.extend(server_hosts)
-
-    #print(assemble_hosts(local_hosts))
 
     #/etc/hosts에 반영
     replace_file('/etc/hosts', assemble_hosts(local_hosts), signature)
