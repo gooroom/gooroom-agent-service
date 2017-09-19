@@ -259,23 +259,6 @@ def task_append_contents_etc_hosts(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def task_get_server_certificate(task, data_center):
-    """
-    get_server_certificate
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    server_rsp = data_center.module_request(task)
-
-    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
-
-    replace_file('/etc/gooroom/agent/server_certificate.crt', file_contents)
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-#-----------------------------------------------------------------------
 def chown_file(fname, fuser=None, fgroup=None):
     """
     chown of file
