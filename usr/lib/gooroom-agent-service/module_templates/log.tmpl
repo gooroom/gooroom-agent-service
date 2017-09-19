@@ -101,4 +101,26 @@
         </out>
     </task>
 
+    <task name="gooroom_log" polltime="60" bootable="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+            <param name="user_id" type="string"/>
+            <param name="logs" type="map">
+                <key name="item" type="string"/>
+                <value name="log" type="string"/>
+            </param>
+        </request>
+        <response>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
 </module>
