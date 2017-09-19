@@ -69,7 +69,6 @@ def task_gooroom_log(task, data_center):
 
     last_seek_time = datetime.datetime.now().timestamp()
 
-    logs = {'hmkim':'test'}
     for entry in j:
         if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
             ident = entry['SYSLOG_IDENTIFIER']    
