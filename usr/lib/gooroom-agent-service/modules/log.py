@@ -40,6 +40,10 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+gooroom_match_strings = (
+    'SYSLOG_IDENTIFIER=gooroom-browser', 
+    'SYSLOG_IDENTIFIER=grac-device-daemon')
+
 PRIORITY_N_TO_S = {
         0:'EMERG',
         1:'ALERT',
@@ -54,11 +58,6 @@ def task_gooroom_log(task, data_center):
     """
     load gooroom log on journal
     """
-
-    gooroom_match_strings = (
-        'SYSLOG_IDENTIFIER=gooroom-browser', 
-        'SYSLOG_IDENTIFIER=grac-device-daemon',
-        'PRIORITY=%s' % data_center.journal_loglevel)
 
     backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
     if backup_path[-1] != '/':
@@ -86,13 +85,16 @@ def task_gooroom_log(task, data_center):
 
         for entry in j:
             if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
+                priority = entry['PRIORITY']
+                if priority > data_center.journal_loglevel:
+                    continue
+
                 ident = entry['SYSLOG_IDENTIFIER']    
                 dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
                 msg = entry['MESSAGE']
-                priority = PRIORITY_N_TO_S[entry['PRIORITY']]
                 
                 logs.setdefault(ident, []).append(
-                    '%s,,,%s,,,%s' % (dt, priority, msg))
+                    '%s,,,%s,,,%s' % (dt, PRIORITY_N_TO_S[priority], msg))
 
             if tail_entry['__CURSOR'] == entry['__CURSOR']:
                 break

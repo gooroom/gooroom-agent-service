@@ -115,7 +115,7 @@ class AgentDataCenter:
             self.restful = AgentMsslRest(self)
 
             #JOURNAL LOG LEVEL
-            self.journal_loglevel = self.conf.get('SECURITY', 'JOURNAL_LOGLEVEL')
+            self.journal_loglevel = int(self.conf.get('SECURITY', 'JOURNAL_LOGLEVEL'))
 
             self.logger.info('END SHOW()')
 
