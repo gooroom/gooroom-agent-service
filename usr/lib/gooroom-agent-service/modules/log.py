@@ -40,14 +40,10 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-gooroom_match_strings = (
-    'SYSLOG_IDENTIFIER=gooroom-browser', 
-    'SYSLOG_IDENTIFIER=grac-device-daemon')
-
 PRIORITY_N_TO_S = {
-        0:'CRIT',
+        0:'EMERG',
         1:'ALERT',
-        2:'EMERG',
+        2:'CRIT',
         3:'ERR',
         4:'WARNING',
         5:'NOTICE',
@@ -59,12 +55,16 @@ def task_gooroom_log(task, data_center):
     load gooroom log on journal
     """
 
+    gooroom_match_strings = (
+        'SYSLOG_IDENTIFIER=gooroom-browser', 
+        'SYSLOG_IDENTIFIER=grac-device-daemon',
+        'PRIORITY=%s' % data_center.journal_loglevel)
+
     backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
     if backup_path[-1] != '/':
         backup_path += '/'
 
     j = journal.Reader()
-    j.log_level(journal.LOG_INFO)
 
     j.seek_tail()
     tail_entry = j.get_previous()

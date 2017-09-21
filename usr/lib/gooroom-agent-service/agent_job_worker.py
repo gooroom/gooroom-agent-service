@@ -175,7 +175,7 @@ class AgentJobWorker(threading.Thread):
 
             #if module do not need to request to server, 
             if task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
-                task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] = ''
+                task_rsp[J_MOD][J_TASK][J_OUT][J_MESSAGE] = AGENT_DEFAULT_MESSAGE
                 self.logger.debug(m)
                 return task_rsp
 
@@ -223,7 +223,7 @@ class AgentJobWorker(threading.Thread):
             task_rsp_list.append(self.do_task(task))
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] == AGENT_OK:
                 if task[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
-                    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = ''
+                    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = AGENT_DEFAULT_MESSAGE
             else:
                 job_status = AGENT_NOK
                 break
