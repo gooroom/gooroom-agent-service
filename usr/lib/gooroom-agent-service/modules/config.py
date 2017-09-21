@@ -516,4 +516,3 @@ def verify_signature(signature, data):
     OpenSSL.crypto.verify(cert, 
         base64.b64decode(signature.encode('utf8')), 
         data.encode('utf8'), 'sha256')
-

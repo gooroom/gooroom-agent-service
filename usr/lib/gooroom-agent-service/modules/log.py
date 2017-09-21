@@ -41,8 +41,7 @@ def do_task(task, data_center):
 #-----------------------------------------------------------------------
 gooroom_match_strings = (
     'SYSLOG_IDENTIFIER=gooroom-browser', 
-    'SYSLOG_IDENTIFIER=grac-device-daemon',
-    'SYSLOG_IDENTIFIER=gooroom-agent')
+    'SYSLOG_IDENTIFIER=grac-device-daemon')
 
 def task_gooroom_log(task, data_center):
     """
@@ -56,44 +55,53 @@ def task_gooroom_log(task, data_center):
     j = journal.Reader()
     j.log_level(journal.LOG_INFO)
 
+    j.seek_tail()
+    tail_entry = j.get_previous()
+
     last_seek_time = read_last_seek_time(backup_path, 'gooroom-last-seek-time')
 
-    if last_seek_time:
-        j.seek_realtime(last_seek_time+.000001)
-    else:
-        pass
-    
-    logs = {}
+    if tail_entry and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
 
-    for match in gooroom_match_strings:
-        j.add_match(match)
-        j.add_disjunction()
+        if last_seek_time:
+            j.seek_realtime(round(last_seek_time+0.000001, 6))
+        else:
+            j.seek_head()
+        
+        for match in gooroom_match_strings:
+            j.add_match(match)
+            j.add_disjunction()
 
-    last_seek_time = datetime.datetime.now().timestamp()
+        logs = {}
 
-    for entry in j:
-        if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
-            ident = entry['SYSLOG_IDENTIFIER']    
-            dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
-            msg = entry['MESSAGE']
-            
-            logs.setdefault(ident, []).append('%s %s' % (dt, msg))
-            last_seek_time = entry['__REALTIME_TIMESTAMP'].timestamp()
+        for entry in j:
+            if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
+                ident = entry['SYSLOG_IDENTIFIER']    
+                dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
+                msg = entry['MESSAGE']
+                priority = entry['PRIORITY']
+                
+                logs.setdefault(ident, []).append(
+                    '__REALTIME_TIMESTAMP=%s PRIORITY=%s MESSAGE=%s' % (dt, priority, msg))
 
-    if len(logs) > 0:
-        for k, v in logs.items():
-            logs[k] = '\n'.join(v)
+            if tail_entry['__CURSOR'] == entry['__CURSOR']:
+                break
 
-        task[J_MOD][J_TASK].pop(J_IN)
-        task[J_MOD][J_TASK][J_REQUEST] = {}
-        task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
-        task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
+        if len(logs) > 0:
+            for k, v in logs.items():
+                logs[k] = '\n'.join(v)
 
-        #if no exception, it's OK
-        data_center.module_request(task, mustbedata=False)
+            task[J_MOD][J_TASK].pop(J_IN)
+            task[J_MOD][J_TASK][J_REQUEST] = {}
+            task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
+            task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
 
-    #save lask seek_time to file
-    write_last_seek_time(backup_path, last_seek_time, 'gooroom-last-seek-time')
+            #if no exception, it's OK
+            data_center.module_request(task, mustbedata=False)
+
+        last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
+
+        #save lask seek_time to file
+        write_last_seek_time(backup_path, last_seek_time, 'gooroom-last-seek-time')
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -113,7 +121,7 @@ def task_clear_security_alarm(task, data_center):
 
     seek_time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')
     with open(logparser_path, 'w') as f:
-        f.write(str(seek_time))
+        f.write(seek_time)
     
 #-----------------------------------------------------------------------
 def task_client_info(task, data_center):
@@ -152,7 +160,7 @@ def read_last_seek_time(backup_path, fname):
     read last seek time from file
     """
 
-    fullpath = backup_path+fname #'security_last_seek_time'
+    fullpath = backup_path+fname 
 
     if not os.path.exists(fullpath):
         return None
@@ -217,64 +225,66 @@ def load_security_log(task, data_center):
 
     j = journal.Reader()
 
-    #이전 작업시간을 저장하고 있는 파일을 읽어서
+    j.seek_tail()
+    tail_entry = j.get_previous()
+
     last_seek_time = read_last_seek_time(backup_path, 'security-last-seek-time')
 
-    #시간이 있으면 이전 작업시간+.000001초 부터 검색
-    #journal이 마이크로초까지 저장
-    if last_seek_time:
-        j.seek_realtime(last_seek_time+.000001)
+    if tail_entry and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
 
-    #파일이 없거나 시간이 없으면 부팅 이후 부터 검색
-    else:
-        pass
-    
-    logs = []
-
-    for match in match_strings:
-        j.add_match(match)
-        j.add_disjunction()
-
-    last_seek_time = datetime.datetime.now().timestamp()
-
-    for entry in j:
-        if 'MESSAGE' in entry and type(entry['MESSAGE']) is bytes:
-            entry['MESSAGE'] = \
-                str(entry['MESSAGE'].decode('unicode_escape').encode('utf-8'))
-
-        logs.append(entry)
-        last_seek_time = entry['__REALTIME_TIMESTAMP'].timestamp()
-
-    #load modules
-    module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
-    sys.path.append(module_path)
-
-    #invoke get_summary
-    sendable = False
-    for sf in ('os', 'exe', 'boot', 'media'):
-        try:
-            m = importlib.import_module('security.'+sf)
-            run, status, log = getattr(m, 'get_summary')(logs)
-
-            if not log:
-                continue
-
-            task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
-            task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
-            task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
-
-            sendable = True
-
-        except:
-            e = agent_format_exc()
-            AgentLog.get_logger().info(e)
+        if last_seek_time:
+            j.seek_realtime(round(last_seek_time+0.000001, 6))
+        else:
+            j.seek_head()
         
-    #if no exception, it's OK
-    if sendable:
-        data_center.module_request(task, mustbedata=False)
+        for match in match_strings:
+            j.add_match(match)
+            j.add_disjunction()
 
-    #save lask seek_time to file
-    write_last_seek_time(backup_path, last_seek_time, 'security-last-seek-time')
+        logs = []
+
+        for entry in j:
+            if 'MESSAGE' in entry and type(entry['MESSAGE']) is bytes:
+                entry['MESSAGE'] = \
+                    str(entry['MESSAGE'].decode('unicode_escape').encode('utf-8'))
+
+            logs.append(entry)
+
+            if tail_entry['__CURSOR'] == entry['__CURSOR']:
+                break
+
+        #load modules
+        module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
+        sys.path.append(module_path)
+
+        #invoke get_summary
+        sendable = False
+        for sf in ('os', 'exe', 'boot', 'media'):
+            try:
+                m = importlib.import_module('security.'+sf)
+                run, status, log = getattr(m, 'get_summary')(logs)
+
+                if not log:
+                    continue
+
+                task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
+                task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
+                task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
+
+                sendable = True
+
+            except:
+                e = agent_format_exc()
+                AgentLog.get_logger().info(e)
+            
+        #if no exception, it's OK
+        if sendable:
+            data_center.module_request(task, mustbedata=False)
+
+        last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
+
+        #save lask seek_time to file
+        write_last_seek_time(backup_path, last_seek_time, 'security-last-seek-time')
 
 #-----------------------------------------------------------------------
 def read_unique_id():
