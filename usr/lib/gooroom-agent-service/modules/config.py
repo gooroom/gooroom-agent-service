@@ -25,7 +25,8 @@ def do_task(task, data_center):
     do task
     """
 
-    task[J_MOD][J_TASK][J_OUT] = {J_STATUS : AGENT_OK, J_MESSAGE : ''}
+    task[J_MOD][J_TASK][J_OUT] = \
+        {J_STATUS : AGENT_OK, J_MESSAGE : AGENT_DEFAULT_MESSAGE}
 
     try:
         eval('task_%s(task,data_center)' % task[J_MOD][J_TASK][J_TASKN])
