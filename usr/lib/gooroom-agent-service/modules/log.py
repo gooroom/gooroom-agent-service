@@ -43,6 +43,16 @@ gooroom_match_strings = (
     'SYSLOG_IDENTIFIER=gooroom-browser', 
     'SYSLOG_IDENTIFIER=grac-device-daemon')
 
+PRIORITY_N_TO_S = {
+        0:'CRIT',
+        1:'ALERT',
+        2:'EMERG',
+        3:'ERR',
+        4:'WARNING',
+        5:'NOTICE',
+        6:'INFO',
+        7:'DEBUG'}
+
 def task_gooroom_log(task, data_center):
     """
     load gooroom log on journal
@@ -78,18 +88,15 @@ def task_gooroom_log(task, data_center):
                 ident = entry['SYSLOG_IDENTIFIER']    
                 dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
                 msg = entry['MESSAGE']
-                priority = entry['PRIORITY']
+                priority = PRIORITY_N_TO_S[entry['PRIORITY']]
                 
                 logs.setdefault(ident, []).append(
-                    '__REALTIME_TIMESTAMP=%s PRIORITY=%s MESSAGE=%s' % (dt, priority, msg))
+                    '%s,,,%s,,,%s' % (dt, priority, msg))
 
             if tail_entry['__CURSOR'] == entry['__CURSOR']:
                 break
 
         if len(logs) > 0:
-            for k, v in logs.items():
-                logs[k] = '\n'.join(v)
-
             task[J_MOD][J_TASK].pop(J_IN)
             task[J_MOD][J_TASK][J_REQUEST] = {}
             task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
