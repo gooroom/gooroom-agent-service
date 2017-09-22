@@ -279,7 +279,7 @@ def load_security_log(task, data_center):
 
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
-                task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(log)
+                task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(str(l) for l in log)
 
                 sendable = True
 

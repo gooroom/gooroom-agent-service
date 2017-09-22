@@ -79,6 +79,9 @@ class Agent(dbus.service.Object):
         protect invoking do_task from unprivileged process
         """
 
+        white_list = \
+            ['/usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libsecurity-status-plugin.so']
+
         pid = self.get_sender_pid(sender)
 
         import psutil
@@ -88,7 +91,11 @@ class Agent(dbus.service.Object):
 
         self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
 
-        return True #path in allowed_path
+        if cmds[1] in white_list:
+            return True
+        else:
+            self.logger.error('!! ILLEGAL ACCESS FROM %s' % cmds[1])
+            return False
 
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
@@ -103,7 +110,9 @@ class Agent(dbus.service.Object):
             task = json.loads(args)
 
             #testing
-            self.shield_do_task(sender)
+            if not self.shield_do_task(sender):
+                task['WARNNING'] = 'You are not authorized to access me. I am watching you.'
+                return task
 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
