@@ -91,12 +91,6 @@ class Agent(dbus.service.Object):
 
         self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
 
-        if cmds[1] in white_list:
-            return True
-        else:
-            self.logger.error('!! ILLEGAL ACCESS FROM %s' % cmds[1])
-            return False
-
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
         """
@@ -111,8 +105,7 @@ class Agent(dbus.service.Object):
 
             #testing
             if not self.shield_do_task(sender):
-                task['WARNNING'] = 'You are not authorized to access me. I am watching you.'
-                return task
+                pass
 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
