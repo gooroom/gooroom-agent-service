@@ -13,7 +13,7 @@ import OpenSSL
 from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
 
-from agent_define import AGENT_OK,AGENT_NOK
+from agent_define import AGENT_OK,AGENT_NOK,J_MOD,J_MODN,J_TASK,J_TASKN
 from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_clientjob_dispatcher import AgentClientJobDispatcher
 from agent_serverjob_dispatcher import AgentServerJobDispatcher
@@ -99,7 +99,7 @@ class Agent(dbus.service.Object):
         modn = task[J_MOD][J_MODN]
         taskn = task[J_MOD][J_TASK][J_TASKN]
 
-        return (modn, taskn) in self.dbusable_tasks
+        return (modn, taskn) in self.data_center.dbusable_tasks
 
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
@@ -119,7 +119,8 @@ class Agent(dbus.service.Object):
 
             if not self.allowed_for_dbus(task):
                 task['WARNNING'] = 'You do not have permission to do this.'
-                return task
+                self.logger.error('%s is not allowed for dbus' % task[J_MOD][J_TASK][J_TASKN])
+                return json.dumps(task)
                 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)

@@ -118,7 +118,7 @@ def task_gooroom_log(task, data_center):
 #-----------------------------------------------------------------------
 def task_clear_security_alarm(task, data_center):
     """
-    clear_cecurity_alarm
+    clear_security_alarm
     """
 
     task[J_MOD][J_TASK].pop(J_IN)

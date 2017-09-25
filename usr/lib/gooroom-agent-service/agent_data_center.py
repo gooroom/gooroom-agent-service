@@ -99,7 +99,6 @@ class AgentDataCenter:
 
             #DBUS ALLOWED TASKS
             self.dbusable_tasks = self.parser.dbusable_tasks()
-            print(self.dbusable_tasks)
 
             #LOAD MODULE TEMPLATES
             self.load_modules()
