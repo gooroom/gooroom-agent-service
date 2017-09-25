@@ -97,6 +97,10 @@ class AgentDataCenter:
             #BOOTABLE TASK LIST
             self.bootable_tasks = self.parser.bootable_tasks()
 
+            #DBUS ALLOWED TASKS
+            self.dbusable_tasks = self.parser.dbusable_tasks()
+            print(self.dbusable_tasks)
+
             #LOAD MODULE TEMPLATES
             self.load_modules()
 

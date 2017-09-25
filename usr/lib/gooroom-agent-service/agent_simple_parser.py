@@ -52,6 +52,23 @@ class SimpleParser:
                 task_name = t_task.attrib[T_NAME]
                 mod_task = self._mod_tmpls[mod_name][task_name] = [t_mod, t_task, t_in, t_out]
 
+    def dbusable_tasks(self):
+        """
+        return tasks which is allowed for dbus
+        """
+
+        #[ (modulename:taskname), ]
+        tasks = []
+
+        for mod_name in self._mod_tmpls:
+            for task_name in self._mod_tmpls[mod_name]:
+                salt = self._mod_tmpls[mod_name][task_name][1].attrib
+
+                if T_DBUS in salt and salt[T_DBUS].lower() == 'allow':
+                    tasks.append( (mod_name, task_name) )
+
+        return tasks
+
     def clientjob_book(self):
         """
         client job processing 에서 사용할 {polltime:task_list}

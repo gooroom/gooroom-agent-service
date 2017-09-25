@@ -91,6 +91,16 @@ class Agent(dbus.service.Object):
 
         self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
 
+    def allowed_for_dbus(self, task):
+        """
+        check whether task is allowed for dbus
+        """
+
+        modn = task[J_MOD][J_MODN]
+        taskn = task[J_MOD][J_TASK][J_TASKN]
+
+        return (modn, taskn) in self.dbusable_tasks
+
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
         """
@@ -107,6 +117,10 @@ class Agent(dbus.service.Object):
             if not self.shield_do_task(sender):
                 pass
 
+            if not self.allowed_for_dbus(task):
+                task['WARNNING'] = 'You do not have permission to do this.'
+                return task
+                
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
             return ret
