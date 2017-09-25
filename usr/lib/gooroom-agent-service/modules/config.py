@@ -123,7 +123,7 @@ def ntp_list_config(ntp_list, data_center):
 
     ntp_conf_path = '/etc/systemd/timesyncd.conf'
     ntp_config = AgentConfig.get_config(ntp_conf_path)
-    ntp_config.set('Time', 'NTP', ' '.join(ntp_list))
+    ntp_config.set('Time', 'NTP', ntp_list)
 
     with open(ntp_conf_path, 'w') as f:
         ntp_config.write(f)
