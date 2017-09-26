@@ -49,19 +49,52 @@ class AgentClientJobDispatcher(threading.Thread):
 
         return self._special_worker.do_clientjob(task)
 
+    def timing(self, tm):
+        """
+        when init-step is failed it defines waiting time for retrying
+        """
+
+        i = 0
+        while self._turn_on:
+            yield i % tm == 0
+            i += 1
+            time.sleep(1)
+
     def init_agent(self):
         """
         init agent
         """
-
+        
         try:
-            for task in self.data_center.bootable_tasks:
-                result = self._special_worker.do_clientjob(task)
-                if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
-                    raise 
-        except:
-            pass
+            INIT_RETRY_TIME = int(self.conf.get('MAIN', 'INIT_RETRY_TIME'))
 
+            ting = self.timing(INIT_RETRY_TIME)
+
+            while True:
+                if next(ting):
+                    try:
+                        self.data_center.get_server_certificate2()
+                        break
+                    except:
+                        self.logger.error('RETRY after %dsecs in INIT-CERT' % INIT_RETRY_TIME)
+
+            for task in self.data_center.bootable_tasks:
+                ting = self.timing(INIT_RETRY_TIME)
+
+                while True:
+                    if next(ting):
+                        result = self._special_worker.do_clientjob(task)
+
+                        if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                            self.logger.error('RETRY after %dsecs in INIT-TASK' % INIT_RETRY_TIME)
+                        else:
+                            break
+
+        except StopIteration:
+            pass
+        except:
+            self.logger.error('%s' % agent_format_exc())
+            
         self.data_center.serverjob_looping_on[0] = True
 
     def run(self):

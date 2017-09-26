@@ -64,7 +64,7 @@ class AgentDataCenter:
             self.server_domain = self.read_server_domain()
 
             #SERVER CERTIFICATE
-            self.get_server_certificate(self.server_domain)
+            #self.get_server_certificate(self.server_domain)
 
             #SERVERJOB DISPATCHER VARIABLES
             self.jobs_api = self.conf.get('REST_API', 'JOBS')
@@ -127,6 +127,28 @@ class AgentDataCenter:
 
         finally:
             self.center_lock.release()
+
+    def get_server_certificate2(self):
+        """
+        task server certificate from agent server
+        """
+
+        import socket
+        host_info = self.server_domain.split('/')[0].split(':')
+        host = host_info[0]
+        port = 443
+        if len(host_info) > 1:
+            port = int(host_info[1])
+
+        ctx = ssl.create_default_context()
+        s = ctx.wrap_socket(socket.socket(), server_hostname=self.server_domain)
+        s.settimeout(self.rest_timeout)
+        s.connect((host, port))
+
+        server_cert = ssl.DER_cert_to_PEM_cert(s.getpeercert(True))
+
+        with open('/etc/gooroom/agent/server_certificate.crt', 'w') as f:
+            f.write(server_cert)
 
     def get_server_certificate(self, server_domain):
         """
