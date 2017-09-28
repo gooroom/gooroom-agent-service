@@ -33,3 +33,12 @@ def task_grm_heartbit(task, data_center):
 
     pass
     
+#-----------------------------------------------------------------------
+def task_raise_traffic(task, data_center):
+    """
+    raise_traffic
+    """
+
+    ts = task[J_MOD][J_TASK][J_IN]['traffic_size']
+    task[J_MOD][J_TASK][J_OUT]['traffic'] = '*' * ts
+

@@ -3,6 +3,21 @@
 
     <param name="module_name" type="string"/>
 
+    <!-- DAEMON ABLE -->
+    <task name="daemon_able" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="service" type="string"/>
+            <param name="operation" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
     <!-- DAEMON START -->
     <task name="daemon_start">
         <param name="task_name" type="string"/>

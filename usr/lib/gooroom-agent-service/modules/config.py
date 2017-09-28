@@ -48,6 +48,43 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_set_hipervisor_operation(task, data_center):
+    """
+    set_hipervisor_operation
+    """
+
+    operation = server_rsp[J_MOD][J_TASK][J_IN]['operation']
+
+    svc = 'gop-daemon.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = \
+        {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':operation}, J_OUT:{}}}}
+
+    getattr(m, 'task_daemon_able')(tmp_task, data_center)
+
+#-----------------------------------------------------------------------
+def task_get_hipervisor_operation(task, data_center):
+    """
+    get_hipervisor_operation
+    """
+
+    login_id = server_rsp[J_MOD][J_TASK][J_IN]['login_id']
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+
+    svc = 'gop-daemon.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = \
+        {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':operation}, J_OUT:{}}}}
+
+    getattr(m, 'task_daemon_able')(tmp_task, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_serverjob_dispatch_time_config(task, data_center):
     """
     set_serverjob_dispatch_time_config

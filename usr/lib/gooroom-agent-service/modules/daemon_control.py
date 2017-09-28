@@ -62,6 +62,25 @@ def task_daemon_status(task, data_center):
     task[J_MOD][J_TASK][J_OUT]['daemon_status'] = daemon_status
 
 #-----------------------------------------------------------------------
+def task_daemon_able(task, data_center):
+    """
+    systemctl enable/disable service
+    """
+
+    service = task[J_MOD][J_TASK][J_IN]['service']
+    operation = task[J_MOD][J_TASK][J_IN]['operation']
+
+    bus = dbus.SystemBus()
+    systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
+    manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
+
+    if operation == 'enable':
+        manager.EnableUnitFiles([service], False, False)
+    else:
+        manager.DisableUnitFiles([service], False)
+    manager.Reload()
+
+#-----------------------------------------------------------------------
 def task_daemon_start(task, data_center):
     """
     systemctl start service

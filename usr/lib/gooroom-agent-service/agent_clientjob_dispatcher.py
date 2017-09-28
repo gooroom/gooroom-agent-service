@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
+import simplejson as json
+import multiprocessing
 import threading
 import time
-import multiprocessing
-import simplejson as json
+import copy
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_job_worker import AgentJobManager,AgentJobWorker
@@ -83,7 +84,7 @@ class AgentClientJobDispatcher(threading.Thread):
 
                 while True:
                     if next(ting):
-                        result = self._special_worker.do_clientjob(task)
+                        result = self._special_worker.do_clientjob(copy.deepcopy(task))
 
                         if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
                             self.logger.error('RETRY after %dsecs in INIT-TASK' % INIT_RETRY_TIME)
@@ -109,8 +110,6 @@ class AgentClientJobDispatcher(threading.Thread):
         ###############################################################
 
         intervals = 0
-
-        import copy
 
         while self._turn_on:
             if self.data_center.clientjob_looping_on[0]:
