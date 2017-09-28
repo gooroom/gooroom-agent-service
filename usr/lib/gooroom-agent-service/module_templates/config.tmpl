@@ -6,6 +6,7 @@
     <!-- CONFIG_FILE TYPE -->
     <simpleType name="CONFIG_FILE">
         <restriction base="string">
+            <enum value="/usr/lib/gooroom-agent-service/module_templates/config.tmpl"/>
             <enum value="/etc/apt/sources.list.d/official-package-repositories.list"/>
             <enum value="/etc/apt/preferences.d/gooroom.pref"/>
             <enum value="/etc/hosts"/>
@@ -225,7 +226,7 @@
     </task>
 
     <!-- GET_HIPERVISOR_OPERATION -->
-    <task name="get_hipervisor_operation">
+    <task name="get_hipervisor_operation" dbus="allow">
         <param name="task_name" type="string"/>
 
         <in>

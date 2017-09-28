@@ -23,6 +23,13 @@ def do_task(task, data_center):
 
         AgentLog.get_logger().error(e)
 
+    if J_IN in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_IN)
+    if J_REQUEST in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_REQUEST)
+    if J_RESPONSE in task[J_MOD][J_TASK]:
+        task[J_MOD][J_TASK].pop(J_RESPONSE)
+
     return task
 
 #-----------------------------------------------------------------------
@@ -40,5 +47,5 @@ def task_raise_traffic(task, data_center):
     """
 
     ts = task[J_MOD][J_TASK][J_IN]['traffic_size']
-    task[J_MOD][J_TASK][J_OUT]['traffic'] = '*' * ts
+    task[J_MOD][J_TASK][J_OUT]['traffic'] = '*' * int(ts)
 

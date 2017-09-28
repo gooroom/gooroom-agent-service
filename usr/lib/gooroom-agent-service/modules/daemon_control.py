@@ -62,6 +62,28 @@ def task_daemon_status(task, data_center):
     task[J_MOD][J_TASK][J_OUT]['daemon_status'] = daemon_status
 
 #-----------------------------------------------------------------------
+def dum_func(operation):
+    """
+    until finding dbus method
+    """
+
+    ORG = '/run/systemd/generator.late/gop-daemon.service'
+    TARGET1 = '/run/systemd/generator.late/graphical.target.wants/gop-daemon.service'
+    TARGET2 = '/run/systemd/generator.late/multi-user.target.wants/gop-daemon.service'
+
+    import os
+
+    if operation == 'enable':
+        if not os.path.isfile(TARGET1):
+            os.symlink(ORG, TARGET1)
+        if not os.path.isfile(TARGET2):
+            os.symlink(ORG, TARGET2)
+    else:
+        if os.path.isfile(TARGET1):
+            os.remove(TARGET1)
+        if os.path.isfile(TARGET2):
+            os.remove(TARGET2)
+
 def task_daemon_able(task, data_center):
     """
     systemctl enable/disable service
@@ -74,10 +96,13 @@ def task_daemon_able(task, data_center):
     systemd1 = bus.get_object(SD_BUS_NAME, SD_BUS_OBJ)
     manager = dbus.Interface(systemd1, dbus_interface=SD_BUS_IFACE)
 
-    if operation == 'enable':
-        manager.EnableUnitFiles([service], False, False)
+    if service == 'gop-daemon.service':
+        dum_func(operation)
     else:
-        manager.DisableUnitFiles([service], False)
+        if operation == 'enable':
+            manager.EnableUnitFiles([service], False, False)
+        else:
+            manager.DisableUnitFiles([service], False)
     manager.Reload()
 
 #-----------------------------------------------------------------------

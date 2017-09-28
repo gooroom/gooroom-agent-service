@@ -53,7 +53,7 @@ def task_set_hipervisor_operation(task, data_center):
     set_hipervisor_operation
     """
 
-    operation = server_rsp[J_MOD][J_TASK][J_IN]['operation']
+    operation = task[J_MOD][J_TASK][J_IN]['operation']
 
     svc = 'gop-daemon.service'
     m = importlib.import_module('modules.daemon_control')
@@ -68,7 +68,7 @@ def task_get_hipervisor_operation(task, data_center):
     get_hipervisor_operation
     """
 
-    login_id = server_rsp[J_MOD][J_TASK][J_IN]['login_id']
+    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
