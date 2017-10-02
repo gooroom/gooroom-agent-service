@@ -48,9 +48,9 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-def task_set_hipervisor_operation(task, data_center):
+def task_set_hypervisor_operation(task, data_center):
     """
-    set_hipervisor_operation
+    set_hypervisor_operation
     """
 
     operation = task[J_MOD][J_TASK][J_IN]['operation']
@@ -63,9 +63,9 @@ def task_set_hipervisor_operation(task, data_center):
     getattr(m, 'task_daemon_able')(tmp_task, data_center)
 
 #-----------------------------------------------------------------------
-def task_get_hipervisor_operation(task, data_center):
+def task_get_hypervisor_operation(task, data_center):
     """
-    get_hipervisor_operation
+    get_hypervisor_operation
     """
 
     login_id = task[J_MOD][J_TASK][J_IN]['login_id']
