@@ -68,9 +68,8 @@ def task_get_hypervisor_operation(task, data_center):
     get_hypervisor_operation
     """
 
-    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
     task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':catch_user_id()}
 
     server_rsp = data_center.module_request(task)
     operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
