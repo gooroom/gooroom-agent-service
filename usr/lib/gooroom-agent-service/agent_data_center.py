@@ -120,6 +120,9 @@ class AgentDataCenter:
             #JOURNAL LOG LEVEL
             self.journal_loglevel = int(self.conf.get('SECURITY', 'JOURNAL_LOGLEVEL'))
 
+            #PACKAGE OPERATION
+            self.package_operation = self.conf.get('MAIN', 'PACKAGE_OPERATION')
+
             self.logger.info('END SHOW()')
 
         except:
@@ -260,6 +263,16 @@ class AgentDataCenter:
         agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
 
         return agent_data
+
+    def set_package_operation(self, operation):
+        """
+        set package operation
+        """
+
+        old_t = self.package_operation
+        new_t = self.package_operation = operation
+        self.logger.info(
+            'package operation %s -> %s' % (old_t, new_t))
 
     def reload_serverjob_dispatch_time(self):
         """

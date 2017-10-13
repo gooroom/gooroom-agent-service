@@ -48,6 +48,34 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_set_package_operation(task, data_center):
+    """
+    set_package_operation
+    """
+
+    operation = task[J_MOD][J_TASK][J_IN]['operation']
+
+    config = AgentConfig.get_config()
+    config.set('MAIN', 'PACKAGE_OPERATION', operation)
+
+    with open(CONFIG_FULLPATH, 'w') as f:
+        config.write(f)
+
+    data_center.set_package_operation(operation)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_get_package_operation(task, data_center):
+    """
+    get_package_operation
+    """
+
+    task[J_MOD][J_TASK][J_OUT]['operation'] = data_center.package_operation
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_hypervisor_operation(task, data_center):
     """
     set_hypervisor_operation

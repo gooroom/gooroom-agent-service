@@ -244,4 +244,32 @@
         </out>
     </task>
 
+    <!-- SET_PACKAGE_OPERATION -->
+    <task name="set_package_operation" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="operation" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET_PACKAGE_OPERATION -->
+    <task name="get_package_operation" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <out>
+            <param name="operation" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

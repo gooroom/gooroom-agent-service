@@ -8,6 +8,9 @@ from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------
+MAX_PACKAGE_NUM = 1000
+
+#-----------------------------------------------------------------------
 def do_task(task, data_center):
     """
     do task
@@ -47,6 +50,8 @@ def task_install_or_upgrade_package(task, data_center, cache):
     install_package
     """
 
+    check_package_operation(data_center)
+
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
     for pkg_name in pkg_list:
@@ -68,6 +73,8 @@ def task_remove_package(task, data_center, cache):
     remove_package
     """
 
+    check_package_operation(data_center)
+
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
     for pkg_name in pkg_list:
@@ -87,6 +94,8 @@ def task_upgrade_all(task, data_center, cache):
     upgrade_all
     """
 
+    check_package_operation(data_center)
+
     cache.upgrade()
     agent_commit(task, cache)
 
@@ -95,6 +104,8 @@ def task_upgrade_package_with_label(task, data_center, cache):
     """
     upgrade_label
     """
+
+    check_package_operation(data_center)
 
     label_list = task[J_MOD][J_TASK][J_IN]['label_list'].split(',')
 
@@ -135,7 +146,7 @@ def task_insert_all_packages_to_server(task, data_center, cache):
     pkg_list = read_all_pkgs_list_in_cache(cache)
 
     for pkg in pkg_list:
-        if cnt >= 1000:
+        if cnt >= MAX_PACKAGE_NUM:
             task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = tmp_list
             data_center.module_request(task, mustbedata=False)
 
@@ -151,10 +162,34 @@ def task_insert_all_packages_to_server(task, data_center, cache):
         task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = tmp_list
         data_center.module_request(task, mustbedata=False)
 
-    #print('cnt=', cnt)
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def certificate_changed(filepath):
+    """
+    check if certificate is chagend
+    """
+
+    pass
+
+
+def _send_pkg(data_center, task):
+    """
+    devide and transmit
+    """
+
+    pkg_list = task[J_MOD][J_TASK][J_REQUEST]['pkg_list']
+    send_cnt = len(task[J_MOD][J_TASK][J_REQUEST]['pkg_list']) // MAX_PACKAGE_NUM + 1
+
+    for i in range(send_cnt):
+        if i+1 != send_cnt:
+            task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = \
+                pkg_list[i*MAX_PACKAGE_NUM:(i+1)*MAX_PACKAGE_NUM]
+        else:
+            task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = pkg_list[i*MAX_PACKAGE_NUM:]
+
+        data_center.module_request(task, mustbedata=False, remove_request=False)
+
 def task_update_package_version_to_server(task, data_center, cache):
     """
     update_package_version_to_server
@@ -174,7 +209,8 @@ def task_update_package_version_to_server(task, data_center, cache):
         task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'installed'
         task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = package_list
 
-        data_center.module_request(task, mustbedata=False)
+        #data_center.module_request(task, mustbedata=False)
+        _send_pkg(data_center, task)
 
         #서버의 응답이 정상(module_request에서 예외가 발생하지 않으면)
         #파일에 저장
@@ -231,7 +267,8 @@ def task_update_package_version_to_server(task, data_center, cache):
             task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'updating'
             task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = unmatched_pkg_list
 
-            data_center.module_request(task, mustbedata=False)
+            #data_center.module_request(task, mustbedata=False)
+            _send_pkg(data_center, task)
 
             #서버의 응답이 정상(module_request가 예외를 발생시키지 않으면)
             #파일 업데이트
@@ -390,6 +427,15 @@ def get_mark_status(cache):
 
     return ms
 
+#-----------------------------------------------------------------------
+def check_package_operation(data_center):
+    """
+    check package_operation
+    """
+
+    if data_center.package_operation != 'enable':
+        raise Exception('package-operation is turned off by security-status-plugin.')
+        
 #-----------------------------------------------------------------------
 from apt.progress.base import InstallProgress, AcquireProgress
 

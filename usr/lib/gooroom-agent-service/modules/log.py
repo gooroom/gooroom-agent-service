@@ -82,6 +82,13 @@ def task_gooroom_log(task, data_center):
             j.add_disjunction()
 
         logs = {}
+        logs_len = 0
+
+        task[J_MOD][J_TASK].pop(J_IN)
+        task[J_MOD][J_TASK][J_REQUEST] = {}
+        task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
+
+        MAX_LOG_LEN = int(AgentConfig.get_config().get('MAIN', 'MAX_LOG_LEN'))
 
         for entry in j:
             if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
@@ -93,23 +100,28 @@ def task_gooroom_log(task, data_center):
                 dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
                 msg = entry['MESSAGE']
                 
-                logs.setdefault(ident, []).append(
-                    '%s,,,%s,,,%s' % (dt, PRIORITY_N_TO_S[priority], msg))
+                dpm = '%s,,,%s,,,%s' % (dt, PRIORITY_N_TO_S[priority], msg)
+                logs.setdefault(ident, []).append(dpm)
+                logs_len += len(dpm)
+
+                #divide and transmit
+                if logs_len >= MAX_LOG_LEN:
+                    task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
+                    #if no exception, it's OK
+                    data_center.module_request(task, mustbedata=False, remove_request=False)
+                    logs = {}
+                    logs_len = 0
 
             if tail_entry['__CURSOR'] == entry['__CURSOR']:
                 break
 
-        if len(logs) > 0:
-            task[J_MOD][J_TASK].pop(J_IN)
-            task[J_MOD][J_TASK][J_REQUEST] = {}
-            task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
+        #first or last transmition
+        if logs_len > 0:
             task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
-
             #if no exception, it's OK
             data_center.module_request(task, mustbedata=False)
 
         last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
-
         #save lask seek_time to file
         write_last_seek_time(backup_path, last_seek_time, 'gooroom-last-seek-time')
 
