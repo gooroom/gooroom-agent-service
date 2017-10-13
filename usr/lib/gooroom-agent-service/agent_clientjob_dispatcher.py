@@ -71,15 +71,8 @@ class AgentClientJobDispatcher(threading.Thread):
 
             ting = self.timing(INIT_RETRY_TIME)
 
-            while True:
-                if next(ting):
-                    try:
-                        self.data_center.get_server_certificate2()
-                        break
-                    except:
-                        self.logger.error('RETRY after %dsecs in INIT-CERT' % INIT_RETRY_TIME)
-
-            for task in self.data_center.bootable_tasks:
+            for task_info in self.data_center.bootable_tasks:
+                task, mustok = task_info
                 ting = self.timing(INIT_RETRY_TIME)
 
                 while True:
@@ -87,6 +80,9 @@ class AgentClientJobDispatcher(threading.Thread):
                         result = self._special_worker.do_clientjob(copy.deepcopy(task))
 
                         if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                            if mustok == 'no':
+                                break
+
                             self.logger.error('RETRY after %dsecs in INIT-TASK' % INIT_RETRY_TIME)
                         else:
                             break

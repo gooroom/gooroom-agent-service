@@ -102,13 +102,17 @@ class SimpleParser:
                 salt = self._mod_tmpls[mod_name][task_name][1].attrib
                 if T_BOOTABLE in salt:
                     if 'yes' == salt[T_BOOTABLE].lower():
+                        mustok = 'ok'
+                        if T_MUSTOK in salt:
+                            mustok = salt[T_MUSTOK].lower() 
+
                         priority = 0
                         if T_PRIORITY in salt:
                             priority = int(salt[T_PRIORITY])
                         
                         module = {J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}
-                        for_priority_sort.append((priority,module))
+                        for_priority_sort.append((priority,module,mustok))
 
         from operator import itemgetter
-        return [m for p, m in sorted(for_priority_sort, key=itemgetter(0))]
+        return [(m,mok) for p, m, mok in sorted(for_priority_sort, key=itemgetter(0))]
 

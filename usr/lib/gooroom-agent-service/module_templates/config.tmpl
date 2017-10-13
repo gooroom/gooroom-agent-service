@@ -6,6 +6,7 @@
     <!-- CONFIG_FILE TYPE -->
     <simpleType name="CONFIG_FILE">
         <restriction base="string">
+			<enum value="/etc/gooroom/agent/server_certificate.crt"/>
             <enum value="/usr/lib/gooroom-agent-service/module_templates/config.tmpl"/>
             <enum value="/etc/apt/sources.list.d/official-package-repositories.list"/>
             <enum value="/etc/apt/preferences.d/gooroom.pref"/>
@@ -226,7 +227,7 @@
     </task>
 
     <!-- GET_HYPERVISOR_OPERATION -->
-    <task name="get_hypervisor_operation" bootable="yes">
+    <task name="get_hypervisor_operation" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -267,6 +268,26 @@
 
         <out>
             <param name="operation" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET SERVER CERTIFICATE -->
+    <task name="get_server_certificate" bootable="yes" priority="-1">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="file_contents" type="string"/>
+            <param name="signature" type="string"/>
+        </response>
+
+        <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>

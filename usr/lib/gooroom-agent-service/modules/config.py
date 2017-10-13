@@ -48,6 +48,23 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_get_server_certificate(task, data_center):
+    """
+    get_server_certificate
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+
+    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+
+    replace_file('/etc/gooroom/agent/server_certificate.crt', file_contents)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_package_operation(task, data_center):
     """
     set_package_operation

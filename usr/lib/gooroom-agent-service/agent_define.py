@@ -43,6 +43,7 @@ T_BOOTABLE='bootable'
 T_PRIORITY='priority'
 T_ID='id'
 T_DBUS='dbus'
+T_MUSTOK='mustok'
 
 #agent와 server가 송수신하는 job에 대한 json의 키값
 J_OB='job'
