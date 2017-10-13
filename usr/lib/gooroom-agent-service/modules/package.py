@@ -165,14 +165,6 @@ def task_insert_all_packages_to_server(task, data_center, cache):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def certificate_changed(filepath):
-    """
-    check if certificate is chagend
-    """
-
-    pass
-
-
 def _send_pkg(data_center, task):
     """
     devide and transmit
@@ -378,7 +370,9 @@ def create_pkglist_file():
 
     if not os.path.isdir(fullpath):
         os.makedirs(fullpath)
-    fullpath += 'package_version_enum'
+
+    key_path = AgentConfig.get_config().get('MAIN', 'AGENT_KEY')
+    fullpath += 'package-version-enum-%f' % os.stat(key_path).st_ctime
     return fullpath
 
 #-----------------------------------------------------------------------
