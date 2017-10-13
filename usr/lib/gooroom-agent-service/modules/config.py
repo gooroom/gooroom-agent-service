@@ -341,13 +341,38 @@ def task_append_contents_etc_hosts(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def chown_file(fname, fuser=None, fgroup=None):
+def task_get_media_config(task, data_center):
     """
-    chown of file
+    get_media_config
     """
 
-    if fuser and fgroup:
-        shutil.chown(fname, user=fuser, group=fgroup)
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+
+    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
+    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+    signature = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+
+    #if verifying is failed, exception occur
+    verify_signature(signature, file_contents)
+
+    replace_file(file_name, file_contents, signature)
+
+    #reload grac
+    svc = 'grac-device-daemon.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = \
+        {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
+
+    getattr(m, 'task_daemon_reload')(tmp_task, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_set_authority_config(task, data_center):
@@ -598,3 +623,12 @@ def verify_signature(signature, data):
     OpenSSL.crypto.verify(cert, 
         base64.b64decode(signature.encode('utf8')), 
         data.encode('utf8'), 'sha256')
+#-----------------------------------------------------------------------
+def chown_file(fname, fuser=None, fgroup=None):
+    """
+    chown of file
+    """
+
+    if fuser and fgroup:
+        shutil.chown(fname, user=fuser, group=fgroup)
+
