@@ -51,7 +51,7 @@
     </task>
 
     <!-- GET UPDATE SERVER CONFIG FILE -->
-    <task name="get_update_server_config" bootable="yes">
+    <task name="get_update_server_config" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -72,7 +72,7 @@
     </task>
 
     <!-- APPEND CONTENTS HOSTS -->
-    <task name="append_contents_etc_hosts" bootable="yes">
+    <task name="append_contents_etc_hosts" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -163,7 +163,7 @@
     </task>
 
     <!-- GET_SERVERJOB_DISPATCH_TIME -->
-    <task name="get_serverjob_dispatch_time" bootable="yes">
+    <task name="get_serverjob_dispatch_time" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -195,7 +195,7 @@
     </task>
 
     <!-- GET_NTP_LIST_CONFIG -->
-    <task name="get_ntp_list_config" bootable="yes" priority="1">
+    <task name="get_ntp_list_config" bootable="yes" priority="1" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
