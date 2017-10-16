@@ -317,6 +317,10 @@ def task_get_update_server_config(task, data_center):
         verify_signature(s, c)
         replace_file(n, c, s)
 
+    import apt
+    cache = apt.cache.Cache()
+    cache.update()
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
