@@ -90,6 +90,9 @@ class Agent(dbus.service.Object):
         cmds = ps.cmdline()
 
         self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
+        if len(cmds) > 0:
+            cmds[0] = path
+            self.logger.debug('path -> cmds[0]')
 
         for wl in white_process:
             if len(wl) <= len(path) and all(x == y for x, y in zip(wl, cmds)):
@@ -121,20 +124,14 @@ class Agent(dbus.service.Object):
 
             #testing
             if not self.watch_process(sender):
-                '''
                 task['WARNNING'] = 'You are an unauthenticated process.'
                 self.logger.error('!!!!!!!!!! UNAUTHENTICATED ACCESS !!!!!!!!!!')
                 return json.dumps(task)
-                '''
-                pass
 
             if not self.watch_task(task):
-                '''
                 task['WARNNING'] = 'You are an unauthorized process.'
                 self.logger.error('!!!!!!!!!! UNAUTHORIZED ACCESS !!!!!!!!!!')
                 return json.dumps(task)
-                '''
-                pass
                 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
