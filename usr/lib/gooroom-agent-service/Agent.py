@@ -74,13 +74,13 @@ class Agent(dbus.service.Object):
 
         self.logger.info('AGENT QUIT')
 
-    def shield_do_task(self, sender):
+    def watch_process(self, sender):
         """
         protect invoking do_task from unprivileged process
         """
 
-        white_list = \
-            ['/usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libsecurity-status-plugin.so']
+        wps = AgentConfig.get_config().get('SECURITY', 'WHITE_PROCESS').split(',')
+        white_process = [wp.split('&&') for wp in wps]
 
         pid = self.get_sender_pid(sender)
 
@@ -91,7 +91,13 @@ class Agent(dbus.service.Object):
 
         self.logger.debug('FROM WHOM=%s : %s' % (path, cmds))
 
-    def allowed_for_dbus(self, task):
+        for wl in white_process:
+            if len(wl) <= len(path) and all(x == y for x, y in zip(wl, cmds)):
+                return True
+
+        return False
+
+    def watch_task(self, task):
         """
         check whether task is allowed for dbus
         """
@@ -114,12 +120,14 @@ class Agent(dbus.service.Object):
             task = json.loads(args)
 
             #testing
-            if not self.shield_do_task(sender):
-                pass
+            if not self.watch_process(sender):
+                task['WARNNING'] = 'You are an unauthenticated process.'
+                self.logger.error('!!!!!!!!!! UNAUTHENTICATED ACCESS !!!!!!!!!!')
+                return json.dumps(task)
 
-            if not self.allowed_for_dbus(task):
-                task['WARNNING'] = 'You do not have permission to do this.'
-                self.logger.error('%s is not allowed for dbus' % task[J_MOD][J_TASK][J_TASKN])
+            if not self.watch_task(task):
+                task['WARNNING'] = 'You are an unauthorized process.'
+                self.logger.error('!!!!!!!!!! UNAUTHORIZED ACCESS !!!!!!!!!!')
                 return json.dumps(task)
                 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))

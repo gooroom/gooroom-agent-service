@@ -28,7 +28,7 @@ class AgentDataCenter:
 
         self.GOOROOM_AGENT = gooroom_agent
 
-        self.conf = AgentConfig.get_config(reload=True)
+        self.conf = AgentConfig.get_config()
         self.logger = AgentLog.get_logger()
 
         self.center_lock = threading.Lock()
