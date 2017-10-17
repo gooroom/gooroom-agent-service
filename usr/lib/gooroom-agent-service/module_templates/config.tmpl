@@ -314,4 +314,26 @@
         </out>
     </task>
 
+    <!-- GET BROWSER CONFIG -->
+    <task name="get_browser_config" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="file_name_list" type="string_array"/>
+            <param name="file_contents_list" type="string_array"/>
+            <param name="signature_list" type="string_array"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

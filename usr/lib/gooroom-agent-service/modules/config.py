@@ -379,6 +379,37 @@ def task_get_media_config(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def task_get_browser_config(task, data_center):
+    """
+    get_browser_config
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+
+    file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
+    file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
+    signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+    for idx in range(len(file_name_list)):
+        file_name = file_name_list[idx]
+        file_contents = file_contents_list[idx]
+        signature = signature_list[idx]
+        
+        #if verifying is failed, exception occur
+        verify_signature(signature, file_contents)
+
+        replace_file(file_name, file_contents, signature)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_authority_config(task, data_center):
     """
     set_authority_config
