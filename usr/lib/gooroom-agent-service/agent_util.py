@@ -166,6 +166,22 @@ def catch_user_id():
         if ut_type == 7 and ut_id == ':0':
             user_id = ut_user.decode('utf8').strip('\00')
 
+    #check if user_id is an online account
+    with open('/etc/passwd') as f:
+        pws = f.readlines()
+
+    if user_id != '-':
+        for pw in pws:
+            splited = pw.split(':')
+            if splited[0] == user_id:
+                ps = '/var/run/user/%s/gooroom/.grm-user'  % user_id
+                #user_id is a local account
+                if not 'gooroom-online-account' in splited[4] or not os.path.exists(ps):
+                    user_id = '+' + user_id
+                break
+        else:
+            raise Exception('user_id(%s) does not existed in /etc/passwd')
+
     return user_id
 
 #-----------------------------------------------------------------------

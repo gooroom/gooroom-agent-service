@@ -114,14 +114,19 @@
         </out>
     </task>
 
-    <!-- SET SECURITY ITEM CONFIG -->
-    <task name="set_security_item_config">
+    <!-- GET PASSWORD CYCLE -->
+    <task name="get_password_cycle">
         <param name="task_name" type="string"/>
 
         <in>
-            <param name="password_time" type="string"/>
-            <param name="screen_time" type="string"/>
         </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="password_time" type="string"/>
+        </response>
 
         <out>
             <param name="status" type="string"/>
@@ -137,10 +142,26 @@
         </in>
 
         <request id='null' seq="null">
+            <param name="login_id" type="string"/>
         </request>
         <response>
             <param name="screen_time" type="string"/>
         </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SET SECURITY ITEM CONFIG -->
+    <task name="set_security_item_config">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="password_time" type="string"/>
+            <param name="screen_time" type="string"/>
+        </in>
 
         <out>
             <param name="status" type="string"/>
@@ -336,4 +357,58 @@
         </out>
     </task>
 
+    <!-- GET UPDATE OPERATION WITH LOGINID-->
+    <task name="get_update_operation_with_loginid" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="operation" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET UPDATE OPERATION -->
+    <task name="get_update_operation">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="operation" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- TELL UPDATE OPERATION -->
+    <task name="tell_update_operation" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <out>
+            <param name="operation" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
 </module>

@@ -9,6 +9,7 @@ import base64
 import shutil
 import ctypes
 import dbus
+import stat
 import pwd
 import sys
 import os
@@ -46,6 +47,87 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_tell_update_operation(task, data_center):
+    """
+    tell_update_operation
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+
+    task[J_MOD][J_TASK][J_OUT]['operation'] = operation
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+updating_binary = ['/usr/bin/gooroom-update', '/usr/sbin/synaptic']
+
+def task_get_update_operation_with_loginid(task, data_center):
+    """
+    get_update_operation_with_loginid
+    """
+
+    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+
+    if operation == 'enable':
+        NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
+        for ub in updating_binary:
+            perm = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, perm & NO_EXEC)
+    else:
+        EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        for ub in updating_binary:
+            perm = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, perm | EXEC)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_get_update_operation(task, data_center):
+    """
+    get_update_operation
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+
+    if operation == 'enable':
+        NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
+        for ub in updating_binary:
+            current_permissions = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, current_permissions & NO_EXEC)
+    else:
+        EXEC = stat.S_IXUSR & stat.S_IXGRP & stat.S_IXOTH
+        for ub in updating_binary:
+            current_permissions = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, current_permissions & EXEC)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_get_server_certificate(task, data_center):
@@ -231,8 +313,14 @@ def task_get_screen_time(task, data_center):
     get_screen_time
     """
 
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
+
     task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':catch_user_id()}
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
     server_rsp = data_center.module_request(task)
 
@@ -242,15 +330,55 @@ def task_get_screen_time(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def task_get_password_cycle(task, data_center):
+    """
+    get_password_cycle
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+
+    #password cycle
+    pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
+
+    spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
+
+    with open(spath) as f:
+        jsondata = json.loads(f.read().strip('\n'))
+
+    if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
+        or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
+
+        jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
+
+        with open(spath, 'w') as f:
+            f.write(json.dumps(jsondata))
+        
+        chown_file(spath, fuser=login_id, fgroup=login_id)
+
+#-----------------------------------------------------------------------
 def task_set_security_item_config(task, data_center):
     """
     set_security_item_config
     """
 
+    login_id = catch_user_id()
+    if login_id == '-':
+        raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
+
     #password cycle
     pwd_max_day = task[J_MOD][J_TASK][J_IN]['password_time']
 
-    login_id = catch_user_id()
     spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
 
     with open(spath) as f:
@@ -353,6 +481,8 @@ def task_get_media_config(task, data_center):
     login_id = catch_user_id()
     if login_id == '-':
         raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -387,6 +517,8 @@ def task_get_browser_config(task, data_center):
     login_id = catch_user_id()
     if login_id == '-':
         raise Exception('The client did not log in.')
+    elif login_id[0] == '+':
+        raise Exception('The client logged in as local user.')
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
