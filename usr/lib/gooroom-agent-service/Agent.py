@@ -122,7 +122,11 @@ class Agent(dbus.service.Object):
             self.logger.info('DBUS CLIENTJOB -> %s' % args)
             task = json.loads(args)
 
-            #testing
+            if not self.data_center or not self.data_center.serverjob_looping_on[0]:
+                task['WARNNING'] = 'Agent is initializing...'
+                self.logger.error('!!!!!!!!!! AGENT IS INITIALIZING !!!!!!!!!!')
+                return json.dumps(task)
+
             if not self.watch_process(sender):
                 task['WARNNING'] = 'You are an unauthenticated process.'
                 self.logger.error('!!!!!!!!!! UNAUTHENTICATED ACCESS !!!!!!!!!!')
