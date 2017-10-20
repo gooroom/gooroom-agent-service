@@ -3,6 +3,7 @@
 #-----------------------------------------------------------------------
 import os
 import sys
+from pwd import getpwnam
 import simplejson as json
 
 from agent_error import AgentError
@@ -174,7 +175,7 @@ def catch_user_id():
         for pw in pws:
             splited = pw.split(':')
             if splited[0] == user_id:
-                ps = '/var/run/user/%s/gooroom/.grm-user'  % user_id
+                ps = '/var/run/user/%d/gooroom/.grm-user'  % getpwnam(user_id).pw_uid
                 #user_id is a local account
                 if not 'gooroom-online-account' in splited[4] or not os.path.exists(ps):
                     user_id = '+' + user_id
