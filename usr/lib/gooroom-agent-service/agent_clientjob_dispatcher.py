@@ -80,10 +80,15 @@ class AgentClientJobDispatcher(threading.Thread):
                         result = self._special_worker.do_clientjob(copy.deepcopy(task))
 
                         if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
+                            task_name = result[J_MOD][J_TASK][J_TASKN]
+                            self.data_center.journal_logger.error('%s:%s' % 
+                                (task_name, result[J_MOD][J_TASK][J_OUT][J_MESSAGE]))
+
                             if mustok == 'no':
                                 break
 
-                            self.logger.error('RETRY after %dsecs in INIT-TASK' % INIT_RETRY_TIME)
+                            self.logger.error('RETRY after %dsecs in INIT-TASK(%s)' 
+                                % (INIT_RETRY_TIME, task_name))
                         else:
                             break
 

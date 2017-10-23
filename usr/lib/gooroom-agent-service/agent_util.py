@@ -1,16 +1,20 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
-import os
-import sys
-from pwd import getpwnam
+from datetime import datetime
+from systemd import journal
 import simplejson as json
+from pwd import getpwnam
+import logging.handlers
+import configparser
+import traceback
+import logging
+import struct
+import dbus
+import sys
+import os
 
 from agent_error import AgentError
-
-#-----------------------------------------------------------------------
-import configparser
-
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -49,12 +53,6 @@ class AgentConfig:
         """
 
         return sys.argv[0].split('/')[-1].split('.')[0]
-
-#-----------------------------------------------------------------------
-import logging
-import logging.handlers
-
-from datetime import datetime
 
 #-----------------------------------------------------------------------
 class AgentLog:
@@ -137,7 +135,6 @@ class AgentLog:
         return logger
 
 #-----------------------------------------------------------------------
-import traceback
 def agent_format_exc():
     """
     reprlib version of format_exc of traceback
@@ -146,7 +143,6 @@ def agent_format_exc():
     return '\n'.join(traceback.format_exc().split('\n')[-4:-1])
 
 #-----------------------------------------------------------------------
-import struct
 def catch_user_id():
     """
     read current logined user_id from /var/run/utmp
@@ -186,8 +182,17 @@ def catch_user_id():
     return user_id
 
 #-----------------------------------------------------------------------
-import dbus
+def create_journal_logger():
+    """
+    create journald logger
+    """
 
+    journal_logger = logging.getLogger('gooroom-agent')
+    journal_logger.propagate = False
+    journal_logger.addHandler(journal.JournalHandler(SYSLOG_IDENTIFIER='gooroom-agent'))
+    return journal_logger
+
+#-----------------------------------------------------------------------
 DBUS_NAME = 'kr.gooroom.agent'
 DBUS_OBJ = '/kr/gooroom/agent'
 DBUS_IFACE = 'kr.gooroom.agent'

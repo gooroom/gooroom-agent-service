@@ -13,7 +13,7 @@ import ssl
 import sys
 import re
 
-from agent_util import AgentConfig,AgentLog,catch_user_id
+from agent_util import AgentConfig,AgentLog,catch_user_id,create_journal_logger
 from agent_simple_parser import SimpleParser
 from agent_msslrest import AgentMsslRest
 from agent_define import *
@@ -119,6 +119,9 @@ class AgentDataCenter:
 
             #PACKAGE OPERATION
             self.package_operation = self.conf.get('MAIN', 'PACKAGE_OPERATION')
+
+            #JOURNAL LOGGER
+            self.journal_logger = create_journal_logger()
 
             self.logger.info('END SHOW()')
 
