@@ -448,6 +448,7 @@ def task_get_update_server_config(task, data_center):
     import apt
     cache = apt.cache.Cache()
     cache.update()
+    cache.close()
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
