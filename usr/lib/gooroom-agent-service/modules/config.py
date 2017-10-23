@@ -119,13 +119,13 @@ def task_get_update_operation(task, data_center):
     if operation == 'enable':
         NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
         for ub in updating_binary:
-            current_permissions = stat.S_IMODE(os.lstat(ub).st_mode)
-            os.chmod(ub, current_permissions & NO_EXEC)
+            perm = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, perm & NO_EXEC)
     else:
-        EXEC = stat.S_IXUSR & stat.S_IXGRP & stat.S_IXOTH
+        EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         for ub in updating_binary:
-            current_permissions = stat.S_IMODE(os.lstat(ub).st_mode)
-            os.chmod(ub, current_permissions & EXEC)
+            perm = stat.S_IMODE(os.lstat(ub).st_mode)
+            os.chmod(ub, perm | EXEC)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
