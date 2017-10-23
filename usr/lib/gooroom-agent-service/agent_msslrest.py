@@ -77,7 +77,7 @@ class AgentMsslRest:
         authenticate and get token
         """
 
-        body = {H_AUTH:{H_CID:self.data_center.client_id}}
+        body = {H_AUTH:{H_CID:self.data_center.get_client_id()}}
 
         rsp_headers, rsp_body = self.shoot(
             self.data_center.auth_api, body=json.dumps(body))

@@ -58,7 +58,7 @@ class AgentDataCenter:
                 self.clientjob_looping_on = [True]
 
             #CLIENT ID
-            self.client_id = self.extract_clientid_from_cert()
+            #self.client_id = self.extract_clientid_from_cert()
         
             #SERVER DOMAIN
             self.server_domain = self.read_server_domain()
@@ -191,7 +191,7 @@ class AgentDataCenter:
             user_id = '***TERMINAL ERROR***'
             raise
 
-        b = {'client_id':self.client_id, 'user_id':user_id, 'type:':0}
+        b = {'client_id':self.get_client_id(), 'user_id':user_id, 'type:':0}
         return self.restful.request(
             self.jobs_api, body=json.dumps(b))
 
@@ -219,7 +219,7 @@ class AgentDataCenter:
         agent_data = [{}]
 
         agent_data[0][J_AGENT_DATA_JOBNO] = job_no
-        agent_data[0][J_AGENT_DATA_CLIENTID] = self.client_id
+        agent_data[0][J_AGENT_DATA_CLIENTID] = self.get_client_id()
         agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
 
         return agent_data
@@ -263,6 +263,14 @@ class AgentDataCenter:
 
         return dt
 
+    def get_client_id(self):
+        """
+        return clientid
+        """
+
+        return self.extract_clientid_from_cert()
+
+
     def extract_clientid_from_cert(self):
         """
         get clientid from certificate
@@ -276,7 +284,7 @@ class AgentDataCenter:
 
         if cert:
             cn = cert.get_subject().CN
-            self.logger.info('client_id=%s', cn)
+            self.logger.debug('client_id=%s', cn)
             return cn
         else:
             return None
