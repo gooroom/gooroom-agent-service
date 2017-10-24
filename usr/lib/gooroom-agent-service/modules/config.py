@@ -123,11 +123,13 @@ def task_get_update_operation(task, data_center):
         for ub in updating_binary:
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm & NO_EXEC)
+        data_center.GOOROOM_AGENT.update_operation(1)
     else:
         EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         for ub in updating_binary:
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm | EXEC)
+        data_center.GOOROOM_AGENT.update_operation(0)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
