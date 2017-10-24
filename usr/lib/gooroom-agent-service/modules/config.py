@@ -70,7 +70,9 @@ def task_tell_update_operation(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-updating_binary = ['/usr/bin/gooroom-update', '/usr/sbin/synaptic']
+updating_binary = ['/usr/bin/gooroom-update', 
+                    '/usr/sbin/synaptic', 
+                    '/usr/bin/gooroom-update-launcher']
 
 def task_get_update_operation_with_loginid(task, data_center):
     """

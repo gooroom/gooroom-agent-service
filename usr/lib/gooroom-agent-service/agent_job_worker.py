@@ -15,7 +15,6 @@ import ctypes
 from ctypes import util
 from socket import timeout as SOCKET_TIMEOUT
 
-from agent_msslrest import AgentMsslRest
 from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_define import *
 

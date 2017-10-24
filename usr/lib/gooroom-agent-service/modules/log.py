@@ -188,9 +188,10 @@ def read_last_seek_time(backup_path, fname):
     if not os.path.exists(fullpath):
         return None
 
-    t = None
     with open(fullpath) as f:
         t = f.readline().strip().rstrip('\n')
+        if not t:
+            t = None
 
     return float(t)
 
