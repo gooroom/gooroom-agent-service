@@ -6,6 +6,7 @@ After=network-online.target
 ExecStart=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py
 ExecStop=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py stop
 ExecReload=/usr/bin/python3 /usr/lib/gooroom-agent-service/Agent.py reload
+Restart=on-failure
 RestartSec=5
 TimeoutSec=10
 KillMode=none

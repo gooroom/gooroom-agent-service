@@ -123,6 +123,9 @@ class AgentDataCenter:
             #JOURNAL LOGGER
             self.journal_logger = create_journal_logger()
 
+            #FOR SUMMARY-LOG-TASK
+            self.summary_log_first_execute = True
+
             self.logger.info('END SHOW()')
 
         except:

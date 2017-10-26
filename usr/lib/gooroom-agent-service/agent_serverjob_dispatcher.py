@@ -76,6 +76,7 @@ class AgentServerJobDispatcher(threading.Thread):
 
                 except SOCKET_TIMEOUT:
                     waiting_time, timeout_cnt = self.timeout_on(waiting_time, timeout_cnt)
+                    AgentLog.get_logger().error('%s' % agent_format_exc())
 
                 except: 
                     AgentLog.get_logger().error('%s' % agent_format_exc())

@@ -278,8 +278,8 @@ def get_cache():
     """
 
     cache = apt.cache.Cache()
-    #cache.update()
-    #cache.open()
+    cache.update()
+    cache.open()
 
     return cache
 
