@@ -294,10 +294,13 @@ def load_security_log(task, data_center):
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
 
-                if not log:
+                if not log and not data_center.summary_log_first_execution:
                     continue
+                else:
+                    task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(str(l) for l in log)
 
-                task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(str(l) for l in log)
+                if data_center.summary_log_first_execution:
+                    data_center.summary_log_first_execution = False
 
                 sendable = True
 

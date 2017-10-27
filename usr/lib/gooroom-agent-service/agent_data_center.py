@@ -7,6 +7,7 @@ import importlib
 import httplib2
 import OpenSSL
 import ctypes
+import psutil
 import queue
 import glob
 import ssl
@@ -122,6 +123,12 @@ class AgentDataCenter:
 
             #JOURNAL LOGGER
             self.journal_logger = create_journal_logger()
+
+            #UPTIME 
+            self.uptime = psutil.boot_time()
+
+            #FOR SUMMARY_LOG
+            self.summary_log_first_execution = True
 
             self.logger.info('END SHOW()')
 

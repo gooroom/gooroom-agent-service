@@ -1,14 +1,14 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
-import os
-import sys
-import dbus
-import dbus.service
-import time
-import multiprocessing
 import simplejson as json
+import multiprocessing
+import dbus.service
 import OpenSSL
+import dbus
+import time
+import sys
+import os
 
 from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
