@@ -150,6 +150,9 @@ def task_daemon_reload(task, data_center):
 
     manager.ReloadUnit(service, "fail")
 
+    if 'FROM' in task and task['FROM'] == 'dbus':
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
     return wait_status_updated(bus, manager, service, 'active', 10)
 
 #-----------------------------------------------------------------------

@@ -235,7 +235,6 @@ class AgentJobWorker(threading.Thread):
             self.logger.debug(m)
         else:
             self.logger.error(m)
-        #print(m)
 
     def run(self):
         """

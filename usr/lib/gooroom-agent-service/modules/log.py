@@ -288,12 +288,15 @@ def load_security_log(task, data_center):
                 m = importlib.import_module('security.'+sf)
                 run, status, log = getattr(m, 'get_summary')(logs)
 
-                AgentLog.get_logger().debug('(summary_log) ({:<5}) logs={}'.format(sf, log))
-                if not log:
-                    continue
+                AgentLog.get_logger().debug(
+                    '(summary_log) ({:<5}) run={} status={} logs={}'.format(sf, run, status, log))
 
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
+
+                if not log:
+                    continue
+
                 task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(str(l) for l in log)
 
                 sendable = True

@@ -132,6 +132,8 @@ class Agent(dbus.service.Object):
                 self.logger.error('!!!!!!!!!! UNAUTHORIZED ACCESS !!!!!!!!!!')
                 return json.dumps(task)
                 
+            task['FROM'] = 'dbus'
+
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
             self.logger.info('DBUS CLIENTJOB <- %s' % ret)
             return ret
