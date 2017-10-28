@@ -66,15 +66,16 @@ class AgentJobManager:
             if worker_num == 0:
                 wk = AgentJobWorker(self.role, self.data_center)
                 self.workers.append(wk)
+                wk.daemon = True
                 wk.start()
             #worker가 부족하면 또 뽑고
             else:
-                #worker 부족판정로직은 스트레스테스트와 병행해서 보완이 필수
-                if worker_num <= self.data_center.job_max_worker_num \
+                if worker_num < self.data_center.job_max_worker_num \
                     and Q.qsize() > \
                         self.data_center.job_num_per_worker * worker_num:
                     wk = AgentJobWorker(self.role, self.data_center)
                     self.workers.append(wk)
+                    wk.daemon = True
                     wk.start()
                         
             Q.put(job)
@@ -90,8 +91,6 @@ class AgentJobManager:
         #설정파일에 기재된 시간이 지나면 worker는 자동으로 
         #종료되기 때문에 수동으로 종료시킬 필요가 없을 것 같음.
 
-        #agent를 종료하더라도 수행중이던 task는 끝내고
-        #자동으로 종료하게 하는게 맞는 것 같음.
         pass
 
 #-----------------------------------------------------------------------
@@ -265,8 +264,6 @@ class AgentJobWorker(threading.Thread):
                 self.last_job_time = time.time()
 
             except queue.Empty:
-                self.retiring()
-
                 if time.time() - self.last_job_time > self.data_center.worker_lifetime:
                     self.logger.error('A WORKER(%s) RETIRING' % self.role)
                     break
@@ -289,7 +286,7 @@ class AgentJobWorker(threading.Thread):
 
         idle_rate = float(time.time() - self.last_job_time) / float(self.data_center.worker_lifetime)
 
-        return idle_rate > 0.9 #to config
+        return idle_rate > 0.9
 
     def alive(self):
         return self.is_alive()
