@@ -51,7 +51,7 @@
     </task>
 
     <!-- GET UPDATE SERVER CONFIG FILE -->
-    <task name="get_update_server_config" bootable="yes" mustok="no">
+    <task name="get_update_server_config" bootable="yes" mustok="no" priority="3">
         <param name="task_name" type="string"/>
 
         <in>
@@ -413,7 +413,7 @@
     </task>
 
     <!-- SET APT CONF -->
-    <task name="set_apt_conf" bootable="yes" mustok="no" priority="5">
+    <task name="set_apt_conf" bootable="yes" mustok="no" priority="2">
         <param name="task_name" type="string"/>
 
         <in>
@@ -431,7 +431,7 @@
     </task>
 
     <!-- SET GPG KEY -->
-    <task name="set_gpg_key" bootable="yes" mustok="no" priority="6">
+    <task name="set_gpg_key" bootable="yes" mustok="no" priority="1">
         <param name="task_name" type="string"/>
 
         <in>

@@ -9,6 +9,7 @@ import OpenSSL
 import base64
 import shutil
 import ctypes
+import gnupg
 import dbus
 import stat
 import glob
@@ -50,7 +51,6 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
-
 #-----------------------------------------------------------------------
 def task_set_gpg_key(task, data_center):
     """
@@ -60,7 +60,7 @@ def task_set_gpg_key(task, data_center):
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {}
 
-    AGENT_MARK = '_AGENT_'
+    AGENT_MARK = 'AGENT-'
     path = '/etc/apt/trusted.gpg.d/'
     mch = re.compile(AGENT_MARK)
 
@@ -70,30 +70,36 @@ def task_set_gpg_key(task, data_center):
     server_rsp = data_center.module_request(task)
     urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
 
-    for url in urls:
-        domain = url.split()[1].strip()
-        proto_len = 0
-        if domain.startswith('https://'):
-            proto_len = 8
-        elif domain.startswith('http://'):
-            proto_len = 7
+    gpg = gnupg.GPG(gnupghome='/var/tmp/gooroom-agent-service')
+    try:
+        for url in urls:
+            domain = url.split()[1].strip()
+            proto_len = 0
+            if domain.startswith('https://'):
+                proto_len = 8
+            elif domain.startswith('http://'):
+                proto_len = 7
 
-        if proto_len == 0:
-            continue
+            if proto_len == 0:
+                continue
 
-        protocol = domain[:proto_len]
-        hostname = domain[proto_len:].split('/')[0]
-        agent_http = httplib2.Http(timeout=data_center.rest_timeout)
-        rsp_headers, rsp_body = \
-            agent_http.request(protocol+hostname+'/archive.key', method='GET')
+            protocol = domain[:proto_len]
+            hostname = domain[proto_len:].split('/')[0]
+            agent_http = httplib2.Http(ca_certs=data_center.agent_ca_cert, 
+                    timeout=data_center.rest_timeout)
+            agent_http.add_certificate(key=data_center.agent_key, 
+                    cert=data_center.agent_cert, domain='')
+            rsp_headers, rsp_body = \
+                agent_http.request(protocol+hostname+'/archive.key', method='GET')
 
-        if rsp_headers['status'] == '200':
-            new_fname = path+AGENT_MARK + hostname +'.gpg'
-
-            '''
-            with open(new_fname, 'wb') as f:
-                f.write(base64.b64decode(rsp_body))
-            '''
+            if rsp_headers['status'] == '200':
+                new_fname = path+AGENT_MARK + hostname.replace('.', '-') +'.gpg'
+                res = gpg.import_keys(rsp_body)
+                os.chmod('/var/tmp/gooroom-agent-service/pubring.gpg', 644)
+                shutil.copyfile('/var/tmp/gooroom-agent-service/pubring.gpg', new_fname)
+                AgentLog.get_logger().info('GPG KEY OK')
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -119,7 +125,7 @@ def task_set_apt_conf(task, data_center):
     server_rsp = data_center.module_request(task)
     urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
 
-    AGENT_MARK = '_AGENT_'
+    AGENT_MARK = 'AGENT-'
     path = '/etc/apt/apt.conf.d/'
     mch = re.compile(AGENT_MARK)
 
@@ -129,24 +135,28 @@ def task_set_apt_conf(task, data_center):
     for old_fname in (f for f in glob.glob(path+'*') if mch.search(f)):
         os.remove(old_fname)
 
-    for url in urls:
-        domain = url.split()[1].strip()
-        if not url.startswith('https://'):
-            continue
+    try:
+        for url in urls:
+            domain = url.split()[1].strip()
+            if not domain.startswith('https://'):
+                continue
 
-        proto_len = 8
-        hostname = domain[proto_len:].split('/')[0]
-        agent_http = httplib2.Http(timeout=data_center.rest_timeout)
-        rsp_headers, rsp_body = agent_http.request(domain, method='GET')
+            proto_len = 8
+            hostname = domain[proto_len:].split('/')[0]
+            agent_http = httplib2.Http(timeout=data_center.rest_timeout)
+            rsp_headers, rsp_body = agent_http.request(domain, method='GET')
 
-        if rsp_headers['status'] == '400':
-            new_fname = path + '20' + AGENT_MARK + domain
-            '''
-            with open(new_fname, 'w') as f:
-                f.write(ATP_CONF_TEMPL % (hostname, cert_path, key_path))
-            '''
+            if rsp_headers['status'] == '400':
+                new_fname = path + '20' + AGENT_MARK + hostname.replace('.', '-')
+                with open(new_fname, 'w') as f:
+                    f.write(ATP_CONF_TEMPL % (hostname, cert_path, key_path))
+
+                AgentLog.get_logger().info('APT CONF OK')
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
 
 #-----------------------------------------------------------------------
 def task_tell_update_operation(task, data_center):
