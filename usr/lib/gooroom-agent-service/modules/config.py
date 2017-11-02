@@ -4,15 +4,18 @@
 import xml.etree.ElementTree as etree
 import simplejson as json
 import importlib
+import httplib2
 import OpenSSL
 import base64
 import shutil
 import ctypes
 import dbus
 import stat
+import glob
 import pwd
 import sys
 import os
+import re
 
 from multiprocessing import Process
 from collections import OrderedDict
@@ -47,6 +50,103 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_set_gpg_key(task, data_center):
+    """
+    set_gpg_key
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    AGENT_MARK = '_AGENT_'
+    path = '/etc/apt/trusted.gpg.d/'
+    mch = re.compile(AGENT_MARK)
+
+    for old_fname in (f for f in glob.glob(path+'*') if mch.search(f)):
+        os.remove(old_fname)
+
+    server_rsp = data_center.module_request(task)
+    urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
+
+    for url in urls:
+        domain = url.split()[1].strip()
+        proto_len = 0
+        if domain.startswith('https://'):
+            proto_len = 8
+        elif domain.startswith('http://'):
+            proto_len = 7
+
+        if proto_len == 0:
+            continue
+
+        protocol = domain[:proto_len]
+        hostname = domain[proto_len:].split('/')[0]
+        agent_http = httplib2.Http(timeout=data_center.rest_timeout)
+        rsp_headers, rsp_body = \
+            agent_http.request(protocol+hostname+'/archive.key', method='GET')
+
+        if rsp_headers['status'] == '200':
+            new_fname = path+AGENT_MARK + hostname +'.gpg'
+
+            '''
+            with open(new_fname, 'wb') as f:
+                f.write(base64.b64decode(rsp_body))
+            '''
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+ATP_CONF_TEMPL = '''APT::Sandbox::User "root";
+
+Acquire::https::%s {
+    Verify-Peer "true";
+    Verify-Host "true";
+
+    SslCert "%s";
+    SslKey "%s";
+}'''
+
+def task_set_apt_conf(task, data_center):
+    """
+    set_apt_conf
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
+
+    AGENT_MARK = '_AGENT_'
+    path = '/etc/apt/apt.conf.d/'
+    mch = re.compile(AGENT_MARK)
+
+    cert_path = AgentConfig.get_config().get('MAIN', 'AGENT_CERT')
+    key_path = AgentConfig.get_config().get('MAIN', 'AGENT_KEY')
+
+    for old_fname in (f for f in glob.glob(path+'*') if mch.search(f)):
+        os.remove(old_fname)
+
+    for url in urls:
+        domain = url.split()[1].strip()
+        if not url.startswith('https://'):
+            continue
+
+        proto_len = 8
+        hostname = domain[proto_len:].split('/')[0]
+        agent_http = httplib2.Http(timeout=data_center.rest_timeout)
+        rsp_headers, rsp_body = agent_http.request(domain, method='GET')
+
+        if rsp_headers['status'] == '400':
+            new_fname = path + '20' + AGENT_MARK + domain
+            '''
+            with open(new_fname, 'w') as f:
+                f.write(ATP_CONF_TEMPL % (hostname, cert_path, key_path))
+            '''
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_tell_update_operation(task, data_center):

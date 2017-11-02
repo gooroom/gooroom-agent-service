@@ -393,7 +393,9 @@ def agent_commit(task, cache):
                 len(mark_status['D']))
 
         for action in ('I', 'U', 'D'):
-            m += '[%s] %s\n' % (action, '\n'.join(mark_status[action]))
+            m += '[%s:%d] %s\n' % (action, 
+                                len(mark_status[action]), 
+                                '\n'.join(mark_status[action]))
     else:
         m += '%s\n%s' % (aap.get_message(), aip.get_message())
         #task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK

@@ -411,4 +411,40 @@
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- SET APT CONF -->
+    <task name="set_apt_conf" bootable="yes" mustok="no" priority="5">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="update_base_urls" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SET GPG KEY -->
+    <task name="set_gpg_key" bootable="yes" mustok="no" priority="6">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="update_base_urls" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
 </module>
