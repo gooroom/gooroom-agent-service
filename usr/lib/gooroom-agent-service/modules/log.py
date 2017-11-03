@@ -4,6 +4,7 @@
 import subprocess
 import importlib
 import datetime
+import glob
 import sys
 import os
 
@@ -323,8 +324,17 @@ def read_unique_id():
     return client unique id
     """
 
-    with open('/sys/devices/virtual/dmi/id/product_uuid') as f:
-        return f.read().split('\n')[0]
+    if os.path.exists('/sys/devices/virtual/dmi/id/product_uuid'): 
+        with open('/sys/devices/virtual/dmi/id/product_uuid') as f:
+            return f.read().strip('\n')
+    else:
+        for iface in glob.glob('/sys/class/net/*'):
+            if iface == '/sys/class/net/lo':
+                continue
+            with open(iface+'/address') as f2:
+                return f2.read().strip('\n')
+
+    return 'no unique id'
 
 #-----------------------------------------------------------------------
 def read_kernel():
