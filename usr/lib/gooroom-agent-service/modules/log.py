@@ -236,8 +236,11 @@ match_strings = (
     'SYSLOG_IDENTIFIER=gep-daemon',
     'SYSLOG_IDENTIFIER=gop-daemon', 
     'SYSLOG_IDENTIFIER=grac-device-daemon',
+    'SYSLOG_IDENTIFIER=gooroom-browser',
     'PRIORITY=3',
     '_AUDIT_FIELD_OP="appraise_data"')
+
+match_firewall = ('PRIORITY=4', 'SYSLOG_IDENTIFIER=kernel')
 
 def load_security_log(task, data_center):
     """
@@ -265,6 +268,9 @@ def load_security_log(task, data_center):
         for match in match_strings:
             j.add_match(match)
             j.add_disjunction()
+
+        for match in match_firewall:
+            j.add_match(match)
 
         logs = []
 

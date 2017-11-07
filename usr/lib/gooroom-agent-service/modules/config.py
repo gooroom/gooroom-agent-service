@@ -14,6 +14,7 @@ import dbus
 import stat
 import glob
 import pwd
+import apt
 import sys
 import os
 import re
@@ -559,9 +560,11 @@ def task_get_update_server_config(task, data_center):
         verify_signature(s, c)
         replace_file(n, c, s)
 
-    import apt
+    import apt_pkg
+    apt_pkg.init()
     cache = apt.cache.Cache()
     cache.update()
+    cache.open()
     cache.close()
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
