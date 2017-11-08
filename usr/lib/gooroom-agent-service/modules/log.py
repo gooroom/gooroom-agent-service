@@ -237,10 +237,9 @@ match_strings = (
     'SYSLOG_IDENTIFIER=gop-daemon', 
     'SYSLOG_IDENTIFIER=grac-device-daemon',
     'SYSLOG_IDENTIFIER=gooroom-browser',
-    'PRIORITY=3',
     '_AUDIT_FIELD_OP="appraise_data"')
 
-match_firewall = ('PRIORITY=4', 'SYSLOG_IDENTIFIER=kernel')
+match_firewall = ('PRIORITY=3', 'SYSLOG_IDENTIFIER=kernel')
 
 def load_security_log(task, data_center):
     """

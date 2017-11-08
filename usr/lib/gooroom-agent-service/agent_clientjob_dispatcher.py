@@ -74,6 +74,7 @@ class AgentClientJobDispatcher(threading.Thread):
             for task_info in self.data_center.bootable_tasks:
                 task, mustok = task_info
                 ting = self.timing(INIT_RETRY_TIME)
+                sent_journal = False
 
                 while True:
                     if next(ting):
@@ -81,8 +82,11 @@ class AgentClientJobDispatcher(threading.Thread):
 
                         if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
                             task_name = result[J_MOD][J_TASK][J_TASKN]
-                            self.data_center.journal_logger.error('%s:%s' % 
-                                (task_name, result[J_MOD][J_TASK][J_OUT][J_MESSAGE]))
+
+                            if not sent_journal:
+                                self.data_center.journal_logger.error('%s:%s' % 
+                                    (task_name, result[J_MOD][J_TASK][J_OUT][J_MESSAGE]))
+                                sent_journal = True
 
                             if mustok == 'no':
                                 break
