@@ -112,7 +112,7 @@ class AgentJobWorker(threading.Thread):
 
         self.daemon = True
 
-        self.logger.debug('A WORKER(%s) EMPLOYED' % self.role)
+        self.logger.info('A WORKER(%s) EMPLOYED' % self.role)
 
     def do_task(self, task):
         """
@@ -124,7 +124,7 @@ class AgentJobWorker(threading.Thread):
 
         module = self.data_center.modules[module_name]
         do_task = getattr(module, 'do_task')
-        self.logger.debug('DOING TASK(%s)' % task_name)
+        self.logger.info('DOING TASK(%s)' % task_name)
 
         rsp = None
 
@@ -140,7 +140,7 @@ class AgentJobWorker(threading.Thread):
         else:
             rsp = do_task(task, self.data_center)
 
-        self.logger.debug('DONE TASK(%s)' % task_name)
+        self.logger.info('DONE TASK(%s)' % task_name)
         return rsp
 
     def make_outtask(self, task, status, err_reason):
@@ -186,7 +186,7 @@ class AgentJobWorker(threading.Thread):
             m = '[CLIENT FIN] ({:<8}) ({:<30}) rsp={} code={} err={}'.format(
                 'shoot', task_name, server_rsp, status_code, err_msg)
             if status_code == AGENT_OK:
-                self.logger.debug(m)
+                self.logger.info(m)
             else:
                 self.logger.error(m)
 
@@ -231,7 +231,7 @@ class AgentJobWorker(threading.Thread):
         m = '[SERVER FIN] ({:<8}) ({:<10}) rsp={} code={} err={}'.format(
             'shoot', job_no, server_rsp, status_code, err_msg)
         if status_code == AGENT_OK:
-            self.logger.debug(m)
+            self.logger.info(m)
         else:
             self.logger.error(m)
 
@@ -272,7 +272,7 @@ class AgentJobWorker(threading.Thread):
                 self.logger.error('%s' % agent_format_exc())
                 break
 
-        self.logger.debug('A WORKER(%s) RETIRED' % self.role)
+        self.logger.info('A WORKER(%s) RETIRED' % self.role)
 
     def retiring(self):
         """

@@ -107,7 +107,7 @@ DBUS_CALL=2
 
 #모듈의 결과값을 서버로 전송하지 않기 위해서
 #모듈이 아래값을 반환하면 agent는 결과를 서버로 전송하지 않음
-SKEEP_SERVER_REQUEST='!! module do not want to request to server'
+SKEEP_SERVER_REQUEST='skeep_server_request'
 
 #모듈이름이 아래와 같은 태스크는 모듈을 호출하지 않고
 #agent가 태스크를 서버로 직접전송
