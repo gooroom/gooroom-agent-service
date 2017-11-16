@@ -1,3 +1,103 @@
+gooroom-agent-service (0.1.1+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [3617a3e3] convert tab to 4spaces
+  * [8e9ce3e7] remove .agent_job_worker.py.swp
+  * [e83a7354] change method of getting jobs. add log module tasks. bug fix.
+  * [0992a767] setting authority config is implemented. added test code for protecting feature from unprivileged processes which call do_task over dbus.
+  * [d953b992] although agent can't load security modules, it does not raise exception because of modules developing.
+  * [f0d074a9] matched the description with codereview's
+  * [92f48927] updated authority config task. modified how to get loginid.
+  * [8ed9798e] when a task of serverjob is failed, set the status of AGENT_NOK(111)
+  * [01fb650f] change 'move' to 'copy' for creating backfile in replace_file.
+  * [898adb65] added dummy security log for performance test.
+  * [0382e0bb] changed pss-score int to string in calc_pss
+  * [c2d19229] changed how to create httplib2.Http instance because httplib2 is not thread safe.
+  * [b0fade1d] added TASK_SET_SERVERJOB_DISPATCH_TIME and TASK_SET_SECURITY_ITEM
+  * [bf080318] (bug fix) remove exit(0) in set_xfconf_dpms_on_ac_off
+  * [33ac2279] added dpms-on-battery-off property in TASK_SET_SECURITY_ITEM
+  * [3daa3f1f] updated how to update apt cache
+  * [bf928f62] (bug fix) removed one of multiple need_new_http of request()
+  * [e29cc6c1] (bug fix) task_rsp -> task
+  * [c9925ede] changed summary_log logic. after checking server response AGENT writes seek-time.
+  * [48a9ba4e] separated clinet-info and summary-log. added task_get_serverjob_dispatch_time.
+  * [94ed92f9] changed rules file path to /etc/gooroom/grac.d/user.rules
+  * [249ab3c9] added ntp-list-task
+  * [061bc7d8] changed screensaver-event from dbus-method to dbus-signal
+  * [4b48e880] roll back client unique id from machine-id to board-id
+  * [60ecbb45] updated config files in white list
+  * [8df8c5c4] (bug fix) request()
+  * [d4f9152a] (bug fix) changed max_dispatch_time from str to int
+  * [9edc2725] changed security item filepath
+  * [a1f29c8e] added signature in authority config task
+  * [f6f4c650] (bug fix) added AgentLog to daemon_control
+  * [7a34b772] changed password cycle key from pwd_last_day to pwd_max_day
+  * [b0cded58] changed init process of clientjob. remove journal test code
+  * [49093574] changed preference file name to gooroom.pref
+  * [37b9ea5f] changed dirpath of signatures
+  * [567bf40b] added get-screen-time task
+  * [86be0ddc] changed /etc/hosts config logic for supporting to delete lines. added gooroom-log-task.
+  * [ace0aa44] changed how to get server certificate file.
+  * [533bfa94] removed test code in gooroom_log()
+  * [7b16ec32] changed hosts-task logic. added loglevel of journal in gooroom_log().
+  * [593975f7] changed biz logic of gooroom_log and summary_log.
+  * [6368a40f] changed data format of gooroom_log.
+  * [8fce2254] added default message(OK) in all tasks. changed polltime of summary_log to 5secs. changed priority of ntp-list-task to 1.
+  * [5a36e9e0] added priority in gooroom_log.
+  * [ad7328e0] changed priority logic in gooroom_log.
+  * [be3a5c1d] (bug fix) changed security log data format. added dbus protection feature.
+  * [610fe7d6] deleted dbus protector code.
+  * [d6564332] added dbus protection method to check modn/taskn.
+  * [f59967e5] (bug fix) changeid=I51511c7b72e3ca5c4d477e2cc0157601ac0fa3e9
+  * [fec54a32] changed ntp data format from server.
+  * [b562d026] added retrying logic of initialization.
+  * [ac54b7e0] added hipervisor-operation-task. added raise-tracffic-task.
+  * [49909012] changed hipervisor method.
+  * [3ac4b635] changed hipervisor-task logic.
+  * [62deb2aa] changed task name from hipervisor to hypervisor.
+  * [edc5d858] changed get-hypervisor-operation's launcher from pam to agent.
+  * [2b9668f6] changed how to get loginid in hypervisor-operation-task.
+  * [23e6c286] added package-operation-task.
+  * [3eb0828e] added logic checking if certificate is changed in update-package-to-server-task.
+  * [97107786] rollback server-certificate-task because grm just only supports m-ssl. added mustok feature in template.
+  * [7381e476] added get-media-config-task.
+  * [05198238] re-added process watchdog feature.
+  * [b3d6cac9] added cache-update after adapting update-server-config.
+  * [7c78bd07] updated mustok option of bootable tasks.
+  * [d7e93c67] commented watch logic for testing.
+  * [aba51151] rollback process watchdog logic. updated white process list in config.
+  * [47292e5a] It's not error when apt.cache.commit() returns None.
+  * [350cb9e8] added get-browser-config-task.
+  * [a3448f6d] added update-operation tasks. splited security-items task and added password-cycle and screen-time tasks.
+  * [a3b0beb3] added protection feature which disallows dbus-call when agent is initializing.
+  * [56134d31] (bug fix) changed username to uid in catch_login_id().
+  * [3ca28f97] changed getting clientid when agent starting to getting when requesting every time.
+  * [f6ebba57] (bug fix) syncronized task_get_update_operation with task_get_update_operation_with_loginid.
+  * [a83eab5d] added cache.close() in update-server-task.
+  * [76599d0d] added gooroom-agent log to gooroom-log-task.
+  * [eea55d17] (bug fix) checked if seek-time is none in log.
+  * [f046ef16] added sending signal for starting/stoping updater to session.
+  * [6c71ce10] removed protection of initialization from dbus.
+  * [bb2ef24d] changed logic of summary-log-task for showing security features's status on GPMS.
+  * [6e98ddcc] updated summary log logic for previout commit.
+  * [cb14ce28] added daemon flag to job worker.
+  * [ed41b34b] adding #1 set-pgp-key-task and set-atp-conf-task.
+  * [aab5bc8e] added #2 set-pgp-key-task and set-apt-conf-task.
+  * [dc84c230] changed security directory and pycaller.py path from /usr/lib/[arch] to /usr/lib for ARM.
+  * [f431c7ea] added mustok attribution in log.py.
+  * [36c16c8a] added mac address as unique id of arm machine.
+  * [60f1bd3f] changed polltime from 600 to 60 in update_package_to_server.
+  * [9febed9a] changed summary_log logic by gooroom-security-logparser. added apt_pkg.init to update_server_config for supporting m-ssl update.
+  * [70884366] changed summary_log journal filter for sync to logparser. changed init-error-log to send just once to server.
+  * [cf361ffc] changed log-level of a few logs. changed SKEEP_SERVER_REQUEST string.
+
+  [ Seunghun Han ]
+  * [57018222] add run status to output json change journald filter
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Thu, 16 Nov 2017 16:24:48 +0900
+
 gooroom-agent-service (0.1) unstable; urgency=low
 
   * Initial Release
