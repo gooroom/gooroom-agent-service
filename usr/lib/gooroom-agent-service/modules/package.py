@@ -115,7 +115,7 @@ def task_upgrade_package_with_label(task, data_center, cache):
             if pkg.is_installed \
                 and pkg.is_upgradable \
                 and pkg.candidate \
-                and pkg.candidate.orgins:
+                and pkg.candidate.origins:
 
                 label_idx = len(pkg.candidate.origins)
 
