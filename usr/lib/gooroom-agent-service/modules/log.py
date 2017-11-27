@@ -235,7 +235,7 @@ match_strings = (
     'SYSLOG_IDENTIFIER=gbp-daemon', 
     'SYSLOG_IDENTIFIER=gep-daemon',
     'SYSLOG_IDENTIFIER=gop-daemon', 
-    'SYSLOG_IDENTIFIER=grac-device-daemon',
+    'SYSLOG_IDENTIFIER=GRAC',
     'SYSLOG_IDENTIFIER=gooroom-browser',
     '_AUDIT_FIELD_OP="appraise_data"')
 
