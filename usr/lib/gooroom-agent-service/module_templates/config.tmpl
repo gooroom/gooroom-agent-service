@@ -34,22 +34,6 @@
         </out>
     </task>
 
-    <!-- REPLACE CLIENT CONFIG FILE -->
-    <task name="replace_client_config">
-        <param name="task_name" type="string"/>
-
-        <in>
-            <param name="file_name" type="CONFIG_FILE"/>
-            <param name="file_contents" type="string"/>
-            <param name="signature" type="string"/>
-        </in>
-
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-        </out>
-    </task>
-
     <!-- GET UPDATE SERVER CONFIG FILE -->
     <task name="get_update_server_config" bootable="yes" mustok="no" priority="3">
         <param name="task_name" type="string"/>

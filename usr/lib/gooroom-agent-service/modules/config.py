@@ -517,21 +517,6 @@ def task_set_security_item_config(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def task_replace_config(task, data_center):
-    """
-    replace_config
-    """
-
-    file_name = task[J_MOD][J_TASK][J_IN]['file_name']
-    file_contents = task[J_MOD][J_TASK][J_IN]['file_contents']
-    signature = task[J_MOD][J_TASK][J_IN]['signature']
-    
-    #if verifying is failed, exception occur
-    verify_signature(signature, file_contents)
-
-    replace_file(file_name, file_contents, signature)
-
-#-----------------------------------------------------------------------
 def task_get_update_server_config(task, data_center):
     """
     get_update_server_config

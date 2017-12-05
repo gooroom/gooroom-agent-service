@@ -42,8 +42,6 @@ def do_task(task, data_center):
 
 #-----------------------------------------------------------------------
 gooroom_match_strings = (
-    'SYSLOG_IDENTIFIER=gooroom-browser', 
-    'SYSLOG_IDENTIFIER=grac-device-daemon',
     'SYSLOG_IDENTIFIER=gooroom-agent')
 
 PRIORITY_N_TO_S = {

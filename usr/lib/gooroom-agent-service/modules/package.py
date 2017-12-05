@@ -115,16 +115,10 @@ def task_upgrade_package_with_label(task, data_center, cache):
             if pkg.is_installed \
                 and pkg.is_upgradable \
                 and pkg.candidate \
-                and pkg.candidate.origins:
+                and pkg.candidate.origins \
+                and len(pkg.candidate.origins) > 0:
 
-                label_idx = len(pkg.candidate.origins)
-
-                if label_idx == 1:
-                    label_idx = 0
-                else:
-                    label_idx = 1
-
-                if label in pkg.candidate.origins[label_idx].label:
+                if label in pkg.candidate.origins[0].origin:
                     cnt += 1
                     pkg.mark_upgrade()
 
@@ -295,14 +289,9 @@ def read_all_pkgs_list_in_cache(cache):
         if not pkg.candidate:
             continue
 
-        label = None
-        if pkg.candidate.origins and pkg.candidate.origins:
-            label_idx = len(pkg.candidate.origins)
-            if label_idx == 1:
-                label_idx = 0
-            else:
-                label_idx = 1
-            label = pkg.candidate.origins[label_idx].label
+        label = 'null'
+        if pkg.candidate.origins and len(pkg.candidate.origins) > 0:
+            label = pkg.candidate.origins[0].origin
 
             if not label:
                 label = 'null'
@@ -326,14 +315,9 @@ def read_installed_pkgs_in_cache(cache):
             if pkg.candidate:
                 candi_ver = pkg.candidate.version
 
-            label = None
-            if pkg.installed.origins and pkg.installed.origins:
-                label_idx = len(pkg.installed.origins)
-                if label_idx == 1:
-                    label_idx = 0
-                else:
-                    label_idx = 1
-                label = pkg.installed.origins[label_idx].label
+            label = 'null'
+            if pkg.installed.origins and len(pkg.installed.origins) > 0:
+                label = pkg.installed.origins[0].origin
 
                 if not label:
                     label = 'null'
