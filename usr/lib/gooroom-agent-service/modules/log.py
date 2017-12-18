@@ -67,6 +67,7 @@ def task_gooroom_log(task, data_center):
 
     j.seek_tail()
     tail_entry = j.get_previous()
+    tail_now_timestamp = datetime.datetime.now().timestamp()
 
     last_seek_time = read_last_seek_time(backup_path, 'gooroom-last-seek-time')
 
@@ -122,6 +123,13 @@ def task_gooroom_log(task, data_center):
             data_center.module_request(task, mustbedata=False)
 
         last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
+
+        if not isinstance(last_seek_time, float) or last_seek_time <= 0.0:
+            last_seek_time = tail_now_timestamp
+            AgentLog.get_logger().info(
+                '(gooroom_log) invalid last_seek_time={} type={}'.format(
+                                    last_seek_time, type(last_seek_time)))
+
         #save lask seek_time to file
         write_last_seek_time(backup_path, last_seek_time, 'gooroom-last-seek-time')
 
@@ -252,6 +260,7 @@ def load_security_log(task, data_center):
 
     j.seek_tail()
     tail_entry = j.get_previous()
+    tail_now_timestamp = datetime.datetime.now().timestamp()
 
     last_seek_time = read_last_seek_time(backup_path, 'security-last-seek-time')
 
@@ -317,6 +326,12 @@ def load_security_log(task, data_center):
             data_center.module_request(task, mustbedata=False)
 
         last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
+
+        if not isinstance(last_seek_time, float) or last_seek_time <= 0.0:
+            last_seek_time = tail_now_timestamp
+            AgentLog.get_logger().info(
+                '(summary_log) invalid last_seek_time={} type={}'.format(
+                                    last_seek_time, type(last_seek_time)))
 
         #save lask seek_time to file
         write_last_seek_time(backup_path, last_seek_time, 'security-last-seek-time')
