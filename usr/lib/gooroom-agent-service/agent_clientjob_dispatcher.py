@@ -2,7 +2,6 @@
 
 #-----------------------------------------------------------------------
 import simplejson as json
-import multiprocessing
 import threading
 import time
 import copy
@@ -32,7 +31,6 @@ class AgentClientJobDispatcher(threading.Thread):
         self._turn_on = True
 
         #THREAD EVENT
-        #thread의 conditional signal을 multiprocessing의 Event를 사용
         #시스템 시간을 변경했을 때 문제가 있어서 교체
         self._collect_event = threading.Event()
         self._collect_event.clear()

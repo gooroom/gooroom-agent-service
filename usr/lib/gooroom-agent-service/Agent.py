@@ -2,11 +2,8 @@
 
 #-----------------------------------------------------------------------
 import simplejson as json
-import multiprocessing
 import dbus.service
-import OpenSSL
 import dbus
-import time
 import sys
 import os
 

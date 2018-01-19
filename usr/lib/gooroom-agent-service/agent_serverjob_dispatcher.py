@@ -1,11 +1,10 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
+from socket import timeout as SOCKET_TIMEOUT
+import simplejson as json
 import threading
 import time
-import multiprocessing
-import simplejson as json
-from socket import timeout as SOCKET_TIMEOUT
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_msslrest import AgentMsslRest
@@ -34,7 +33,6 @@ class AgentServerJobDispatcher(threading.Thread):
         #THREAD ESCAPE FLAG
         self._turn_on = True
 
-        #thread의 conditional signal을 multiprocessing의 Event를 사용
         #시스템 시간을 변경했을 때 문제가 있어서 교체필요함
         self._dispatch_event = threading.Event()
         self._dispatch_event.clear()

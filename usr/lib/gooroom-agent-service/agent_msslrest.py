@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
-import httplib2
 import simplejson as json
+import httplib2
 
 from agent_util import AgentConfig, AgentLog
 from agent_define import *

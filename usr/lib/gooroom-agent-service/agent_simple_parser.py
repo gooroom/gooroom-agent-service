@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------
 import xml.etree.ElementTree as etree
 import simplejson as json
-import glob
 import datetime
+import glob
 
 from agent_define import *
 

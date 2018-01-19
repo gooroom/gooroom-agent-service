@@ -1,16 +1,16 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
+import simplejson as json
 import multiprocessing
 import threading
+import importlib
+import ctypes
 import queue
 import time
-import importlib
 import glob
 import sys
-import simplejson as json
 import re
-import ctypes
 
 from ctypes import util
 from socket import timeout as SOCKET_TIMEOUT
@@ -46,9 +46,8 @@ class AgentJobManager:
             Q = self.data_center.clientjob_Q
             
         try:
-            #Q가 꽉 찼으면 서버에 더 이상 요청하지 말고 일단 기다리자
-            #서버에 통지를 해줄지는 협의필요
-            #clientjob 역시 더 이상 스케쥴링하지 말고 기다림
+            #Q가 꽉 찼으면 서버에 더 이상 요청하지 말고 일단 대기
+            #clientjob 역시 더 이상 스케쥴링하지 말고 대기
             while True:
                 if Q.full():
                     self.logger.error('!! JOB-Q is full')
@@ -89,7 +88,7 @@ class AgentJobManager:
         """
 
         #설정파일에 기재된 시간이 지나면 worker는 자동으로 
-        #종료되기 때문에 수동으로 종료시킬 필요가 없을 것 같음.
+        #종료되기 때문에 수동으로 종료시킬 필요가 없음
 
         pass
 
