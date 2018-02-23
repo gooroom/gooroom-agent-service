@@ -119,10 +119,12 @@ class Agent(dbus.service.Object):
             self.logger.info('DBUS CLIENTJOB -> %s' % args)
             task = json.loads(args)
 
+            '''
             if not self.watch_process(sender):
                 task['WARNNING'] = 'You are an unauthenticated process.'
                 self.logger.error('!!!!!!!!!! UNAUTHENTICATED ACCESS !!!!!!!!!!')
                 return json.dumps(task)
+            '''
 
             if not self.watch_task(task):
                 task['WARNNING'] = 'You are an unauthorized process.'
