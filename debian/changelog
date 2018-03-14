@@ -1,3 +1,18 @@
+gooroom-agent-service (0.1.2+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [c7bea3fb] changed grac's syslog_indentifier from grac-device-daemon to GRAC.
+  * [1141d87c] changed main package label from label to origin. removed task_replace_client_config. removed browser and grac in gooroom-log.
+  * [adb7a0f9] (bug fix) added comma in gooroom_match_string (1141d87cf089b8f92ebe653322208c96e061d0aa).
+  * [297bea7c] (bug fix) replaced real-timestamp with now()'s tiemstamp when real-timestamp of journald is invalid.
+  * [829150bf] changed log order of previous commit.
+  * [13bb5107] added copyright. removed unnecessary comments and import.
+  * [300030ba] blocked the function that protects invoking do_task from unprivileged process until os parts has been done.
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Wed, 14 Mar 2018 18:14:27 +0900
+
 gooroom-agent-service (0.1.1+grm1u2) unstable; urgency=medium
 
   [ hmkim ]
