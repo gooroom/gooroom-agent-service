@@ -266,10 +266,8 @@ class AgentJobWorker(threading.Thread):
                 if time.time() - self.last_job_time > self.data_center.worker_lifetime:
                     self.logger.error('A WORKER(%s) RETIRING' % self.role)
                     break
-
             except:
                 self.logger.error('%s' % agent_format_exc())
-                break
 
         self.logger.info('A WORKER(%s) RETIRED' % self.role)
 

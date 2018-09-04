@@ -3,7 +3,9 @@
 #-----------------------------------------------------------------------
 import simplejson as json
 import httplib2
+import datetime
 
+from socket import timeout as SOCKET_TIMEOUT
 from agent_util import AgentConfig, AgentLog
 from agent_define import *
 
@@ -55,11 +57,17 @@ class AgentMsslRest:
         #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
         if agent_status_code == AGENT_OK:
-            if J_AGENT_DATA in result:
-                return result[J_AGENT_DATA], agent_status_code, ''
-            else:
-                return [], agent_status_code, ''
+            err_msg = ''
 
+            #check to be prevAccessDiffTime value or not
+            prev_access_difftime = agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
+            if prev_access_difftime:
+                err_msg = prev_access_difftime
+
+            if J_AGENT_DATA in result:
+                return result[J_AGENT_DATA], agent_status_code, err_msg
+            else:
+                return [], agent_status_code, err_msg
         else:
             #token expired
             if not expired and agent_status_code == '401':
@@ -125,8 +133,15 @@ class AgentMsslRest:
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
-        rsp_headers, rsp_body = agent_http.request(
-            uri, method=method, headers=headers, body=body)
+        t = datetime.datetime.now().timestamp()
+        try:
+            rsp_headers, rsp_body = agent_http.request(
+                uri, method=method, headers=headers, body=body)
+        except SOCKET_TIMEOUT:
+            self.data_center.increase_timeout_cnt()
+            raise
+
+        self.data_center.calc_max_response_time(datetime.datetime.now().timestamp() - t)
         self.logger.debug('RESPONSE=%s' % str(rsp_body)[:LOG_TEXT_LIMIT])
 
         return rsp_headers, rsp_body

@@ -61,7 +61,7 @@
     </task>
 
     <!-- update_package_version_to_server -->
-    <task name="update_package_version_to_server" bootable="yes" polltime="600" mustok="no" priority="9">
+    <task name="update_package_version_to_server" bootable="yes" polltime="600">
         <param name="task_name" type="string"/>
 
         <in>
@@ -111,4 +111,52 @@
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- profiling -->
+    <task name="profiling">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="ref_client_id" type="string"/>
+            <param name="removal" type="string"/>
+        </in>
+
+        <request id="null" seq="null">
+            <param name="ref_client_id" type="string"/>
+        </request>
+        <response>
+            <param name="pkg_list" type="csv_array"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- profiling_packages -->
+    <task name="profiling_packages">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="head" seq="null">
+            <param name="pkg_list" type="csv_array"/>
+        </request>
+        <response>
+        </response>
+
+        <request id="next" seq="null">
+            <param name="pkg_list" type="csv_array"/>
+        </request>
+        <response>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

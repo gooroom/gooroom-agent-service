@@ -23,6 +23,7 @@ from multiprocessing import Process
 from collections import OrderedDict
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
+from agent_util import pkcon_exec
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -52,6 +53,7 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
 #-----------------------------------------------------------------------
 def task_set_gpg_key(task, data_center):
     """
@@ -390,6 +392,37 @@ def task_get_ntp_list_config(task, data_center):
     ntp_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['ntp_list']
 
     ntp_list_config(ntp_list, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def _set_time(tp):
+    import ctypes
+    import ctypes.util
+    import time
+    import datetime
+
+    class timespec(ctypes.Structure):
+        _fields_ = [("tv_sec", ctypes.c_long),
+                    ("tv_nsec", ctypes.c_long)]
+
+    librt = ctypes.CDLL(ctypes.util.find_library("rt"))
+    ts = timespec()
+    ts.tv_sec = int( time.mktime(datetime.datetime(*tp[:6]).timetuple()))
+    ts.tv_nsec = tp[6] * 1000000
+    librt.clock_settime(0, ctypes.byref(ts)) 
+
+def task_get_server_time(task, data_center):
+    """
+    get_server_time
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    tl = [int(t) for t in server_rsp[J_MOD][J_TASK][J_RESPONSE]['time'].split(',')]
+    _set_time(tuple(tl))
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -901,4 +934,87 @@ def chown_file(fname, fuser=None, fgroup=None):
 
     if fuser and fgroup:
         shutil.chown(fname, user=fuser, group=fgroup)
+
+#-----------------------------------------------------------------------
+def task_client_sync(task, data_center):
+    """
+    client sync
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+
+    #SERVER TIME
+    try:
+        server_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['time']
+        if server_time != '':
+            tl = [int(t) for t in server_rsp[J_MOD][J_TASK][J_RESPONSE]['time'].split(',')]
+            _set_time(tuple(tl))
+    except:
+        self.logger.error('%s' % agent_format_exc())
+
+    #POLLING TIME
+    try:
+        dispatch_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['dispatch_time']
+        if dispatch_time != '':
+            config = AgentConfig.get_config()
+            config.set('SERVERJOB', 'DISPATCH_TIME', dispatch_time)
+            with open(CONFIG_FULLPATH, 'w') as f:
+                config.write(f)
+            data_center.reload_serverjob_dispatch_time()
+    except:
+        self.logger.error('%s' % agent_format_exc())
+
+    #HYPERVISOR
+    try:
+        hyper_operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['hyper_operation']
+        if hyper_operation != '':
+            svc = 'gop-daemon.service'
+            m = importlib.import_module('modules.daemon_control')
+            tmp_task = \
+                {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':hyper_operation}, J_OUT:{}}}}
+            getattr(m, 'task_daemon_able')(tmp_task, data_center)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #CERTIFICATE && FILES
+    try:
+        certificate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['certificate']
+        if certificate != '':
+            replace_file('/etc/gooroom/agent/server_certificate.crt', certificate)
+
+        filenames = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
+        filecontents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
+        signatures = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+        len_filenames = len(filenames)
+        len_filecontents = len(filecontents)
+        len_signatures = len(signatures)
+
+        if len_filenames != len_filecontents \
+            and len_filecontents != len_signatures:
+            raise Exception('!! invalid data len(filename)=%d len(filecontents)=%d len(signautres)=%d' 
+                % (len_filenames, len_filecontents, len_signatures))
+        
+        for n, c, s in zip(filenames, filecontents, signatures):
+            if c == '':
+                AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
+                continue
+
+            if n == '/etc/hosts':
+                remake_etc_hosts(c, s)
+                continue
+
+            #if verifying is failed, exception occur
+            verify_signature(s, c)
+            replace_file(n, c, s)
+
+        #update cache
+        pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 

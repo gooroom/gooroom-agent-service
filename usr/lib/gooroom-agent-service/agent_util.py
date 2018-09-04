@@ -4,18 +4,20 @@
 from datetime import datetime
 from systemd import journal
 import simplejson as json
-from pwd import getpwnam
 import logging.handlers
 import configparser
+import subprocess
 import traceback
 import logging
 import struct
+import time
 import dbus
 import sys
 import os
 
 from agent_error import AgentError
 from agent_define import *
+from pwd import getpwnam
 
 #-----------------------------------------------------------------------
 class AgentConfig:
@@ -193,6 +195,47 @@ def create_journal_logger():
     return journal_logger
 
 #-----------------------------------------------------------------------
+def pkcon_exec(cmd, timeout, pkg_list, data_center):
+    """
+    pkcon install -y
+    """
+    
+    pp_result = ''
+
+    for looping_cnt in range(timeout):
+        if not data_center.serverjob_dispatcher_thread_on:
+            pp_result = 'agent is shutting down...'
+            break
+
+        if looping_cnt % 5 == 0:
+            pp = subprocess.Popen(
+                ['/usr/bin/pkcon', cmd, '-y', '-p'] + pkg_list,
+                stdout=subprocess.PIPE)
+
+            pp_out_list = pp.communicate()[0].decode('utf8').split('\n')
+            pp_result_list = []
+            for o in pp_out_list:
+                if o.startswith('상태') \
+                    or o.startswith('백분율') \
+                    or o.startswith('트랜잭션') \
+                    or o.startswith('Status') \
+                    or o.startswith('Percentage') \
+                    or o.startswith('Transaction'):
+                        continue
+                pp_result_list.append(o)
+
+            pp_result = '\n'.join(pp_result_list)
+
+            if pp.returncode != 0:
+                data_center.logger.error(pp_result)
+            else:
+                break
+        else:
+            time.sleep(1)
+
+    return pp_result
+
+#-----------------------------------------------------------------------
 DBUS_NAME = 'kr.gooroom.agent'
 DBUS_OBJ = '/kr/gooroom/agent'
 DBUS_IFACE = 'kr.gooroom.agent'
@@ -203,9 +246,7 @@ def do_task(task):
     """
 
     system_bus = dbus.SystemBus()
-
     bus_object = system_bus.get_object(DBUS_NAME, DBUS_OBJ)
-        
     bus_interface = dbus.Interface(bus_object, dbus_interface=DBUS_IFACE)
-
     return bus_interface.do_debug(task)
+

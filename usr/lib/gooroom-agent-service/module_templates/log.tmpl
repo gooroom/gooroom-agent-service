@@ -5,7 +5,7 @@
 
     <param name="module_name" type="string"/>
 
-    <task name="client_info" polltime="300" bootable="yes" mustok="no">
+    <task name="client_info" polltime="300">
         <param name="task_name" type="string"/>
 
         <in>
@@ -32,7 +32,7 @@
         </out>
     </task>
 
-    <task name="summary_log" polltime="5" bootable="yes" mustok="no">
+    <task name="summary_log" polltime="5">
         <param name="task_name" type="string"/>
 
         <in>
@@ -101,7 +101,7 @@
         </out>
     </task>
 
-    <task name="gooroom_log" polltime="60" bootable="yes" priority="10" mustok="no">
+    <task name="gooroom_log" polltime="60">
         <param name="task_name" type="string"/>
 
         <in>
