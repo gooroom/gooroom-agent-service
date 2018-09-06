@@ -44,6 +44,7 @@ T_PRIORITY='priority'
 T_ID='id'
 T_DBUS='dbus'
 T_MUSTOK='mustok'
+T_VERSION='version'
 
 #agent와 server가 송수신하는 job에 대한 json의 키값
 J_OB='job'
@@ -80,6 +81,7 @@ H_TOKEN='gooroom-client-token'
 H_AUTH='auth'
 H_CID='client_id'
 H_CERT='gooroom-client-cert'
+H_VERSION='version'
 
 #TEMPLATE EXTENTION
 T_EXT='tmpl'
@@ -124,3 +126,8 @@ LOG_TEXT_LIMIT=2048
 
 #package operation timeout
 PKCON_TIMEOUT_TEN_MINS=600
+
+#server version
+SERVER_VERSION_ALL = 0.0
+SERVER_VERSION_1_0=1.0
+SERVER_VERSION_1_1=1.1

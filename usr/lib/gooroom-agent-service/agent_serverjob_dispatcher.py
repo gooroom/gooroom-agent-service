@@ -50,20 +50,36 @@ class AgentServerJobDispatcher(threading.Thread):
         """
 
         self.logger.debug('(serverjob) dispatcher run')
+        
+        #get default server version(1.0)
+        server_version = self.data_center.server_version
+        try:
+            server_version = self.data_center.server_version_request()
+            #notice that server-version is changed HERE
+            self.data_center.server_version = server_version
+            self.logger.info('server-version is {} from grm'.format(server_version))
+        except:
+            self.logger.error('%s' % agent_format_exc())
+
+        if self.data_center.server_version == SERVER_VERSION_1_0:
+            ###################################
+            self.agent_sync(SERVER_VERSION_ALL)
+            ###################################
 
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:
                 try:
                     agent_data, _, err_msg = self.data_center.jobs_request()
-                    if err_msg:
+                    if self.data_center.server_version > SERVER_VERSION_1_0 \
+                        and err_msg:
                         prev_access_difftime = int(err_msg)
                         if self.data_center.serverjob_dispatch_time \
                             - prev_access_difftime \
                             + 10 < 0:
 
-                            #####################
-                            self.agent_sync()
-                            #####################
+                            ###################################
+                            self.agent_sync(SERVER_VERSION_1_1)
+                            ###################################
 
                     if agent_data:
                         for job in agent_data:
@@ -101,7 +117,7 @@ class AgentServerJobDispatcher(threading.Thread):
             i += 1
             time.sleep(1)
 
-    def agent_sync(self):
+    def agent_sync(self, server_version):
         """
         agent sync
         """
@@ -112,8 +128,14 @@ class AgentServerJobDispatcher(threading.Thread):
             ting = self.timing(INIT_RETRY_TIME)
 
             for task_info in self.data_center.bootable_tasks:
-                task, mustok = task_info
+                task, mustok, version  = task_info
                 ting = self.timing(INIT_RETRY_TIME)
+
+                if version != server_version: 
+                    self.logger.info(
+                        'SKIP task={} task-version={} server-serversion{}'.format(
+                            task, version, self.data_center.server_version))
+                    continue
 
                 while True:
                     if next(ting):

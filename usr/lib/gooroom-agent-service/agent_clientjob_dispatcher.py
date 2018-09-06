@@ -9,7 +9,7 @@ import copy
 from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_job_worker import AgentJobManager,AgentJobWorker
 from agent_simple_parser import SimpleParser
-from agent_define import CLIENTJOB
+from agent_define import *
 
 #-----------------------------------------------------------------------
 class AgentClientJobDispatcher(threading.Thread):
@@ -64,8 +64,10 @@ class AgentClientJobDispatcher(threading.Thread):
                     for polltime in self.data_center.clientjob_book.keys():
                         if intervals % polltime is 0:
                             #clientjob은 task 단위로 처리
-                            for task in self.data_center.clientjob_book[polltime]:
-                                self._job_manager.put_job(copy.deepcopy(task))
+                            for task, version in self.data_center.clientjob_book[polltime]:
+                                if version == self.data_center.server_version \
+                                    or version == SERVER_VERSION_ALL:
+                                    self._job_manager.put_job(copy.deepcopy(task))
 
                     if intervals % 60 is 0:
                         self.data_center.clear_max_response_time()

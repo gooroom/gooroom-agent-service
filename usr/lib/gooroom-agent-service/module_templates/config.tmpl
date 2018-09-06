@@ -35,7 +35,7 @@
     </task>
 
     <!-- GET UPDATE SERVER CONFIG FILE -->
-    <task name="get_update_server_config">
+    <task name="get_update_server_config" bootable="yes" mustok="no" priority="3">
         <param name="task_name" type="string"/>
 
         <in>
@@ -56,7 +56,7 @@
     </task>
 
     <!-- APPEND CONTENTS HOSTS -->
-    <task name="append_contents_etc_hosts">
+    <task name="append_contents_etc_hosts" bootable="yes" mustok="no" priority="3">
         <param name="task_name" type="string"/>
 
         <in>
@@ -168,7 +168,7 @@
     </task>
 
     <!-- GET_SERVERJOB_DISPATCH_TIME -->
-    <task name="get_serverjob_dispatch_time">
+    <task name="get_serverjob_dispatch_time" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -178,6 +178,24 @@
         </request>
         <response>
             <param name="dispatch_time" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET_NTP_LIST_CONFIG -->
+    <task name="get_ntp_list_config" bootable="yes" priority="5" mustok="no">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+            <param name="ntp_list" type="csv_string"/>
         </response>
         <out>
             <param name="status" type="string"/>
@@ -220,7 +238,7 @@
     </task>
 
     <!-- GET_HYPERVISOR_OPERATION -->
-    <task name="get_hypervisor_operation">
+    <task name="get_hypervisor_operation" bootable="yes" mustok="no">
         <param name="task_name" type="string"/>
 
         <in>
@@ -267,7 +285,7 @@
     </task>
 
     <!-- GET SERVER CERTIFICATE -->
-    <task name="get_server_certificate">
+    <task name="get_server_certificate" bootable="yes" priority="-1">
         <param name="task_name" type="string"/>
 
         <in>
@@ -384,7 +402,7 @@
     </task>
 
     <!-- SET APT CONF -->
-    <task name="set_apt_conf">
+    <task name="set_apt_conf" bootable="yes" mustok="no" priority="2">
         <param name="task_name" type="string"/>
 
         <in>
@@ -402,7 +420,7 @@
     </task>
 
     <!-- SET GPG KEY -->
-    <task name="set_gpg_key">
+    <task name="set_gpg_key" bootable="yes" mustok="no" priority="1">
         <param name="task_name" type="string"/>
 
         <in>
@@ -420,7 +438,7 @@
     </task>
 
     <!-- CLIENT SYNC -->
-    <task name="client_sync" bootable="yes" mustok="yes" priority="-1">
+    <task name="client_sync" bootable="yes" mustok="yes" priority="-1" version="1.1">
         <param name="task_name" type="string"/>
 
         <in>
