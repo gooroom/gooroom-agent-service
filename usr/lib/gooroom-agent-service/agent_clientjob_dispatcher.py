@@ -65,9 +65,11 @@ class AgentClientJobDispatcher(threading.Thread):
                         if intervals % polltime is 0:
                             #clientjob은 task 단위로 처리
                             for task, version in self.data_center.clientjob_book[polltime]:
-                                if version == self.data_center.server_version \
-                                    or version == SERVER_VERSION_ALL:
-                                    self._job_manager.put_job(copy.deepcopy(task))
+                                if self.data_center.server_version == SERVER_VERSION_1_0 \
+                                    and version != SERVER_VERSION_1_0:
+                                    continue
+
+                                self._job_manager.put_job(copy.deepcopy(task))
 
                     if intervals % 60 is 0:
                         self.data_center.clear_max_response_time()

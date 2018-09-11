@@ -61,25 +61,25 @@ class AgentServerJobDispatcher(threading.Thread):
         except:
             self.logger.error('%s' % agent_format_exc())
 
-        if self.data_center.server_version == SERVER_VERSION_1_0:
+        if self.data_center.server_version.startswith(SERVER_VERSION_1_0):
             ###################################
-            self.agent_sync(SERVER_VERSION_ALL)
+            self.agent_sync(SERVER_VERSION_1_0)
             ###################################
 
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:
                 try:
                     agent_data, _, err_msg = self.data_center.jobs_request()
-                    if self.data_center.server_version != SERVER_VERSION_1_0 \
+                    if not self.data_center.server_version.startswith(SERVER_VERSION_1_0) \
                         and err_msg:
                         prev_access_difftime = int(err_msg)
                         if self.data_center.serverjob_dispatch_time \
                             - prev_access_difftime \
                             + 10 < 0:
 
-                            ###################################
-                            self.agent_sync(SERVER_VERSION_1_1)
-                            ###################################
+                            #######################################
+                            self.agent_sync(SERVER_VERSION_NOT_1_0)
+                            #######################################
 
                     if agent_data:
                         for job in agent_data:
@@ -131,9 +131,9 @@ class AgentServerJobDispatcher(threading.Thread):
                 task, mustok, version  = task_info
                 ting = self.timing(INIT_RETRY_TIME)
 
-                if version != server_version: 
+                if not server_version.startswith(version): 
                     self.logger.info(
-                        'SKIP task={} task-version={} server-serversion{}'.format(
+                        'SKIP task={} task-version={} server-serversion={}'.format(
                             task, version, self.data_center.server_version))
                     continue
 

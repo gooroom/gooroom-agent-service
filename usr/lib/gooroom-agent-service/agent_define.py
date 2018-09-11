@@ -44,7 +44,7 @@ T_PRIORITY='priority'
 T_ID='id'
 T_DBUS='dbus'
 T_MUSTOK='mustok'
-T_VERSION='version'
+T_VERSIONINFO='versioninfo'
 
 #agent와 server가 송수신하는 job에 대한 json의 키값
 J_OB='job'
@@ -128,6 +128,6 @@ LOG_TEXT_LIMIT=2048
 PKCON_TIMEOUT_TEN_MINS=600
 
 #server version
-SERVER_VERSION_ALL = '0.0'
+SERVER_VERSION_ALL='0.0'
 SERVER_VERSION_1_0='1.0'
-SERVER_VERSION_1_1='1.1'
+SERVER_VERSION_NOT_1_0='!1.0'

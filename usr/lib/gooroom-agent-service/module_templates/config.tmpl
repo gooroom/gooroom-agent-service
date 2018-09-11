@@ -438,7 +438,7 @@
     </task>
 
     <!-- CLIENT SYNC -->
-    <task name="client_sync" bootable="yes" mustok="yes" priority="-1" version="1.1">
+    <task name="client_sync" bootable="yes" mustok="yes" priority="-1" versioninfo="!1.0">
         <param name="task_name" type="string"/>
 
         <in>
@@ -448,8 +448,6 @@
         </request>
         <response>
             <param name="update_base_urls" type="string"/>
-        </response>
-        <out>
             <param name="certificate" type="string"/>
             <param name="dispatch_time" type="string"/>
             <param name="hyper_operation" type="string"/>
@@ -458,6 +456,8 @@
             <param name="file_contents_list" type="string"/>
             <param name="signature_list" type="string"/>
 
+        </response>
+        <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>
