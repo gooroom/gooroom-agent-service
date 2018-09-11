@@ -136,7 +136,7 @@ class AgentMsslRest:
         if agent_status_code != AGENT_OK:
             raise Exception('!! version [agent] status %s' % agent_status_code)
 
-        return float(rsp_headers[H_VERSION])
+        return rsp_headers[H_VERSION]
 
     def shoot(self, 
             rest_api, 

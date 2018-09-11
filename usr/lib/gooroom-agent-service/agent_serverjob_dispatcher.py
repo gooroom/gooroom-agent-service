@@ -70,7 +70,7 @@ class AgentServerJobDispatcher(threading.Thread):
             if self.data_center.serverjob_looping_on[0]:
                 try:
                     agent_data, _, err_msg = self.data_center.jobs_request()
-                    if self.data_center.server_version > SERVER_VERSION_1_0 \
+                    if self.data_center.server_version != SERVER_VERSION_1_0 \
                         and err_msg:
                         prev_access_difftime = int(err_msg)
                         if self.data_center.serverjob_dispatch_time \

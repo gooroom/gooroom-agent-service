@@ -86,7 +86,7 @@ class SimpleParser:
 
                 version = SERVER_VERSION_ALL
                 if T_VERSION in salt:
-                    version = float(salt[T_VERSION])
+                    version = salt[T_VERSION]
 
                 infos.setdefault(polltime, []).append(
                     ({J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}, version))
@@ -116,7 +116,7 @@ class SimpleParser:
                         
                         version = SERVER_VERSION_ALL
                         if T_VERSION in salt:
-                            version = float(salt[T_VERSION])
+                            version = salt[T_VERSION]
 
                         module = {J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}
                         for_priority_sort.append((priority,module,mustok,version))
