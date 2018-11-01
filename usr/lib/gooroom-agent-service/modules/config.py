@@ -545,6 +545,10 @@ def task_get_update_server_config(task, data_center):
         verify_signature(s, c)
         replace_file(n, c, s)
 
+    cvu = 'Acquire::Check-Valid-Until "false";'
+    with open('/etc/apt/apt.conf.d/99gooroom', 'w') as f:
+        f.write(cvu)
+
     import apt_pkg
     apt_pkg.init()
     cache = apt.cache.Cache()
