@@ -5,12 +5,9 @@ import xml.etree.ElementTree as etree
 import simplejson as json
 import importlib
 import httplib2
-import OpenSSL
-import base64
 import shutil
 import ctypes
 import gnupg
-import dbus
 import stat
 import glob
 import pwd
@@ -23,7 +20,7 @@ from multiprocessing import Process
 from collections import OrderedDict
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
-from agent_util import pkcon_exec
+from agent_util import pkcon_exec,verify_signature,send_journallog
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -53,6 +50,23 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_get_app_list(task, data_center):
+    """
+    get_app_list
+    """
+
+    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    task[J_MOD][J_TASK][J_OUT]['black_list'] = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['black_list']
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_set_gpg_key(task, data_center):
@@ -230,6 +244,7 @@ def task_get_update_operation(task, data_center):
 
     server_rsp = data_center.module_request(task)
     operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+    jlog = 'update-operation has been {}'.format(operation)
 
     if operation == 'enable':
         NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
@@ -237,12 +252,14 @@ def task_get_update_operation(task, data_center):
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm & NO_EXEC)
         data_center.GOOROOM_AGENT.update_operation(1)
+        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_UPDATE_OPERATION_ENABLE)
     else:
         EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         for ub in updating_binary:
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm | EXEC)
         data_center.GOOROOM_AGENT.update_operation(0)
+        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_UPDATE_OPERATION_DISABLE)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -512,6 +529,8 @@ def task_get_password_cycle(task, data_center):
         
         chown_file(spath, fuser=login_id, fgroup=login_id)
 
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
 #-----------------------------------------------------------------------
 def task_set_security_item_config(task, data_center):
     """
@@ -541,11 +560,17 @@ def task_set_security_item_config(task, data_center):
             f.write(json.dumps(jsondata))
         
         chown_file(spath, fuser=login_id, fgroup=login_id)
+        jlog = 'password cycle has been changed from $({}) to $({})'.format(
+                jsondata['data']['loginInfo']['pwd_max_day'],
+                pwd_max_day)
+        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE)
 
     #screensaver
     #found problem. need more research
     screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
     data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
+    jlog = 'screen-saver time has been changed to $({})'.format(screen_time)
+    send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_SCREEN_SAVER)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -577,6 +602,10 @@ def task_get_update_server_config(task, data_center):
         #if verifying is failed, exception occur
         verify_signature(s, c)
         replace_file(n, c, s)
+
+    cvu = 'Acquire::Check-Valid-Until "false";'
+    with open('/etc/apt/apt.conf.d/99gooroom', 'w') as f:
+        f.write(cvu)
 
     import apt_pkg
     apt_pkg.init()
@@ -915,18 +944,6 @@ def remake_etc_hosts(contents, signature):
     replace_file('/etc/hosts', assemble_hosts(local_hosts), signature)
 
 #-----------------------------------------------------------------------
-def verify_signature(signature, data):
-    """
-    verify file signature
-    """
-
-    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, 
-        open('/etc/gooroom/agent/server_certificate.crt').read())
-
-    OpenSSL.crypto.verify(cert, 
-        base64.b64decode(signature.encode('utf8')), 
-        data.encode('utf8'), 'sha256')
-#-----------------------------------------------------------------------
 def chown_file(fname, fuser=None, fgroup=None):
     """
     chown of file
@@ -1018,3 +1035,83 @@ def task_client_sync(task, data_center):
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
+#-----------------------------------------------------------------------
+def task_client_user_sync(task, data_center):
+    """
+    client user sync
+    """
+
+    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+
+    #NETWORK & MEDIA & BROWSER
+    try:
+        file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
+        file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
+        signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+        for idx in range(len(file_name_list)):
+            file_name = file_name_list[idx]
+            if '$(LOGINID)' in file_name:
+                file_name = \
+                    file_name.replace('$(LOGINID)', '%s' % login_id)
+
+            file_contents = file_contents_list[idx]
+            signature = signature_list[idx]
+            
+            #if verifying is failed, exception occur
+            verify_signature(signature, file_contents)
+
+            replace_file(file_name, file_contents, signature)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #SCREEN TIME
+    try:
+        screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
+        data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #PASSWORD CYCLE
+    try:
+        pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
+
+        spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
+
+        with open(spath) as f:
+            jsondata = json.loads(f.read().strip('\n'))
+
+        if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
+            or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
+
+            jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
+
+            with open(spath, 'w') as f:
+                f.write(json.dumps(jsondata))
+            
+            chown_file(spath, fuser=login_id, fgroup=login_id)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #UPDATE OPERATION
+    try:
+        operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+
+        if operation == 'enable':
+            NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
+            for ub in updating_binary:
+                perm = stat.S_IMODE(os.lstat(ub).st_mode)
+                os.chmod(ub, perm & NO_EXEC)
+        else:
+            EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            for ub in updating_binary:
+                perm = stat.S_IMODE(os.lstat(ub).st_mode)
+                os.chmod(ub, perm | EXEC)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST

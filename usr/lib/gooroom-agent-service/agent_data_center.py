@@ -15,6 +15,7 @@ import sys
 import re
 
 from agent_util import AgentConfig,AgentLog,catch_user_id,create_journal_logger
+from agent_util import agent_format_exc,verify_signature
 from agent_simple_parser import SimpleParser
 from agent_msslrest import AgentMsslRest
 from agent_define import *
@@ -139,8 +140,9 @@ class AgentDataCenter:
             #CLIENT TIMEOUT COUNT
             self.timeout_cnt = 0
 
-            self.logger.info('END SHOW()')
-
+            #CLIENT INFO
+            #product-id,os-ver,kernel-ver,ip,home-size,home-used,pss
+            self.client_info_set = {'','','','',-1,-1,''}
         except:
             raise
 

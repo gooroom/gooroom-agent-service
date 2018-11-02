@@ -4,6 +4,7 @@
 import subprocess
 import importlib
 import datetime
+import socket
 import glob
 import sys
 import os
@@ -41,22 +42,9 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-gooroom_match_strings = (
-    'SYSLOG_IDENTIFIER=gooroom-agent',)
-
-PRIORITY_N_TO_S = {
-        0:'EMERG',
-        1:'ALERT',
-        2:'CRIT',
-        3:'ERR',
-        4:'WARNING',
-        5:'NOTICE',
-        6:'INFO',
-        7:'DEBUG'}
-
-def task_gooroom_log(task, data_center):
+def task_security_log(task, data_center):
     """
-    load gooroom log on journal
+    load security log on journal
     """
 
     backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
@@ -64,63 +52,55 @@ def task_gooroom_log(task, data_center):
         backup_path += '/'
 
     j = journal.Reader()
-
     j.seek_tail()
     tail_entry = j.get_previous()
     tail_now_timestamp = datetime.datetime.now().timestamp()
-
     last_seek_time = read_last_seek_time(backup_path, 'gooroom-last-seek-time')
 
-    if tail_entry and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
-
+    if tail_entry \
+        and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
         if last_seek_time:
             j.seek_realtime(round(last_seek_time+0.000001, 6))
+            pass
         else:
             j.seek_head()
         
-        for match in gooroom_match_strings:
-            j.add_match(match)
-            j.add_disjunction()
-
         logs = {}
         logs_len = 0
-
-        task[J_MOD][J_TASK].pop(J_IN)
-        task[J_MOD][J_TASK][J_REQUEST] = {}
-        task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
-
         MAX_LOG_LEN = int(AgentConfig.get_config().get('MAIN', 'MAX_LOG_LEN'))
 
-        for entry in j:
-            if 'SYSLOG_IDENTIFIER' in entry and 'MESSAGE' in entry:
-                priority = entry['PRIORITY']
-                if priority > data_center.journal_loglevel:
-                    continue
+        module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
+        sys.path.append(module_path)
+        m = importlib.import_module('gooroom-security-logparser')
+        #GET LOG
+        logs = getattr(m, 'get_summary')(j)
+        log_total_len = logs['log_total_len']
 
-                ident = entry['SYSLOG_IDENTIFIER']    
-                dt = entry['__REALTIME_TIMESTAMP'].strftime('%Y-%m-%d %H:%M:%S.%f')
-                msg = entry['MESSAGE']
+        if log_total_len > 0 or data_center.summary_log_first_execution:
+            data_center.summary_log_first_execution = False
+
+            if log_total_len <= MAX_LOG_LEN:
+                task[J_MOD][J_TASK].pop(J_IN)
+                task[J_MOD][J_TASK][J_REQUEST] = {}
+                task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
+                data_center.module_request(task, mustbedata=False)
                 
-                dpm = '%s,,,%s,,,%s' % (dt, PRIORITY_N_TO_S[priority], msg)
-                logs.setdefault(ident, []).append(dpm)
-                logs_len += len(dpm)
+            else:
+                for l in logs.keys():
+                    if l.endswith('_log'):
+                        logs[l] = []
 
-                #divide and transmit
-                if logs_len >= MAX_LOG_LEN:
-                    task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
-                    #if no exception, it's OK
-                    data_center.module_request(task, mustbedata=False, remove_request=False)
-                    logs = {}
-                    logs_len = 0
+                if not 'agent_log' in logs:
+                    logs['agent_log'] = []
 
-            if tail_entry['__CURSOR'] == entry['__CURSOR']:
-                break
-
-        #first or last transmition
-        if logs_len > 0:
-            task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
-            #if no exception, it's OK
-            data_center.module_request(task, mustbedata=False)
+                t = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+                m = 'LOG SIZE IS TOO BIG({})'.format(log_total_len)
+                logs['agent_log'] = [{'grmcode':'',
+                                        'level':'crit',
+                                        'log':m,
+                                        'type':1,
+                                        'time':t}]
+                AgentLog.get_logger().error(m)
 
         last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
 
@@ -162,28 +142,37 @@ def task_client_info(task, data_center):
     unique_id = read_unique_id()
     os_ver = read_os()
     kernel = read_kernel()
-    ip = ''
+    ip = remote_ipaddress()
+    home_size ,home_used = homedir_size()
+    pss = '-1,-1' #','.join(calc_pss())
     
+    info_set = {
+                unique_id, 
+                os_ver, 
+                kernel, 
+                ip, 
+                home_size, 
+                int(home_used/100000000), #100M 이하의 변화는 무시 
+                pss }
+    if data_center.client_info_set == info_set:
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+                                        
+    print(data_center.client_info_set)
+    print(info_set)
+    data_center.client_info_set = info_set
+
     task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \
-        '%s,%s,%s,%s' % (unique_id, os_ver, kernel, ip)
+        '%s,%s,%s,%s,%d,%d' % (
+                                unique_id, 
+                                os_ver, 
+                                kernel, 
+                                ip,
+                                home_size,
+                                home_used)
     
-    task[J_MOD][J_TASK][J_OUT]['safe_score'] = ','.join(calc_pss())
+    task[J_MOD][J_TASK][J_OUT]['safe_score'] = pss
     
-#-----------------------------------------------------------------------
-def task_summary_log(task, data_center):
-    """
-    summary_log
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
-
-    load_security_log(task, data_center)
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
 #-----------------------------------------------------------------------
 def read_last_seek_time(backup_path, fname):
     """
@@ -237,106 +226,6 @@ def calc_pss():
         return '-1', '-1'
 
 #-----------------------------------------------------------------------
-match_strings = (
-    'SYSLOG_IDENTIFIER=gbp-daemon', 
-    'SYSLOG_IDENTIFIER=gep-daemon',
-    'SYSLOG_IDENTIFIER=gop-daemon', 
-    'SYSLOG_IDENTIFIER=GRAC',
-    'SYSLOG_IDENTIFIER=gooroom-browser',
-    '_AUDIT_FIELD_OP="appraise_data"')
-
-match_firewall = ('PRIORITY=3', 'SYSLOG_IDENTIFIER=kernel')
-
-def load_security_log(task, data_center):
-    """
-    load security log on journal
-    """
-
-    backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
-    if backup_path[-1] != '/':
-        backup_path += '/'
-
-    j = journal.Reader()
-
-    j.seek_tail()
-    tail_entry = j.get_previous()
-    tail_now_timestamp = datetime.datetime.now().timestamp()
-
-    last_seek_time = read_last_seek_time(backup_path, 'security-last-seek-time')
-
-    if tail_entry and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
-
-        if last_seek_time:
-            j.seek_realtime(round(last_seek_time+0.000001, 6))
-        else:
-            j.seek_head()
-        
-        for match in match_strings:
-            j.add_match(match)
-            j.add_disjunction()
-
-        for match in match_firewall:
-            j.add_match(match)
-
-        logs = []
-
-        for entry in j:
-            if 'MESSAGE' in entry and type(entry['MESSAGE']) is bytes:
-                entry['MESSAGE'] = \
-                    str(entry['MESSAGE'].decode('unicode_escape').encode('utf-8'))
-
-            logs.append(entry)
-
-            if tail_entry['__CURSOR'] == entry['__CURSOR']:
-                break
-
-        #load modules
-        module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
-        sys.path.append(module_path)
-
-        #invoke get_summary
-        sendable = False
-        for sf in ('os', 'exe', 'boot', 'media'):
-            try:
-                m = importlib.import_module('security.'+sf)
-                run, status, log = getattr(m, 'get_summary')(logs)
-
-                AgentLog.get_logger().debug(
-                    '(summary_log) ({:<5}) run={} status={} logs={}'.format(sf, run, status, log))
-
-                task[J_MOD][J_TASK][J_REQUEST][sf+'_run'] = run
-                task[J_MOD][J_TASK][J_REQUEST][sf+'_status'] = status
-
-                if not log and not data_center.summary_log_first_execution:
-                    continue
-                else:
-                    task[J_MOD][J_TASK][J_REQUEST][sf+'_log'] = '\n'.join(str(l) for l in log)
-
-                if data_center.summary_log_first_execution:
-                    data_center.summary_log_first_execution = False
-
-                sendable = True
-
-            except:
-                e = agent_format_exc()
-                AgentLog.get_logger().info(e)
-            
-        #if no exception, it's OK
-        if sendable:
-            data_center.module_request(task, mustbedata=False)
-
-        last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
-
-        if not isinstance(last_seek_time, float) or last_seek_time <= 0.0:
-            AgentLog.get_logger().info(
-                '(summary_log) invalid last_seek_time={} type={}'.format(
-                                    last_seek_time, type(last_seek_time)))
-            last_seek_time = tail_now_timestamp
-
-        #save lask seek_time to file
-        write_last_seek_time(backup_path, last_seek_time, 'security-last-seek-time')
-
-#-----------------------------------------------------------------------
 def read_unique_id():
     """
     return client unique id
@@ -381,3 +270,62 @@ def read_os():
             info['DISTRIB_CODENAME'], 
             info['DISTRIB_RELEASE'])
 
+#-----------------------------------------------------------------------
+def remote_ipaddress():
+    """
+    get remote ip address
+    """
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('8.8.8.8', 80))
+        ip = sock.getsockname()[0]
+        sock.close()
+        return ip
+    except:
+        logger.info(agent_format_exc())
+        return ''
+
+#-----------------------------------------------------------------------
+def homedir_size():
+    """
+    get home directory full size and used size
+    """
+
+    try:
+        p = subprocess.Popen(
+            ['df', '-B1'], 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE)
+
+        sout, serr = p.communicate()
+        if serr:
+            logger.info(serr)
+            return -1, -1
+
+        sout = sout.decode('utf8')
+        infos = [l.split() for l in sout.split('\n')]
+        root_full_size = root_used_size = 0
+        home_full_size = home_used_size = 0
+        root_found = home_found = False
+
+        for info in infos:
+            if len(info) < 6:
+                continue
+            mounted = info[5].strip()
+            if mounted == '/':
+                root_full_size = int(info[1].strip())
+                root_used_size = int(info[2].strip())
+                root_found = True
+            elif mounted.startswith('/home'):
+                home_full_size += int(info[1].strip())
+                home_used_size += int(info[2].strip())
+                home_found = True
+
+        if home_found:
+            return home_full_size, home_used_size
+        elif root_found:
+            return root_full_size, root_used_size
+    except:
+        logger.info(agent_format_exc())
+        return -1, -1

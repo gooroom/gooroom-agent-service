@@ -9,6 +9,8 @@ import configparser
 import subprocess
 import traceback
 import logging
+import OpenSSL
+import base64
 import struct
 import time
 import dbus
@@ -195,6 +197,17 @@ def create_journal_logger():
     return journal_logger
 
 #-----------------------------------------------------------------------
+def send_journallog(msg, level, grmcode):
+    """
+    send log to journald
+    """
+
+    journal.send(msg, 
+                SYSLOG_IDENTIFIER=AGENT_SYSLOG_IDENTIFIER,
+                PRIORITY=level,
+                GRMCODE=grmcode)
+    
+#-----------------------------------------------------------------------
 def pkcon_exec(cmd, timeout, pkg_list, data_center):
     """
     pkcon install -y
@@ -234,6 +247,19 @@ def pkcon_exec(cmd, timeout, pkg_list, data_center):
             time.sleep(1)
 
     return pp_result
+
+#-----------------------------------------------------------------------
+def verify_signature(signature, data):
+    """
+    verify file signature
+    """
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, 
+        open('/etc/gooroom/agent/server_certificate.crt').read())
+
+    OpenSSL.crypto.verify(cert, 
+        base64.b64decode(signature.encode('utf8')), 
+        data.encode('utf8'), 'sha256')
 
 #-----------------------------------------------------------------------
 DBUS_NAME = 'kr.gooroom.agent'

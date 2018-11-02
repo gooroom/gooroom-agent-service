@@ -5,6 +5,15 @@
 #full path of config
 CONFIG_FULLPATH='/etc/gooroom/agent/Agent.conf'
 
+#default log path
+DEFAULT_LOG_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/default-log.conf'
+
+#log path
+LOG_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/log.conf'
+
+#log sign path
+LOG_SIGN_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/log.conf.sign'
+
 #WORKER
 WORKER_GOT_FIRED='go home buddy...'
 
@@ -131,3 +140,22 @@ PKCON_TIMEOUT_TEN_MINS=600
 SERVER_VERSION_ALL='0.0'
 SERVER_VERSION_1_0='1.0'
 SERVER_VERSION_NOT_1_0='!1.0'
+
+#syslog identifier
+AGENT_SYSLOG_IDENTIFIER='gooroom-agent'
+
+#journald log level
+JOURNAL_EMERG=0
+JOURNAL_ALERT=1
+JOURNAL_CRIT=2
+JOURNAL_ERR=3
+JOURNAL_WARNNING=4
+JOURNAL_NOTICE=5
+JOURNAL_INFO=6
+JOURNAL_DEBUG=7
+
+#gooroom code in journald
+GRMCODE_PASSWORD_CYCLE='990001'
+GRMCODE_SCREEN_SAVER='990002'
+GRMCODE_UPDATE_OPERATION_ENABLE='990003'
+GRMCODE_UPDATE_OPERATION_DISABLE='990004'

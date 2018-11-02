@@ -5,7 +5,7 @@
 
     <param name="module_name" type="string"/>
 
-    <task name="client_info" polltime="300">
+    <task name="client_info" polltime="8">
         <param name="task_name" type="string"/>
 
         <in>
@@ -32,57 +32,6 @@
         </out>
     </task>
 
-    <task name="summary_log" polltime="5">
-        <param name="task_name" type="string"/>
-
-        <in>
-        </in>
-
-        <request id="null" seq="null">
-            <!-- summary update log -->
-            <param name="update_status" type="string"/>
-
-            <param name="update_log" type="csv_array">
-                <col name="timestamp" type="string"/>
-                <col name="data" type="string"/>
-            </param>
-
-            <!-- summary boot_protector_status log -->
-            <param name="boot_protector_status" type="string"/>
-
-            <param name="boot_protector_log" type="csv_array">
-                <col name="timestamp" type="string"/>
-                <col name="type" type="string"/>
-                <col name="data" type="string"/>
-            </param>
-
-            <!-- summary exe_protector_status log -->
-            <param name="exe_protector_status" type="string"/>
-
-            <param name="exe_protector_log" type="csv_array">
-                <col name="timestamp" type="string"/>
-                <col name="type" type="string"/>
-                <col name="data" type="string"/>
-            </param>
-
-            <!-- summary os_protector_status log -->
-            <param name="os_protector_status" type="string"/>
-
-            <param name="os_protector_log" type="csv_array">
-                <col name="timestamp" type="string"/>
-                <col name="type" type="string"/>
-                <col name="data" type="string"/>
-            </param>
-        </request>
-        <response>
-        </response>
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-
-        </out>
-    </task>
-
     <task name="clear_security_alarm" dbus="allow">
         <param name="task_name" type="string"/>
 
@@ -101,7 +50,7 @@
         </out>
     </task>
 
-    <task name="gooroom_log" polltime="60">
+    <task name="security_log" polltime="5">
         <param name="task_name" type="string"/>
 
         <in>
@@ -110,8 +59,6 @@
         <request id="null" seq="null">
             <param name="user_id" type="string"/>
             <param name="logs" type="map">
-                <key name="item" type="string"/>
-                <value name="log" type="string"/>
             </param>
         </request>
         <response>
@@ -122,5 +69,4 @@
 
         </out>
     </task>
-
 </module>

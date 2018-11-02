@@ -56,8 +56,6 @@ def task_delete_homefolder(task, data_center):
         if 'gooroom-online-account' in splited[4]:
             online_accounts.append(splited[0])
 
-    AgentLog.get_logger().error(e)
-
     #현재 로그인한 계정
     with open('/var/run/utmp', 'rb') as f:
         fc = memoryview(f.read())

@@ -118,7 +118,7 @@ class AgentMsslRest:
         get server version
         """
 
-        body = {H_CID:self.data_center.get_client_id()}
+        body = {J_AGENT_DATA_CLIENTID:self.data_center.get_client_id()}
 
         rsp_headers, rsp_body = self.shoot(
             self.data_center.server_version_api, body=json.dumps(body))

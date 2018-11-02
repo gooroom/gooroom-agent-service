@@ -119,7 +119,7 @@
     </task>
 
     <!-- GET SCREEN TIME -->
-    <task name="get_screen_time">
+    <task name="get_screen_time" dbus="allow">
         <param name="task_name" type="string"/>
 
         <in>
@@ -402,7 +402,7 @@
     </task>
 
     <!-- SET APT CONF -->
-    <task name="set_apt_conf" bootable="yes" mustok="no" priority="2">
+    <task name="set_apt_conf">
         <param name="task_name" type="string"/>
 
         <in>
@@ -420,7 +420,7 @@
     </task>
 
     <!-- SET GPG KEY -->
-    <task name="set_gpg_key" bootable="yes" mustok="no" priority="1">
+    <task name="set_gpg_key">
         <param name="task_name" type="string"/>
 
         <in>
@@ -455,11 +455,74 @@
             <param name="file_name_list" type="string"/>
             <param name="file_contents_list" type="string"/>
             <param name="signature_list" type="string"/>
-
         </response>
         <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- CLIENT USER SYNC -->
+    <task name="client_user_sync" priority="-1" versioninfo="!1.0">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="screen_time" type="string"/>
+            <param name="password_time" type="string"/>
+            <param name="operation" type="string"/>
+            <param name="file_name_list" type="string"/>
+            <param name="file_contents_list" type="string"/>
+            <param name="signature_list" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET APP LIST -->
+    <task name="get_app_list" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="black_list" type="string"/>
+        </response>
+        <out>
+            <param name="black_list" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SET APP LIST -->
+    <task name="set_app_list">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="black_list" type="string"/>
+        </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>
