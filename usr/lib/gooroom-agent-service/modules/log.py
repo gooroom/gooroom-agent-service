@@ -158,8 +158,6 @@ def task_client_info(task, data_center):
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
         return
                                         
-    print(data_center.client_info_set)
-    print(info_set)
     data_center.client_info_set = info_set
 
     task[J_MOD][J_TASK][J_OUT]['terminal_info'] = \

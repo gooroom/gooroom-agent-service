@@ -182,10 +182,14 @@ def task_tell_update_operation(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -234,10 +238,14 @@ def task_get_update_operation(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -330,7 +338,7 @@ def task_get_hypervisor_operation(task, data_center):
     """
 
     task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':catch_user_id()}
+    task[J_MOD][J_TASK][J_REQUEST] = {} #'login_id':catch_user_id()}
 
     server_rsp = data_center.module_request(task)
     operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
@@ -479,10 +487,14 @@ def task_get_screen_time(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -501,10 +513,16 @@ def task_get_password_cycle(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            login_id = login_id[1:-1]
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -536,12 +554,17 @@ def task_set_security_item_config(task, data_center):
     """
     set_security_item_config
     """
-
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            login_id = login_id[1:-1]
 
     #password cycle
     pwd_max_day = task[J_MOD][J_TASK][J_IN]['password_time']
@@ -644,10 +667,14 @@ def task_get_media_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -680,10 +707,14 @@ def task_get_browser_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if login_id == '-':
-        raise Exception('The client did not log in.')
-    elif login_id[0] == '+':
-        raise Exception('The client logged in as local user.')
+    if data_center.server_version == SERVER_VERSION_1_0:
+        if login_id == '-':
+            raise Exception('The client did not log in.')
+        elif login_id[0] == '+':
+            raise Exception('The client logged in as local user.')
+    else:
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -1041,7 +1072,10 @@ def task_client_user_sync(task, data_center):
     client user sync
     """
 
-    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
+
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
@@ -1072,6 +1106,8 @@ def task_client_user_sync(task, data_center):
     #SCREEN TIME
     try:
         screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
+        if not screen_time:
+            raise Exception('screen-time is null')
         data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
     except:
         AgentLog.get_logger().error(agent_format_exc())
@@ -1079,6 +1115,8 @@ def task_client_user_sync(task, data_center):
     #PASSWORD CYCLE
     try:
         pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
+        if not pwd_max_day:
+            raise Exception('password-cycle is null')
 
         spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
 
@@ -1100,6 +1138,8 @@ def task_client_user_sync(task, data_center):
     #UPDATE OPERATION
     try:
         operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+        if not operation:
+            raise Exception('update-operation is null')
 
         if operation == 'enable':
             NO_EXEC = ~stat.S_IXUSR & ~stat.S_IXGRP & ~stat.S_IXOTH
