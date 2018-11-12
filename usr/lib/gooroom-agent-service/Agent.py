@@ -249,7 +249,16 @@ class Agent(dbus.service.Object):
     def update_operation(self, tm):
         """
         send signal to user session 
-        so as to set dpms_on_ac_off and dpms_on_battery_off
+        so as to set update-operation
+        """
+
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='s')
+    def app_black_list(self, tm):
+        """
+        send signal to user session 
+        so as to set app-black-list
         """
 
         pass

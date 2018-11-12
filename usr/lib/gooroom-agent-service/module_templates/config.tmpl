@@ -16,6 +16,8 @@
             <enum value="/usr/share/gooroom/browser/policies/mainpref.json"/>
             <enum value="/usr/share/gooroom/browser/policies/trust/managed/policy.json"/>
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/policy.json"/>
+            <enum value="/usr/share/gooroom/browser/policies/trust/managed/ui-policy.json"/>
+            <enum value="/usr/share/gooroom/browser/policies/untrust/managed/ui-policy.json"/>
         </restriction>
     </simpleType>
 
@@ -119,7 +121,7 @@
     </task>
 
     <!-- GET SCREEN TIME -->
-    <task name="get_screen_time" dbus="allow">
+    <task name="get_screen_time">
         <param name="task_name" type="string"/>
 
         <in>
@@ -131,21 +133,6 @@
         <response>
             <param name="screen_time" type="string"/>
         </response>
-
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-        </out>
-    </task>
-
-    <!-- SET SECURITY ITEM CONFIG -->
-    <task name="set_security_item_config">
-        <param name="task_name" type="string"/>
-
-        <in>
-            <param name="password_time" type="string"/>
-            <param name="screen_time" type="string"/>
-        </in>
 
         <out>
             <param name="status" type="string"/>
@@ -490,7 +477,7 @@
         <param name="task_name" type="string"/>
 
         <in>
-            <param name="login_id" type="string"/>
+            <param name="login_id" type="string" optional="yes"/>
         </in>
 
         <request id='null' seq="null">
@@ -506,19 +493,33 @@
         </out>
     </task>
 
-    <!-- SET APP LIST -->
-    <task name="set_app_list">
+    <!-- GET LOG CONFIG -->
+    <task name="get_log_config">
         <param name="task_name" type="string"/>
 
         <in>
+            <param name="login_id" type="string" optional="yes"/>
         </in>
 
         <request id='null' seq="null">
-            <param name="login_id" type="string"/>
         </request>
         <response>
-            <param name="black_list" type="string"/>
+            <param name="file_contents" type="string_array"/>
+            <param name="signature" type="string_array"/>
         </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <task name="set_homefolder_operation">
+        <param name="get_homefolder_operation" type="string"/>
+
+        <in>
+            <param name="operation" type="string"/>
+        </in>
+
         <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>

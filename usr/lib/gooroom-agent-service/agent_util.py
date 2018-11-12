@@ -175,13 +175,13 @@ def catch_user_id():
         for pw in pws:
             splited = pw.split(':')
             if splited[0] == user_id:
-                ps = '/var/run/user/%d/gooroom/.grm-user'  % getpwnam(user_id).pw_uid
+                #ps = '/var/run/user/%d/gooroom/.grm-user'  % getpwnam(user_id).pw_uid
                 #user_id is a local account
-                if not 'gooroom-online-account' in splited[4] or not os.path.exists(ps):
+                if not 'gooroom-online-account' in splited[4]: #or not os.path.exists(ps):
                     user_id = '+' + user_id
                 break
         else:
-            raise Exception('user_id(%s) does not existed in /etc/passwd')
+            raise Exception('user_id({}) does not existed in /etc/passwd'.format(user_id))
 
     return user_id
 

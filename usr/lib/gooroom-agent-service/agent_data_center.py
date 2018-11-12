@@ -143,6 +143,9 @@ class AgentDataCenter:
             #CLIENT INFO
             #product-id,os-ver,kernel-ver,ip,home-size,home-used,pss
             self.client_info_set = {'','','','',-1,-1,''}
+
+            #HOME FOLDER DELETE FLAG
+            self.home_folder_delete_flag = [False]
         except:
             raise
 

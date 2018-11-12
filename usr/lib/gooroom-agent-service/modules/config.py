@@ -3,8 +3,10 @@
 #-----------------------------------------------------------------------
 import xml.etree.ElementTree as etree
 import simplejson as json
+import subprocess
 import importlib
 import httplib2
+import datetime
 import shutil
 import ctypes
 import gnupg
@@ -52,12 +54,81 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_set_homefolder_operation(task, data_center):
+    """
+    get home folder deletion
+    """
+
+    homefolder_operation = \
+        server_rsp[J_MOD][J_TASK][J_IN]['operation']
+    if homefolder_operation == 'enable':
+        data_center.homefolder_operation[0] = True
+        lg = 'homefolder operation has been enabled'
+        gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
+    else:
+        data_center.home_folder_delete_flag[0] = False
+        lg = 'homefolder operation has been disabled'
+        gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
+    send_journallog(
+        lg,
+        JOURNAL_NOTICE, 
+        gc)
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+
+#-----------------------------------------------------------------------
+def task_get_log_config(task, data_center):
+    """
+    get log config
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+    server_rsp = data_center.module_request(task)
+
+    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
+    file_contents = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+    signature = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+    module_path = \
+        AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
+    sys.path.append(module_path)
+    m = importlib.import_module('gooroom-security-logparser')
+    config_diff = getattr(m, 'config_diff')(file_contents)
+    if config_diff:
+        send_journallog(
+                    config_diff, 
+                    JOURNAL_NOTICE, 
+                    GRMCODE_LOG_CONFIG_CHANGED)
+
+    #if verifying is failed, exception occur
+    verify_signature(signature, file_contents)
+    replace_file(file_name, file_contents, signature)
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_get_app_list(task, data_center):
     """
     get_app_list
     """
 
-    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
+        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+        with open('/etc/passwd') as f:
+            pws = f.readlines()
+        for pw in pws:
+            splited = pw.split(':')
+            if splited[0] == login_id:
+                if not 'gooroom-online-account' in splited[4]:
+                    login_id = ''
+                break
+        else:
+            login_id = ''
+    else:
+        login_id = catch_user_id()
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -493,16 +564,21 @@ def task_get_screen_time(task, data_center):
         elif login_id[0] == '+':
             raise Exception('The client logged in as local user.')
     else:
-        if login_id == '-' or login_id[0] == '+':
+        #not logged in
+        if login_id == '-':
+            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+            return
+        elif login_id[0] == '+':
             login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
-
     server_rsp = data_center.module_request(task)
 
-    screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
+    screen_time = server_rsp[J_MOD][J_TASK][J_IN]['screen_time']
     data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
+    jlog = 'screen-saver time has been changed to $({})'.format(screen_time)
+    send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_SCREEN_SAVER)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -519,81 +595,49 @@ def task_get_password_cycle(task, data_center):
         elif login_id[0] == '+':
             raise Exception('The client logged in as local user.')
     else:
+        #not logged in
         if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            login_id = login_id[1:-1]
+            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+            return
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
-
     server_rsp = data_center.module_request(task)
+    pwd_max_day = server_rsp[J_MOD][J_TASK][J_IN]['password_time']
 
-    #password cycle
-    pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
+    #online account
+    if login_id[0] != '+':
+        spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
 
-    spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
+        with open(spath) as f:
+            jsondata = json.loads(f.read().strip('\n'))
 
-    with open(spath) as f:
-        jsondata = json.loads(f.read().strip('\n'))
+        if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
+            or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
 
-    if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
-        or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
+            jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
 
-        jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
-
-        with open(spath, 'w') as f:
-            f.write(json.dumps(jsondata))
-        
-        chown_file(spath, fuser=login_id, fgroup=login_id)
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-#-----------------------------------------------------------------------
-def task_set_security_item_config(task, data_center):
-    """
-    set_security_item_config
-    """
-    login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
+            with open(spath, 'w') as f:
+                f.write(json.dumps(jsondata))
+            
+            chown_file(spath, fuser=login_id, fgroup=login_id)
+            jlog = 'password cycle has been changed from $({}) to $({})'.format(
+                    jsondata['data']['loginInfo']['pwd_max_day'],
+                    pwd_max_day)
+            send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE)
+    #local account
     else:
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            login_id = login_id[1:-1]
+        now_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        pp = subprocess.Popen(
+            ['/usr/bin/chage', '-d', now_date, '-M', pwd_max_day, login_id[1:]],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        sout, serr = pp.communicate()
+        if serr:
+            raise Exception('local-count chage-cmd failed:{}'.serr.decode('utf8'))
 
-    #password cycle
-    pwd_max_day = task[J_MOD][J_TASK][J_IN]['password_time']
-
-    spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
-
-    with open(spath) as f:
-        jsondata = json.loads(f.read().strip('\n'))
-
-    if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
-        or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
-
-        jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
-
-        with open(spath, 'w') as f:
-            f.write(json.dumps(jsondata))
-        
-        chown_file(spath, fuser=login_id, fgroup=login_id)
-        jlog = 'password cycle has been changed from $({}) to $({})'.format(
-                jsondata['data']['loginInfo']['pwd_max_day'],
-                pwd_max_day)
-        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE)
-
-    #screensaver
-    #found problem. need more research
-    screen_time = task[J_MOD][J_TASK][J_IN]['screen_time']
-    data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
-    jlog = 'screen-saver time has been changed to $({})'.format(screen_time)
-    send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_SCREEN_SAVER)
+        jlog = 'password cycle has been changed to $({})'.format(pwd_max_day)
+        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE_LOCAL)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1064,6 +1108,27 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
+    #HOMEFOLDER OPERATION
+    try:
+        homefolder_operation = \
+            server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+        if homefolder_operation == 'enable':
+            data_center.homefolder_operation[0] = True
+            lg = 'homefolder operation has been enabled'
+            gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
+        else:
+            data_center.home_folder_delete_flag[0] = False
+            lg = 'homefolder operation has been disabled'
+            gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
+        send_journallog(
+            lg,
+            JOURNAL_NOTICE, 
+            gc)
+        print('HOMEFOLDER ', lg, JOURNAL_NOTICE, gc)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -1089,10 +1154,6 @@ def task_client_user_sync(task, data_center):
 
         for idx in range(len(file_name_list)):
             file_name = file_name_list[idx]
-            if '$(LOGINID)' in file_name:
-                file_name = \
-                    file_name.replace('$(LOGINID)', '%s' % login_id)
-
             file_contents = file_contents_list[idx]
             signature = signature_list[idx]
             
@@ -1100,38 +1161,6 @@ def task_client_user_sync(task, data_center):
             verify_signature(signature, file_contents)
 
             replace_file(file_name, file_contents, signature)
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
-
-    #SCREEN TIME
-    try:
-        screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
-        if not screen_time:
-            raise Exception('screen-time is null')
-        data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
-
-    #PASSWORD CYCLE
-    try:
-        pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
-        if not pwd_max_day:
-            raise Exception('password-cycle is null')
-
-        spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
-
-        with open(spath) as f:
-            jsondata = json.loads(f.read().strip('\n'))
-
-        if 'pwd_max_day' not in jsondata['data']['loginInfo'] \
-            or pwd_max_day != jsondata['data']['loginInfo']['pwd_max_day']:
-
-            jsondata['data']['loginInfo']['pwd_max_day'] = pwd_max_day
-
-            with open(spath, 'w') as f:
-                f.write(json.dumps(jsondata))
-            
-            chown_file(spath, fuser=login_id, fgroup=login_id)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
