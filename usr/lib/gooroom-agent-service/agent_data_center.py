@@ -130,6 +130,11 @@ class AgentDataCenter:
             #FOR SUMMARY_LOG
             self.summary_log_first_execution = True
 
+            #HOME FOLDER DELETE FLAG
+            self.home_folder_delete_flag = ['disable']
+            hf_operation = self.conf.get('CLIENTJOB', 'HOMEFOLDER_OPERATION')
+            self.home_folder_delete_flag[0] = hf_operation
+
             self.logger.info('END SHOW()')
 
         except:
