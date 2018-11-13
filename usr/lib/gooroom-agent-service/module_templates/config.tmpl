@@ -513,14 +513,30 @@
         </out>
     </task>
 
+    <!-- SET HOMEFOLDER OPERATION -->
     <task name="set_homefolder_operation">
-        <param name="get_homefolder_operation" type="string"/>
+        <param name="task_name" type="string"/>
 
         <in>
             <param name="operation" type="string"/>
         </in>
 
         <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- DPMS OFF TIME -->
+    <task name="dpms_off_time" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <out>
+            <param name="screen_time" type="int"/>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>

@@ -54,6 +54,37 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_dpms_off_time(task, data_center):
+    """
+    dpms off time
+    """
+
+    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
+        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+        with open('/etc/passwd') as f:
+            pws = f.readlines()
+        for pw in pws:
+            splited = pw.split(':')
+            if splited[0] == login_id:
+                if not 'gooroom-online-account' in splited[4]:
+                    login_id = ''
+                break
+        else:
+            login_id = ''
+    else:
+        login_id = catch_user_id()
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    server_rsp = data_center.module_request(task)
+    screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
+    task[J_MOD][J_TASK][J_OUT]['screen_time'] = int(screen_time)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_set_homefolder_operation(task, data_center):
     """
     get home folder deletion
@@ -136,7 +167,7 @@ def task_get_app_list(task, data_center):
     server_rsp = data_center.module_request(task)
     black_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['black_list']
 
-    if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
+    if 'from_gpms' in server_rsp[J_MOD][J_TASK][J_RESPONSE]:
         data_center.GOOROOM_AGENT.app_black_list(black_list)
         
     task[J_MOD][J_TASK][J_OUT]['black_list'] = black_list
