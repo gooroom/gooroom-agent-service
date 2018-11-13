@@ -254,7 +254,7 @@ class Agent(dbus.service.Object):
 
         pass
 
-    @dbus.service.signal(DBUS_IFACE, signature='s')
+    @dbus.service.signal(DBUS_IFACE, signature='v')
     def app_black_list(self, tm):
         """
         send signal to user session 

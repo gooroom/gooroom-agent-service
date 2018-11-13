@@ -134,8 +134,12 @@ def task_get_app_list(task, data_center):
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
     server_rsp = data_center.module_request(task)
-    task[J_MOD][J_TASK][J_OUT]['black_list'] = \
-        server_rsp[J_MOD][J_TASK][J_RESPONSE]['black_list']
+    black_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['black_list']
+
+    if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
+        data_center.GOOROOM_AGENT.app_black_list(black_list)
+        
+    task[J_MOD][J_TASK][J_OUT]['black_list'] = black_list
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -666,6 +670,8 @@ def task_get_update_server_config(task, data_center):
             % (len_filenames, len_filecontents, len_signatures))
     
     for n, c, s in zip(filenames, filecontents, signatures):
+        if c == None or c == '':
+            continue
         #if verifying is failed, exception occur
         verify_signature(s, c)
         replace_file(n, c, s)
@@ -1091,7 +1097,7 @@ def task_client_sync(task, data_center):
                 % (len_filenames, len_filecontents, len_signatures))
         
         for n, c, s in zip(filenames, filecontents, signatures):
-            if c == '':
+            if c == None or c == '':
                 AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
                 continue
 
