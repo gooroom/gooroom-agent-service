@@ -62,11 +62,11 @@ def task_set_homefolder_operation(task, data_center):
     homefolder_operation = \
         server_rsp[J_MOD][J_TASK][J_IN]['operation']
     if homefolder_operation == 'enable':
-        data_center.homefolder_operation[0] = True
+        data_center.homefolder_operation[0] = 'enable'#True
         lg = 'homefolder operation has been enabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
     else:
-        data_center.home_folder_delete_flag[0] = False
+        data_center.home_folder_delete_flag[0] = 'disable'#False
         lg = 'homefolder operation has been disabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
     send_journallog(
@@ -1119,18 +1119,17 @@ def task_client_sync(task, data_center):
         homefolder_operation = \
             server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
         if homefolder_operation == 'enable':
-            data_center.homefolder_operation[0] = True
+            data_center.homefolder_operation[0] = 'enable'#True
             lg = 'homefolder operation has been enabled'
             gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
         else:
-            data_center.home_folder_delete_flag[0] = False
+            data_center.home_folder_delete_flag[0] = 'disable'#False
             lg = 'homefolder operation has been disabled'
             gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
         send_journallog(
             lg,
             JOURNAL_NOTICE, 
             gc)
-        print('HOMEFOLDER ', lg, JOURNAL_NOTICE, gc)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

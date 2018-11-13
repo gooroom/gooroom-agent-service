@@ -145,7 +145,9 @@ class AgentDataCenter:
             self.client_info_set = {'','','','',-1,-1,''}
 
             #HOME FOLDER DELETE FLAG
-            self.home_folder_delete_flag = [False]
+            self.home_folder_delete_flag = ['disable']
+            hf_operation = self.conf.get('CLIENTJOB', 'HOMEFOLDER_OPERATION')
+            self.home_folder_delete_flag[0] = hf_operation
         except:
             raise
 
