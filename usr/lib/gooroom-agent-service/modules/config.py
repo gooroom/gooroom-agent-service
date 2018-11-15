@@ -161,13 +161,18 @@ def task_get_app_list(task, data_center):
         if login_id == '-' or login_id[0] == '+':
             login_id = ''
 
+    if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
+        from_gpms = True
+    else:
+        from_gpms = False
+
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
     server_rsp = data_center.module_request(task)
     black_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['black_list']
 
-    if 'from_gpms' in server_rsp[J_MOD][J_TASK][J_RESPONSE]:
+    if from_gpms:
         data_center.GOOROOM_AGENT.app_black_list(black_list)
         
     task[J_MOD][J_TASK][J_OUT]['black_list'] = black_list
@@ -610,7 +615,7 @@ def task_get_screen_time(task, data_center):
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
     server_rsp = data_center.module_request(task)
 
-    screen_time = server_rsp[J_MOD][J_TASK][J_IN]['screen_time']
+    screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
     data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
     jlog = 'screen-saver time has been changed to $({})'.format(screen_time)
     send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_SCREEN_SAVER)
@@ -638,7 +643,7 @@ def task_get_password_cycle(task, data_center):
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
     server_rsp = data_center.module_request(task)
-    pwd_max_day = server_rsp[J_MOD][J_TASK][J_IN]['password_time']
+    pwd_max_day = server_rsp[J_MOD][J_TASK][J_RESPONSE]['password_time']
 
     #online account
     if login_id[0] != '+':
