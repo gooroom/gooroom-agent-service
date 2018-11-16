@@ -223,7 +223,8 @@ def pkcon_exec(cmd, timeout, pkg_list, data_center):
         if looping_cnt % 5 == 0:
             pp = subprocess.Popen(
                 ['/usr/bin/pkcon', cmd, '-y', '-p'] + pkg_list,
-                stdout=subprocess.PIPE)
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
             pp_out_list = pp.communicate()[0].decode('utf8').split('\n')
             pp_result_list = []

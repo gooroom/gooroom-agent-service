@@ -42,6 +42,23 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_journal_remover(task, data_center):
+    """
+    journal remover
+    """
+
+    remain_days = data_center.journal_remain_days
+    if remain_days == 0:
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+
+    pp = subprocess.Popen(
+        ['/bin/journalctl', '--vacuum-time={}d'.format(remain_days)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    sout, serr = pp.communicate()
+    
+#-----------------------------------------------------------------------
 def task_security_log(task, data_center):
     """
     load security log on journal

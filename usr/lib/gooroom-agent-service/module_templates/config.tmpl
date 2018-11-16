@@ -18,6 +18,7 @@
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/policy.json"/>
             <enum value="/usr/share/gooroom/browser/policies/trust/managed/ui-policy.json"/>
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/ui-policy.json"/>
+            <enum value="/usr/lib/gooroom-security-utils/log.conf"/>
         </restriction>
     </simpleType>
 
@@ -442,6 +443,11 @@
             <param name="file_name_list" type="string"/>
             <param name="file_contents_list" type="string"/>
             <param name="signature_list" type="string"/>
+            <param name="isDeleteLog" type="string"/>
+            <param name="logRemainDate" type="string"/>
+            <param name="logMaxCount" type="string"/>
+            <param name="logMaxSize" type="string"/>
+            <param name="systemKeepFree" type="string"/>
         </response>
         <out>
             <param name="status" type="string"/>
@@ -504,8 +510,14 @@
         <request id='null' seq="null">
         </request>
         <response>
-            <param name="file_contents" type="string_array"/>
-            <param name="signature" type="string_array"/>
+            <param name="file_name" type="string"/>
+            <param name="file_contents" type="string"/>
+            <param name="signature" type="string"/>
+            <param name="isDeleteLog" type="string"/>
+            <param name="logRemainDate" type="string"/>
+            <param name="logMaxCount" type="string"/>
+            <param name="logMaxSize" type="string"/>
+            <param name="systemKeepFree" type="string"/>
         </response>
         <out>
             <param name="status" type="string"/>

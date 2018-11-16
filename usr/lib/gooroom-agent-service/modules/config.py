@@ -3,6 +3,7 @@
 #-----------------------------------------------------------------------
 import xml.etree.ElementTree as etree
 import simplejson as json
+import configparser
 import subprocess
 import importlib
 import httplib2
@@ -108,20 +109,68 @@ def task_set_homefolder_operation(task, data_center):
 
 
 #-----------------------------------------------------------------------
-def task_get_log_config(task, data_center):
+def _journal_config(server_rsp, data_center):
     """
-    get log config
+    for task_get_log_config and client_sync
     """
 
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-    server_rsp = data_center.module_request(task)
+    #journal configuration
+    journal_conf = \
+        json.loads(server_rsp[J_MOD][J_TASK][J_RESPONSE]['journal_conf'])
+    is_delete = journal_conf['isDeleteLog']
+    remain_days = int(journal_conf['logRemainDate'])
+    if is_delete.lower() == 'true':
+        remain_days = int(journal_conf['logRemainDate'])
+    else:
+        remain_days = 0
+    data_center.journal_remain_days = remain_days
 
-    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
-    file_contents = \
-        server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
-    signature = \
-        server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+    max_count = journal_conf['logMaxCount']
+    max_size = journal_conf['logMaxSize'] + 'M'
+    keep_free = journal_conf['systemKeepFree']
+
+    parser = configparser.RawConfigParser()
+    parser.optionxform = str
+    parser.read('/etc/systemd/journald.conf')
+
+    old_max_count = parser.get('Journal', 'SystemMaxFiles')
+    old_max_size = parser.get('Journal', 'SystemMaxFileSize')
+    old_keep_free = parser.get('Journal', 'SystemKeepFree')
+    if old_max_size == max_size \
+        and old_max_count == max_count \
+        and old_keep_free == keep_free:
+        return
+
+    lm = 'journal configuration has been changed $('
+    if old_max_size != max_size: 
+        lm += ' SystemMaxFileSize:{}->{}'.format(old_max_size, max_size)
+        parser.set('Journal', 'SystemMaxFileSize', '{}'.format(max_size))
+    if old_max_count != max_count: 
+        lm += ' SystemMaxFiles:{}->{}'.format(old_max_count, max_count)
+        parser.set('Journal', 'SystemMaxFiles', '{}'.format(max_count))
+    if old_keep_free != keep_free: 
+        lm += ' SystemKeepFree:{}->{}'.format(old_keep_free, keep_free)
+        parser.set('Journal', 'SystemKeepFree', '{}'.format(keep_free))
+    lm += ')' 
+    with open('/etc/systemd/journald.conf', 'w') as f:
+        parser.write(f)
+
+    send_journallog(
+                lm, 
+                JOURNAL_NOTICE, 
+                GRMCODE_JOURNAL_CONFIG_CHANGED)
+
+    svc = 'systemd-journald.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = \
+        {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
+    getattr(m, 'task_daemon_restart')(tmp_task, data_center)
+
+def send_config_diff(file_contents):
+    """
+    send config diff to journald
+    """
+
     module_path = \
         AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
     sys.path.append(module_path)
@@ -133,9 +182,31 @@ def task_get_log_config(task, data_center):
                     JOURNAL_NOTICE, 
                     GRMCODE_LOG_CONFIG_CHANGED)
 
+def task_get_log_config(task, data_center):
+    """
+    get log config
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+    server_rsp = data_center.module_request(task)
+
+    #log configuration
+    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
+    file_contents = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+    signature = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+
+    send_config_diff(file_contents)
+
     #if verifying is failed, exception occur
     verify_signature(signature, file_contents)
     replace_file(file_name, file_contents, signature)
+
+    #journal configuration
+    _journal_config(server_rsp, data_center)
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -1132,6 +1203,8 @@ def task_client_sync(task, data_center):
             raise Exception('!! invalid data len(filename)=%d len(filecontents)=%d len(signautres)=%d' 
                 % (len_filenames, len_filecontents, len_signatures))
         
+        #check if do pkcon_exec(refresh)
+        must_refresh = False
         for n, c, s in zip(filenames, filecontents, signatures):
             if c == None or c == '':
                 AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
@@ -1141,12 +1214,22 @@ def task_client_sync(task, data_center):
                 remake_etc_hosts(c, s)
                 continue
 
+            if n == '/usr/lib/gooroom-security-utils/log.conf':
+                send_config_diff(c)
+
+            if n == '/etc/apt/sources.list.d/official-package-repositories.list' \
+                or n == '/etc/apt/preferences.d/gooroom.pref':
+                with open(n, 'r') as f:
+                    if c != f.read():
+                        must_refresh = True
+
             #if verifying is failed, exception occur
             verify_signature(s, c)
             replace_file(n, c, s)
 
         #update cache
-        pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+        if must_refresh:
+            pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1169,6 +1252,11 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
+    #JOURNAL LOG CONFIG
+    try:
+        _journal_config(server_rsp, data_center)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 

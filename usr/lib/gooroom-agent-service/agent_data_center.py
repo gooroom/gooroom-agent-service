@@ -148,6 +148,9 @@ class AgentDataCenter:
             self.home_folder_delete_flag = ['disable']
             hf_operation = self.conf.get('CLIENTJOB', 'HOMEFOLDER_OPERATION')
             self.home_folder_delete_flag[0] = hf_operation
+
+            #JOURNAL REMAIN DAYS
+            self.journal_remain_days = int(self.conf.get('JOURNAL', 'REMAIN_DAYS'))
         except:
             raise
 

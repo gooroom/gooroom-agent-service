@@ -89,7 +89,8 @@ def task_delete_homefolder(task, data_center):
                     pid = str(proc.pid)
                     kill_cmd = subprocess.Popen(
                                             ['kill', '-9', pid], 
-                                            stdout=subprocess.PIPE)
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
                     kill_out = kill_cmd.communicate()[0]
                     if kill_cmd.returncode != 0:
                         raise Exception(
@@ -105,7 +106,8 @@ def task_delete_homefolder(task, data_center):
                 '-u', 
                 online_account, 
                 '/usr/bin/ecryptfs-umount-private'],
-                stdout=subprocess.PIPE)
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
             umount_out, umount_err = umount_cmd.communicate()
             AgentLog.get_logger().info(
                 'ecryptfs umount={} {}'.format(umount_out, umount_err))
@@ -125,7 +127,8 @@ def task_delete_homefolder(task, data_center):
                 if mounted:
                     umount_cmd = subprocess.Popen(
                                             ['umount', fn], 
-                                            stdout=subprocess.PIPE)
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
                     umount_out = umount_cmd.communicate()[0]
                     if umount_cmd.returncode != 0:
                         raise Exception(
@@ -138,7 +141,8 @@ def task_delete_homefolder(task, data_center):
             deluser_cmd = subprocess.Popen(
                 ['deluser', '--remove-home', 
                 online_account], 
-                stdout=subprocess.PIPE)
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
             deluser_out, deluser_err = deluser_cmd.communicate()
             if deluser_cmd.returncode != 0:
                 raise Exception(

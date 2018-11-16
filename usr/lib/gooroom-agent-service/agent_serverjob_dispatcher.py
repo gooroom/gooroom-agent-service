@@ -66,6 +66,8 @@ class AgentServerJobDispatcher(threading.Thread):
             self.agent_sync(SERVER_VERSION_1_0)
             ###################################
 
+        sync_done = False
+
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:
                 try:
@@ -73,13 +75,16 @@ class AgentServerJobDispatcher(threading.Thread):
                     if not self.data_center.server_version.startswith(SERVER_VERSION_1_0) \
                         and err_msg:
                         prev_access_difftime = int(err_msg)
-                        if self.data_center.serverjob_dispatch_time \
+                        if not sync_done and self.data_center.serverjob_dispatch_time \
                             - prev_access_difftime \
                             + 10 < 0:
 
                             #######################################
                             self.agent_sync(SERVER_VERSION_NOT_1_0)
                             #######################################
+                            sync_done = True
+                        else:
+                            sync_done = False
 
                     if agent_data:
                         for job in agent_data:

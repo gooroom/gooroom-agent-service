@@ -58,11 +58,28 @@
 
         <request id="null" seq="null">
             <param name="user_id" type="string"/>
-            <param name="logs" type="map">
-            </param>
+            <param name="logs" type="map"/>
         </request>
         <response>
         </response>
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
+    <task name="journal_remover" bootable="yes" mustok="no" polltime="3600" versioninfo="!1.0">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+        </response>
+
         <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
