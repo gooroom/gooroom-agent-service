@@ -71,14 +71,16 @@ def task_security_log(task, data_center):
     j = journal.Reader()
     j.seek_tail()
     tail_entry = j.get_previous()
+    j.get_next()
     tail_now_timestamp = datetime.datetime.now().timestamp()
-    last_seek_time = read_last_seek_time(backup_path, 'gooroom-last-seek-time')
+    last_seek_time = \
+        read_last_seek_time(backup_path, 'gooroom-last-seek-time')
 
     if tail_entry \
         and tail_entry['__REALTIME_TIMESTAMP'].timestamp() != last_seek_time:
         if last_seek_time:
-            j.seek_realtime(round(last_seek_time+0.000001, 6))
-            pass
+            j.seek_realtime(round(last_seek_time, 6))
+            j.get_next()
         else:
             j.seek_head()
         
@@ -86,7 +88,8 @@ def task_security_log(task, data_center):
         logs_len = 0
         MAX_LOG_LEN = int(AgentConfig.get_config().get('MAIN', 'MAX_LOG_LEN'))
 
-        module_path = AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
+        module_path = \
+            AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
         sys.path.append(module_path)
         m = importlib.import_module('gooroom-security-logparser')
         #GET LOG

@@ -91,6 +91,7 @@ def task_set_homefolder_operation(task, data_center):
     get home folder deletion
     """
 
+    prev_v = data_center.homefolder_operation[0]
     homefolder_operation = \
         server_rsp[J_MOD][J_TASK][J_IN]['operation']
     if homefolder_operation == 'enable':
@@ -101,10 +102,11 @@ def task_set_homefolder_operation(task, data_center):
         data_center.home_folder_delete_flag[0] = 'disable'#False
         lg = 'homefolder operation has been disabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
-    send_journallog(
-        lg,
-        JOURNAL_NOTICE, 
-        gc)
+    if prev_v != homefolder_operation:
+        send_journallog(
+            lg,
+            JOURNAL_NOTICE, 
+            gc)
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 
@@ -123,7 +125,18 @@ def _journal_config(server_rsp, data_center):
         remain_days = int(journal_conf['logRemainDate'])
     else:
         remain_days = 0
-    data_center.journal_remain_days = remain_days
+    if data_center.journal_remain_days != remain_days:
+        lm = 'journal configuration has been changed $(logRemainDate:{}->{})'.format(
+            data_center.journal_remain_days, remain_days)
+        data_center.journal_remain_days = remain_days
+        send_journallog(
+                    lm, 
+                    JOURNAL_NOTICE, 
+                    GRMCODE_JOURNAL_CONFIG_CHANGED)
+        config = AgentConfig.get_config()
+        config.set('JOURNAL', 'REMAIN_DAYS', str(remain_days))
+        with open(CONFIG_FULLPATH, 'w') as f:
+            config.write(f)
 
     max_count = journal_conf['logMaxCount']
     max_size = journal_conf['logMaxSize'] + 'M'
@@ -133,9 +146,12 @@ def _journal_config(server_rsp, data_center):
     parser.optionxform = str
     parser.read('/etc/systemd/journald.conf')
 
-    old_max_count = parser.get('Journal', 'SystemMaxFiles')
-    old_max_size = parser.get('Journal', 'SystemMaxFileSize')
-    old_keep_free = parser.get('Journal', 'SystemKeepFree')
+    old_max_count = parser.get('Journal', 'SystemMaxFiles') \
+        if parser.has_option('Journal', 'SystemMaxFiles') else 'NONE'
+    old_max_size = parser.get('Journal', 'SystemMaxFileSize') \
+        if parser.has_option('Journal', 'SystemMaxFileSize') else 'NONE'
+    old_keep_free = parser.get('Journal', 'SystemKeepFree') \
+        if parser.has_option('Journal', 'SystemKeepFree') else 'NONE'
     if old_max_size == max_size \
         and old_max_count == max_count \
         and old_keep_free == keep_free:
@@ -143,13 +159,13 @@ def _journal_config(server_rsp, data_center):
 
     lm = 'journal configuration has been changed $('
     if old_max_size != max_size: 
-        lm += ' SystemMaxFileSize:{}->{}'.format(old_max_size, max_size)
+        lm += 'SystemMaxFileSize:{}->{} '.format(old_max_size, max_size)
         parser.set('Journal', 'SystemMaxFileSize', '{}'.format(max_size))
     if old_max_count != max_count: 
-        lm += ' SystemMaxFiles:{}->{}'.format(old_max_count, max_count)
+        lm += 'SystemMaxFiles:{}->{} '.format(old_max_count, max_count)
         parser.set('Journal', 'SystemMaxFiles', '{}'.format(max_count))
     if old_keep_free != keep_free: 
-        lm += ' SystemKeepFree:{}->{}'.format(old_keep_free, keep_free)
+        lm += 'SystemKeepFree:{}->{} '.format(old_keep_free, keep_free)
         parser.set('Journal', 'SystemKeepFree', '{}'.format(keep_free))
     lm += ')' 
     with open('/etc/systemd/journald.conf', 'w') as f:
@@ -842,18 +858,19 @@ def task_get_media_config(task, data_center):
     file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
     signature = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
 
-    #if verifying is failed, exception occur
-    verify_signature(signature, file_contents)
+    if file_contents and len(file_contents) > 0:
+        #if verifying is failed, exception occur
+        verify_signature(signature, file_contents)
 
-    replace_file(file_name, file_contents, signature)
+        replace_file(file_name, file_contents, signature)
 
-    #reload grac
-    svc = 'grac-device-daemon.service'
-    m = importlib.import_module('modules.daemon_control')
-    tmp_task = \
-        {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
+        #reload grac
+        svc = 'grac-device-daemon.service'
+        m = importlib.import_module('modules.daemon_control')
+        tmp_task = \
+            {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
 
-    getattr(m, 'task_daemon_reload')(tmp_task, data_center)
+        getattr(m, 'task_daemon_reload')(tmp_task, data_center)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -883,6 +900,8 @@ def task_get_browser_config(task, data_center):
     signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
 
     for idx in range(len(file_name_list)):
+        if not file_contents:
+            continue
         file_name = file_name_list[idx]
         file_contents = file_contents_list[idx]
         signature = signature_list[idx]
