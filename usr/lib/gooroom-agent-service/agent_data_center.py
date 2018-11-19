@@ -151,6 +151,12 @@ class AgentDataCenter:
 
             #JOURNAL REMAIN DAYS
             self.journal_remain_days = int(self.conf.get('JOURNAL', 'REMAIN_DAYS'))
+
+            #AGENT-GRM CONNECTION STATUS
+            self.agent_grm_connection_status = [False]
+
+            #UPDATE OPERATION
+            self.update_operation = ['disable']
         except:
             raise
 

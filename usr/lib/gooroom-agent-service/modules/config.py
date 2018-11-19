@@ -91,11 +91,11 @@ def task_set_homefolder_operation(task, data_center):
     get home folder deletion
     """
 
-    prev_v = data_center.homefolder_operation[0]
+    prev_v = data_center.home_folder_delete_flag[0]
     homefolder_operation = \
-        server_rsp[J_MOD][J_TASK][J_IN]['operation']
+        task[J_MOD][J_TASK][J_IN]['operation']
     if homefolder_operation == 'enable':
-        data_center.homefolder_operation[0] = 'enable'#True
+        data_center.home_folder_delete_flag[0] = 'enable'#True
         lg = 'homefolder operation has been enabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
     else:
@@ -379,6 +379,7 @@ def task_tell_update_operation(task, data_center):
     tell_update_operation
     """
 
+    '''
     login_id = catch_user_id()
     if data_center.server_version == SERVER_VERSION_1_0:
         if login_id == '-':
@@ -394,8 +395,10 @@ def task_tell_update_operation(task, data_center):
 
     server_rsp = data_center.module_request(task)
     operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
+    '''
 
-    task[J_MOD][J_TASK][J_OUT]['operation'] = operation
+    task[J_MOD][J_TASK][J_OUT]['operation'] = \
+        data_center.update_operation[0]
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -427,6 +430,7 @@ def task_get_update_operation_with_loginid(task, data_center):
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm | EXEC)
 
+    data_center.update_operation[0] = operation
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -467,6 +471,7 @@ def task_get_update_operation(task, data_center):
         data_center.GOOROOM_AGENT.update_operation(0)
         send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_UPDATE_OPERATION_DISABLE)
 
+    data_center.update_operation[0] = operation
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -1257,7 +1262,7 @@ def task_client_sync(task, data_center):
         homefolder_operation = \
             server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
         if homefolder_operation == 'enable':
-            data_center.homefolder_operation[0] = 'enable'#True
+            data_center.home_folder_delete_flag[0] = 'enable'#True
             lg = 'homefolder operation has been enabled'
             gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
         else:
@@ -1328,6 +1333,7 @@ def task_client_user_sync(task, data_center):
             for ub in updating_binary:
                 perm = stat.S_IMODE(os.lstat(ub).st_mode)
                 os.chmod(ub, perm | EXEC)
+        data_center.update_operation[0] = operation
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

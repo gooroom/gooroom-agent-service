@@ -89,8 +89,10 @@ class AgentServerJobDispatcher(threading.Thread):
                     if agent_data:
                         for job in agent_data:
                             self._job_manager.put_job(job)
+                    self.data_center.agent_grm_connection_status[0] = True
                 except: 
                     AgentLog.get_logger().error('%s' % agent_format_exc())
+                    self.data_center.agent_grm_connection_status[0] = False
 
             #start clientjob
             self.data_center.clientjob_looping_on[0] = True
