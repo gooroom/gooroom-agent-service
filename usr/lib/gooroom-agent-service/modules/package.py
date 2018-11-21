@@ -80,7 +80,7 @@ def task_profiling(task, data_center):
         AgentLog.get_logger().info(
             pkcon_exec(
                 'remove', 
-                PKCON_TIMEOUT_TEN_MINS, 
+                PKCON_TIMEOUT_DEFAULT, 
                 to_remove_pkgs, 
                 data_center)
             )
@@ -89,7 +89,7 @@ def task_profiling(task, data_center):
         AgentLog.get_logger().info(
             pkcon_exec(
                 'install', 
-                PKCON_TIMEOUT_TEN_MINS, 
+                PKCON_TIMEOUT_DEFAULT, 
                 to_install_pkgs, 
                 data_center)
             )
@@ -127,7 +127,7 @@ def task_install_or_upgrade_package(task, data_center):
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('install', PKCON_TIMEOUT_TEN_MINS, pkg_list, data_center)
+        pkcon_exec('install', PKCON_TIMEOUT_DEFAULT, pkg_list, data_center)
 
 #-----------------------------------------------------------------------
 def task_remove_package(task, data_center):
@@ -140,7 +140,7 @@ def task_remove_package(task, data_center):
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('remove', PKCON_TIMEOUT_TEN_MINS, pkg_list, data_center)
+        pkcon_exec('remove', PKCON_TIMEOUT_DEFAULT, pkg_list, data_center)
 
 #-----------------------------------------------------------------------
 def task_upgrade_all(task, data_center):
@@ -151,7 +151,7 @@ def task_upgrade_all(task, data_center):
     check_package_operation(data_center)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('update', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+        pkcon_exec('update', PKCON_TIMEOUT_DEFAULT, [], data_center)
 
 #-----------------------------------------------------------------------
 def task_upgrade_package_with_label(task, data_center):
@@ -162,7 +162,7 @@ def task_upgrade_package_with_label(task, data_center):
     check_package_operation(data_center)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('update', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+        pkcon_exec('update', PKCON_TIMEOUT_DEFAULT, [], data_center)
 
 #-----------------------------------------------------------------------
 def task_profiling_packages(task, data_center):

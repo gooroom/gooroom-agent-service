@@ -1269,10 +1269,13 @@ def task_client_sync(task, data_center):
             data_center.home_folder_delete_flag[0] = 'disable'#False
             lg = 'homefolder operation has been disabled'
             gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
+        '''
         send_journallog(
             lg,
             JOURNAL_NOTICE, 
             gc)
+        '''
+
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
