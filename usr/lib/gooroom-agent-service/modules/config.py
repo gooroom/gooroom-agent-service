@@ -1180,7 +1180,7 @@ def task_client_sync(task, data_center):
         server_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['time']
         if server_time != '':
             tl = [int(t) for t in server_rsp[J_MOD][J_TASK][J_RESPONSE]['time'].split(',')]
-            _set_time(tuple(tl))
+            #_set_time(tuple(tl))
     except:
         self.logger.error('%s' % agent_format_exc())
 
