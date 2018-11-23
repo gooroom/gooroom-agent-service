@@ -905,10 +905,10 @@ def task_get_browser_config(task, data_center):
     signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
 
     for idx in range(len(file_name_list)):
-        if not file_contents:
-            continue
         file_name = file_name_list[idx]
         file_contents = file_contents_list[idx]
+        if not file_contents:
+            continue
         signature = signature_list[idx]
         
         #if verifying is failed, exception occur
@@ -1230,7 +1230,7 @@ def task_client_sync(task, data_center):
         #check if do pkcon_exec(refresh)
         must_refresh = False
         for n, c, s in zip(filenames, filecontents, signatures):
-            if c == None or c == '':
+            if not c:
                 AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
                 continue
 
@@ -1308,6 +1308,8 @@ def task_client_user_sync(task, data_center):
         for idx in range(len(file_name_list)):
             file_name = file_name_list[idx]
             file_contents = file_contents_list[idx]
+            if not file_contents:
+                continue
             signature = signature_list[idx]
             
             #if verifying is failed, exception occur
