@@ -1178,7 +1178,6 @@ def task_client_sync(task, data_center):
     #SERVER TIME
     try:
         server_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['time']
-        print('server_time=', server_time)
         if server_time != '':
             tl = [int(t) for t in server_rsp[J_MOD][J_TASK][J_RESPONSE]['time'].split(',')]
             #_set_time(tuple(tl))

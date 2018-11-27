@@ -241,11 +241,16 @@ def pkcon_exec(cmd, timeout, pkg_list, data_center):
             pp_result = '\n'.join(pp_result_list)
 
             if pp.returncode != 0:
+                if cmd == 'install' and pp.returncode == 4:
+                    pp_result = 'agent says:패키지가 이미 설치되어 있습니다'
+                    break
                 data_center.logger.error(pp_result)
             else:
                 break
         else:
             time.sleep(1)
+    else:
+        raise Exception(pp_result)
 
     return pp_result
 
