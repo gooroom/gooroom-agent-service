@@ -26,6 +26,8 @@ from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_util import pkcon_exec,verify_signature,send_journallog
 from agent_define import *
 
+import apt_pkg
+
 #-----------------------------------------------------------------------
 def do_task(task, data_center):
     """
@@ -103,6 +105,10 @@ def task_set_homefolder_operation(task, data_center):
         lg = 'homefolder operation has been disabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
     if prev_v != homefolder_operation:
+        config = AgentConfig.get_config()
+        config.set('CLIENTJOB', 'HOMEFOLDER_OPERATION', homefolder_operation)
+        with open(CONFIG_FULLPATH, 'w') as f:
+            config.write(f)
         send_journallog(
             lg,
             JOURNAL_NOTICE, 
@@ -1253,7 +1259,12 @@ def task_client_sync(task, data_center):
 
         #update cache
         if must_refresh:
-            pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+            #pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+            apt_pkg.init()
+            cache = apt.cache.Cache()
+            cache.update()
+            cache.open()
+            cache.close()
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1261,20 +1272,24 @@ def task_client_sync(task, data_center):
     try:
         homefolder_operation = \
             server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
-        if homefolder_operation == 'enable':
-            data_center.home_folder_delete_flag[0] = 'enable'#True
-            lg = 'homefolder operation has been enabled'
-            gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
-        else:
-            data_center.home_folder_delete_flag[0] = 'disable'#False
-            lg = 'homefolder operation has been disabled'
-            gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
-        '''
-        send_journallog(
-            lg,
-            JOURNAL_NOTICE, 
-            gc)
-        '''
+        if homefolder_operation != data_center.home_folder_delete_flag[0]:
+            data_center.home_folder_delete_flag[0] = homefolder_operation
+            if homefolder_operation == 'enable':
+                lg = 'homefolder operation has been enabled'
+                gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
+            else:
+                lg = 'homefolder operation has been disabled'
+                gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
+
+            config = AgentConfig.get_config()
+            config.set('CLIENTJOB', 'HOMEFOLDER_OPERATION', homefolder_operation)
+            with open(CONFIG_FULLPATH, 'w') as hf:
+                config.write(hf)
+
+            send_journallog(
+                lg,
+                JOURNAL_NOTICE, 
+                gc)
 
     except:
         AgentLog.get_logger().error(agent_format_exc())

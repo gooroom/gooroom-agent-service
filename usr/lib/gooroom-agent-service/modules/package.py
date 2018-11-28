@@ -4,7 +4,8 @@ import copy
 import apt
 import os
 
-from agent_util import AgentConfig,AgentLog,agent_format_exc,pkcon_exec
+from agent_util import AgentConfig,AgentLog,agent_format_exc
+from agent_util import apt_exec,dpkg_configure_a
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -19,8 +20,11 @@ def do_task(task, data_center):
     task[J_MOD][J_TASK][J_OUT] = \
         {J_STATUS : AGENT_OK, J_MESSAGE : AGENT_DEFAULT_MESSAGE}
 
+    cache = None
+
     try:
-        eval('task_%s(task, data_center)' % task[J_MOD][J_TASK][J_TASKN])
+        cache = get_cache()
+        eval('task_%s(task, data_center, cache)' % task[J_MOD][J_TASK][J_TASKN])
 
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
@@ -28,6 +32,9 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = e
 
         AgentLog.get_logger().error(e)
+
+    if cache:
+        cache.close()
 
     if J_IN in task[J_MOD][J_TASK]:
         task[J_MOD][J_TASK].pop(J_IN)
@@ -39,7 +46,7 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-def task_profiling(task, data_center):
+def task_profiling(task, data_center, cache):
     """
     profiling
     """
@@ -69,55 +76,55 @@ def task_profiling(task, data_center):
         AgentLog.get_logger().error('PROFILING packages from server is empty')
         return
 
-    client_pkgs = read_installed_pkg_names_in_cache()
     server_pkgs = pkgs_from_server.split(',')
 
-    to_install_pkgs = set(server_pkgs) - set(client_pkgs)
-    to_remove_pkgs = set(client_pkgs) - set(server_pkgs)
-    #intersection_pkgs = set(client_pkgs) & set(server_pkgs)
-
     if removal == 'true':
-        AgentLog.get_logger().info(
-            pkcon_exec(
-                'remove', 
-                PKCON_TIMEOUT_DEFAULT, 
-                to_remove_pkgs, 
-                data_center)
-            )
+        #dpkg --configuration -a
+        dpkg_configure_a()
+
+        client_pkgs = read_installed_pkg_names_in_cache(cache)
+        to_remove_pkgs = set(client_pkgs) - set(server_pkgs)
+
+        #apt-get purge
+        for pkg_name in to_remove_pkgs:
+            apt_exec('purge', PKCON_TIMEOUT_DEFAULT, pkg_name, data_center)
+        AgentLog.get_logger().info('PROFILING remove OK')
+
+        #cache reopen
+        cache.update()
+        cache.open()
+
+    client_pkgs = read_installed_pkg_names_in_cache(cache)
+    to_install_pkgs = set(server_pkgs) - set(client_pkgs)
 
     if len(to_install_pkgs) > 0:
-        AgentLog.get_logger().info(
-            pkcon_exec(
-                'install', 
-                PKCON_TIMEOUT_DEFAULT, 
-                to_install_pkgs, 
-                data_center)
-            )
+        #dpkg --configuration -a
+        dpkg_configure_a()
 
-    client_pkgs_again = read_installed_pkg_names_in_cache()
+        #apt-get update
+        apt_exec('update', PKCON_TIMEOUT_DEFAULT, '', data_center)
+        #apt-get install
+        for pkg_name in to_install_pkgs:
+            apt_exec('install', PKCON_TIMEOUT_DEFAULT, pkg_name, data_center)
+        AgentLog.get_logger().info('PROFILING install OK')
 
-    if removal == 'true':
-        if set(client_pkgs_again) == set(server_pkgs):
+        #cache reopen
+        cache.update()
+        cache.open()
+        client_pkgs_again = read_installed_pkg_names_in_cache(cache)
+        if not set(server_pkgs) - set(client_pkgs_again):
             #success
-            AgentLog.get_logger().info('PROFILING remove == true SUCCESS')
-        else:
-            #fail
-            task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
-            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-                'Although removal is true client packages is not equal to server packages'
-            AgentLog.get_logger().error('PROFILING remove == true FAIL')
-    else:
-        if not set(client_pkgs_again) - set(server_pkgs):
-            #success
-            AgentLog.get_logger().info('PROFILING remove != true SUCCESS')
+            AgentLog.get_logger().info('PROFILING SUCCESS')
         else:
             #fail
             task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
             task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = 'All server pkgs is not installed'
-            AgentLog.get_logger().error('PROFILING remove != true FAIL')
+            AgentLog.get_logger().error('PROFILING FAIL')
+    else:
+        AgentLog.get_logger().info('PROFILING SUCCESS')
 
 #-----------------------------------------------------------------------
-def task_install_or_upgrade_package(task, data_center):
+def task_install_or_upgrade_package(task, data_center, cache):
     """
     install_package
     """
@@ -126,11 +133,21 @@ def task_install_or_upgrade_package(task, data_center):
 
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('install', PKCON_TIMEOUT_DEFAULT, pkg_list, data_center)
+    for pkg_name in pkg_list:
+        pkg = cache[pkg_name]
+
+        if pkg.is_installed:
+            if pkg.is_upgradable:
+                pkg.mark_upgrade()
+        else:
+            pkg.mark_install()
+
+        pkg.mark_install()
+
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
-def task_remove_package(task, data_center):
+def task_remove_package(task, data_center, cache):
     """
     remove_package
     """
@@ -139,33 +156,50 @@ def task_remove_package(task, data_center):
 
     pkg_list = task[J_MOD][J_TASK][J_IN]['pkgs'].split(',')
 
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('remove', PKCON_TIMEOUT_DEFAULT, pkg_list, data_center)
+    for pkg_name in pkg_list:
+        pkg = cache[pkg_name]
+        pkg.mark_delete()
+
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
-def task_upgrade_all(task, data_center):
+def task_upgrade_all(task, data_center, cache):
     """
     upgrade_all
     """
 
     check_package_operation(data_center)
 
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('update', PKCON_TIMEOUT_DEFAULT, [], data_center)
+    cache.upgrade()
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
-def task_upgrade_package_with_label(task, data_center):
+def task_upgrade_package_with_label(task, data_center, cache):
     """
     upgrade_label
     """
 
     check_package_operation(data_center)
 
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
-        pkcon_exec('update', PKCON_TIMEOUT_DEFAULT, [], data_center)
+    label_list = task[J_MOD][J_TASK][J_IN]['label_list'].split(',')
+
+    for label in label_list:
+        cnt = 0
+        for pkg in cache:
+            if pkg.is_installed \
+                and pkg.is_upgradable \
+                and pkg.candidate \
+                and pkg.candidate.origins \
+                and len(pkg.candidate.origins) > 0:
+
+                if label in pkg.candidate.origins[0].origin:
+                    cnt += 1
+                    pkg.mark_upgrade()
+
+    agent_commit(task, cache)
 
 #-----------------------------------------------------------------------
-def task_profiling_packages(task, data_center):
+def task_profiling_packages(task, data_center, cache):
     """
     insert_all_packages_to_server
     """
@@ -181,7 +215,7 @@ def task_profiling_packages(task, data_center):
     tmp_list = []
     first_time = True
 
-    pkg_list = read_installed_pkgs_in_cache()
+    pkg_list = read_installed_pkgs_in_cache(cache)
 
     for pkg in pkg_list:
         if cnt >= MAX_PACKAGE_NUM:
@@ -204,7 +238,7 @@ def task_profiling_packages(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def task_insert_all_packages_to_server(task, data_center):
+def task_insert_all_packages_to_server(task, data_center, cache):
     """
     insert_all_packages_to_server
     """
@@ -216,7 +250,7 @@ def task_insert_all_packages_to_server(task, data_center):
     tmp_list = []
     first_time = True
 
-    pkg_list = read_all_pkgs_list_in_cache()
+    pkg_list = read_all_pkgs_list_in_cache(cache)
 
     for pkg in pkg_list:
         if cnt >= MAX_PACKAGE_NUM:
@@ -255,7 +289,7 @@ def _send_pkg(data_center, task):
 
         data_center.module_request(task, mustbedata=False, remove_request=False)
 
-def task_update_package_version_to_server(task, data_center):
+def task_update_package_version_to_server(task, data_center, cache):
     """
     update_package_version_to_server
     """
@@ -263,7 +297,7 @@ def task_update_package_version_to_server(task, data_center):
     fullpath = create_pkglist_file()
 
     #cache에서 설치된 패키지 리스트를 가져오고
-    cache_packages = read_installed_pkgs_in_cache()
+    cache_packages = read_installed_pkgs_in_cache(cache)
 
     #파일이 없으면
     if not os.path.exists(fullpath):
@@ -345,12 +379,22 @@ def task_update_package_version_to_server(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-def read_all_pkgs_list_in_cache():
+def get_cache():
     """
-    return all packages in cache
+    get cache 
     """
 
     cache = apt.cache.Cache()
+    cache.update()
+    cache.open()
+
+    return cache
+
+#-----------------------------------------------------------------------
+def read_all_pkgs_list_in_cache(cache):
+    """
+    return all packages in cache
+    """
 
     cache_packages = []
 
@@ -371,12 +415,10 @@ def read_all_pkgs_list_in_cache():
     return cache_packages
 
 #-----------------------------------------------------------------------
-def read_installed_pkg_names_in_cache():
+def read_installed_pkg_names_in_cache(cache):
     """
     return installed package names in cache
     """
-
-    cache = apt.cache.Cache()
 
     cache_packages = []
     for pkg in cache:
@@ -385,12 +427,10 @@ def read_installed_pkg_names_in_cache():
     return cache_packages
 
 #-----------------------------------------------------------------------
-def read_installed_pkgs_in_cache():
+def read_installed_pkgs_in_cache(cache):
     """
     return installed packages in cache
     """
-
-    cache = apt.cache.Cache()
 
     cache_packages = {}
 
@@ -445,6 +485,54 @@ def create_pkglist_file():
     return fullpath
 
 #-----------------------------------------------------------------------
+def agent_commit(task, cache):
+    """
+    commit
+    """
+
+    mark_status = get_mark_status(cache)
+    aap = AgentAcquireProgress()
+    aip = AgentInstallProgress()
+    m = ''
+
+    if cache.commit(fetch_progress=aap, install_progress=aip):
+        m += 'install[%d] upgrade[%d] delete[%d]\n' \
+            % (len(mark_status['I']), 
+                len(mark_status['U']), 
+                len(mark_status['D']))
+
+        for action in ('I', 'U', 'D'):
+            m += '[%s:%d] %s\n' % (action, 
+                                len(mark_status[action]), 
+                                '\n'.join(mark_status[action]))
+    else:
+        m += '%s\n%s' % (aap.get_message(), aip.get_message())
+        #task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = m
+
+    cache.commit()
+
+#-----------------------------------------------------------------------
+def get_mark_status(cache):
+    """
+    return marking status of packages in cache
+    """
+
+    #[ [install], [upgrade], [delete] ]
+    ms = {'I':[], 'U':[], 'D':[]}
+
+    for pkg in cache:
+        if pkg.marked_install:
+            ms['I'].append(pkg.name)    
+        elif pkg.marked_upgrade:
+            ms['U'].append(pkg.name)    
+        elif pkg.marked_delete:
+            ms['D'].append(pkg.name)    
+
+    return ms
+
+#-----------------------------------------------------------------------
 def check_package_operation(data_center):
     """
     check package_operation
@@ -453,3 +541,44 @@ def check_package_operation(data_center):
     if data_center.package_operation != 'enable':
         raise Exception('package-operation is turned off by security-status-plugin.')
         
+#-----------------------------------------------------------------------
+from apt.progress.base import InstallProgress, AcquireProgress
+
+class AgentInstallProgress(InstallProgress):
+    """
+    apt package install progress 
+    """
+    
+    message = []
+
+    def error(self, pkg, errormsg):
+        """
+        invoked when apt's action is failed 
+        """
+
+        super().error(pkg, errormsg)
+        self.message.append('%s: %s' % (pkg, errormsg))
+
+    def get_message(self):
+        """ get message """
+        return '\n'.join(self.message)
+
+
+class AgentAcquireProgress(AcquireProgress):
+    """
+    apt package acquire progress
+    """
+
+    message = []
+
+    def fail(self, item):
+        """
+        invoked when it is failed to download packages
+        """
+
+        self.message.append(item.description)
+
+    def get_message(self):
+        """ get message """
+        return '\n'.join(self.message)
+

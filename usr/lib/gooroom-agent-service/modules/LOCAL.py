@@ -46,7 +46,7 @@ def task_delete_homefolder(task, data_center):
     delete_homefolder
     """
 
-    if data_center.home_folder_delete_flag[0] == 'disable':
+    if data_center.home_folder_delete_flag[0] != 'enable':
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
         return
         

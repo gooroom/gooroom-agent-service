@@ -208,7 +208,92 @@ def send_journallog(msg, level, grmcode):
                 GRMCODE=grmcode)
     
 #-----------------------------------------------------------------------
-def pkcon_exec(cmd, timeout, pkg_list, data_center):
+def dpkg_configure_a():
+    """
+    dpkg --configure -a
+    """
+
+    pp = subprocess.Popen(
+        '/usr/bin/dpkg --configure -a',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True)
+    pp.communicate()
+
+def debconf_set_selections(pkg):
+    """
+    debconf-set_selections
+    """
+
+    p0 = subprocess.Popen(
+        '/usr/bin/debconf-get-selections | grep {}'.format(pkg),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True)
+    agree_list = p0.communicate()[0].decode('utf8').split('\n')
+    #print('agree_list=', agree_list)
+    if agree_list and len(agree_list) > 0:
+        for agree in agree_list:
+            items = [i.strip() for i in agree.split('\t')]
+            if items and len(items) == 4 and items[3] == 'false':
+                items[3] = 'true'
+                c = 'echo "{} {} {} {}" | /usr/bin/debconf-set-selections'.format(
+                        items[0], items[1], items[2], items[3]) 
+                pp = subprocess.Popen(
+                        c, 
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE, 
+                        shell=True)
+                o, e = pp.communicate()
+                #print('o={} e={}'.format(o, e))
+
+def apt_exec(cmd, timeout, pkg, data_center):
+    """
+    apt-get -y
+    """
+    
+    #print('CMD={} PKG={}'.format(cmd, pkg))
+    pp_result = ''
+    fullcmd = 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y {} {}'.format(cmd, pkg)
+
+    for looping_cnt in range(timeout):
+        if not data_center.serverjob_dispatcher_thread_on:
+            pp_result = 'agent is shutting down...'
+            break
+
+        if looping_cnt % 5 == 0:
+            pp = subprocess.Popen(
+                fullcmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+
+            pp_out, pp_err = pp.communicate()
+            pp_out = pp_out.decode('utf8')
+            pp_err = pp_err.decode('utf8')
+
+            if pp.returncode != 0:
+                if cmd == 'install':
+                    debconf_set_selections(pkg)
+                else:
+                    pp_result = pp_err
+                    data_center.logger.error(pp_err)
+                    #print('ERROR#############################################')
+                    #print('pkgname={} errmsg={}'.format(pkg, pp_result))
+                    #print('##################################################')
+            else:
+                pp_result = pp_out
+                #print(pp_result)
+                break
+        else:
+            time.sleep(1)
+    else:
+        raise Exception(pp_result)
+
+    return pp_result
+
+#-----------------------------------------------------------------------
+def pkcon_exec(cmd, timeout, pkg_list, data_center, profile=None):
     """
     pkcon install -y
     """
@@ -244,6 +329,8 @@ def pkcon_exec(cmd, timeout, pkg_list, data_center):
                 if cmd == 'install' and pp.returncode == 4:
                     pp_result = 'agent says:패키지가 이미 설치되어 있습니다'
                     break
+                if profile and profile == 'yes':
+                    raise
                 data_center.logger.error(pp_result)
             else:
                 break
