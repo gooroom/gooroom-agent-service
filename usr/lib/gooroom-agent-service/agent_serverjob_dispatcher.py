@@ -71,7 +71,7 @@ class AgentServerJobDispatcher(threading.Thread):
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:
                 try:
-                    agent_data, _, err_msg = self.data_center.jobs_request()
+                    agent_data, agent_status, err_msg = self.data_center.jobs_request()
                     if not self.data_center.server_version.startswith(SERVER_VERSION_1_0) \
                         and err_msg:
                         prev_access_difftime = int(err_msg)
@@ -89,7 +89,10 @@ class AgentServerJobDispatcher(threading.Thread):
                     if agent_data:
                         for job in agent_data:
                             self._job_manager.put_job(job)
-                    self.data_center.agent_grm_connection_status[0] = True
+                    if agent_status == AGENT_OK:
+                        self.data_center.agent_grm_connection_status[0] = True
+                    else:
+                        self.data_center.agent_grm_connection_status[0] = False
                 except: 
                     AgentLog.get_logger().error('%s' % agent_format_exc())
                     self.data_center.agent_grm_connection_status[0] = False

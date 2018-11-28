@@ -440,7 +440,7 @@ def task_get_update_operation(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
+    if data_center.server_version.startswith(SERVER_VERSION_1_0):
         if login_id == '-':
             raise Exception('The client did not log in.')
         elif login_id[0] == '+':
@@ -690,7 +690,7 @@ def task_get_screen_time(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
+    if data_center.server_version.startswith(SERVER_VERSION_1_0):
         if login_id == '-':
             raise Exception('The client did not log in.')
         elif login_id[0] == '+':
@@ -721,7 +721,7 @@ def task_get_password_cycle(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
+    if data_center.server_version.startswith(SERVER_VERSION_1_0):
         if login_id == '-':
             raise Exception('The client did not log in.')
         elif login_id[0] == '+':
@@ -845,7 +845,7 @@ def task_get_media_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
+    if data_center.server_version.startswith(SERVER_VERSION_1_0):
         if login_id == '-':
             raise Exception('The client did not log in.')
         elif login_id[0] == '+':
@@ -886,7 +886,7 @@ def task_get_browser_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
+    if data_center.server_version.startswith(SERVER_VERSION_1_0):
         if login_id == '-':
             raise Exception('The client did not log in.')
         elif login_id[0] == '+':

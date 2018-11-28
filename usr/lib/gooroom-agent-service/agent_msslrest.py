@@ -54,22 +54,21 @@ class AgentMsslRest:
         result = json.loads(rsp_body)
         agent_status = result[J_AGENT_STATUS]
 
+        #check to be prevAccessDiffTime value or not
+        prev_access_difftime = ''
+        if J_AGENT_STATUS_PREV_ACCESS_DIFFTIME in agent_status:
+            prev_access_difftime = \
+                agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
+
         #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
         if agent_status_code == AGENT_OK:
             err_msg = ''
 
-            #check to be prevAccessDiffTime value or not
-            if J_AGENT_STATUS_PREV_ACCESS_DIFFTIME in agent_status:
-                prev_access_difftime = \
-                    agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
-                if prev_access_difftime:
-                    err_msg = prev_access_difftime
-
             if J_AGENT_DATA in result:
-                return result[J_AGENT_DATA], agent_status_code, err_msg
+                return result[J_AGENT_DATA], agent_status_code, prev_access_difftime
             else:
-                return [], agent_status_code, err_msg
+                return [], agent_status_code, prev_access_difftime
         else:
             #token expired
             if not expired and agent_status_code == '401':
@@ -80,7 +79,7 @@ class AgentMsslRest:
             else:
                 err_msg = '!! request [agent] status %s' % agent_status_code
                 self.logger.error(err_msg)
-                return None, agent_status_code, err_msg
+                return None, agent_status_code, prev_access_difftime
 
     def auth(self):
         """
