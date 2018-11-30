@@ -119,7 +119,8 @@ def task_security_log(task, data_center):
                                         'level':'crit',
                                         'log':m,
                                         'type':1,
-                                        'time':t}]
+                                        'time':t,
+                                        'eval_level':'AGENT-EXPRESS'}]
                 AgentLog.get_logger().error(m)
 
         last_seek_time = tail_entry['__REALTIME_TIMESTAMP'].timestamp()
