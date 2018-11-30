@@ -65,8 +65,12 @@ class AgentServerJobDispatcher(threading.Thread):
             ###################################
             self.agent_sync(SERVER_VERSION_1_0)
             ###################################
+        else:
+            #######################################
+            self.agent_sync(SERVER_VERSION_NOT_1_0)
+            #######################################
 
-        sync_done = False
+        sync_done = True
 
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:

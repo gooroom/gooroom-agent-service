@@ -173,6 +173,8 @@ def _journal_config(server_rsp, data_center):
     if old_keep_free != keep_free: 
         lm += 'SystemKeepFree:{}->{} '.format(old_keep_free, keep_free)
         parser.set('Journal', 'SystemKeepFree', '{}'.format(keep_free))
+    if parser.has_option('Journal', 'MaxRetentionSec'):
+        parser.remove_option('Journal', 'MaxRetentionSec')
     lm += ')' 
     with open('/etc/systemd/journald.conf', 'w') as f:
         parser.write(f)
