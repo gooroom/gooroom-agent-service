@@ -761,10 +761,8 @@ def task_get_password_cycle(task, data_center):
                 f.write(json.dumps(jsondata))
             
             chown_file(spath, fuser=login_id, fgroup=login_id)
-            jlog = 'password cycle has been changed from $({}) to $({})'.format(
-                    jsondata['data']['loginInfo']['pwd_max_day'],
-                    pwd_max_day)
-            send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE)
+            jlog = 'password cycle has been changed to $({})'.format(pwd_max_day)
+            send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE_LOCAL)
     #local account
     else:
         now_date = datetime.datetime.now().strftime('%Y-%m-%d')
