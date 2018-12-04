@@ -57,6 +57,12 @@ def task_journal_remover(task, data_center):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     sout, serr = pp.communicate()
+    sout = sout.decode('utf8')
+    serr = serr.decode('utf8')
+    if serr:
+        AgentLog.get_logger().info('JOURNALD VACUUM SE:{}'.format(serr))
+    if sout:
+        AgentLog.get_logger().info('JOURNALD VACUUM SO:{}'.format(sout))
     
 #-----------------------------------------------------------------------
 def task_security_log(task, data_center):

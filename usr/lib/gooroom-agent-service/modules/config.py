@@ -231,6 +231,21 @@ def task_get_log_config(task, data_center):
     #journal configuration
     _journal_config(server_rsp, data_center)
 
+    #journald vacuum
+    remain_days = data_center.journal_remain_days
+    if remain_days != 0:
+        pp = subprocess.Popen(
+            ['/bin/journalctl', '--vacuum-time={}d'.format(remain_days)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        sout, serr = pp.communicate()
+        sout = sout.decode('utf8')
+        serr = serr.decode('utf8')
+        if serr:
+            AgentLog.get_logger().info('JOURNALD VACUUM SE:{}'.format(serr))
+        if sout:
+            AgentLog.get_logger().info('JOURNALD VACUUM SO:{}'.format(sout))
+    
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
