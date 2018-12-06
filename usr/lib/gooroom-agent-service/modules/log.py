@@ -60,9 +60,11 @@ def task_journal_remover(task, data_center):
     sout = sout.decode('utf8')
     serr = serr.decode('utf8')
     if serr:
-        AgentLog.get_logger().info('JOURNALD VACUUM SE:{}'.format(serr))
+        AgentLog.get_logger().info(
+            'JOURNALD VACUUM FOR OLDER THAN {}days SE:{}'.format(remain_days, serr))
     if sout:
-        AgentLog.get_logger().info('JOURNALD VACUUM SO:{}'.format(sout))
+        AgentLog.get_logger().info(
+            'JOURNALD VACUUM FRO OLDER THAN {}days SO:{}'.format(remain_days, sout))
     
 #-----------------------------------------------------------------------
 def task_security_log(task, data_center):
