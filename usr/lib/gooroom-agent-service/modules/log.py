@@ -10,6 +10,7 @@ import sys
 import os
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
+from agent_util import send_journallog
 from agent_define import *
 from systemd import journal
 
@@ -162,6 +163,10 @@ def task_clear_security_alarm(task, data_center):
     with open(logparser_path, 'w') as f:
         f.write(seek_time)
     
+    lg = 'alert has been released'
+    gc = GRMCODE_ALERT_RELEASE
+    send_journallog(lg, JOURNAL_NOTICE, gc)
+
 #-----------------------------------------------------------------------
 def task_client_info(task, data_center):
     """
