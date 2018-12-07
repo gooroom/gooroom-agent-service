@@ -111,6 +111,7 @@ def task_security_log(task, data_center):
             if log_total_len <= MAX_LOG_LEN:
                 task[J_MOD][J_TASK].pop(J_IN)
                 task[J_MOD][J_TASK][J_REQUEST] = {}
+                task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
                 task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
                 data_center.module_request(task, mustbedata=False)
                 
