@@ -20,7 +20,7 @@ import os
 import re
 
 from multiprocessing import Process
-from collections import OrderedDict
+import difflib
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_util import pkcon_exec,verify_signature,send_journallog
@@ -860,6 +860,190 @@ def task_append_contents_etc_hosts(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def browser_diff(old_fname, new_contents):
+    """
+    diff browser
+    """
+
+    result = ''
+    try:
+        title = '/'.join(old_fname.split('/')[-3:])
+        browser_first_log = True
+
+        with open(old_fname) as f:
+            old_contents = f.read()
+
+        oc = nc = {}
+        try:
+            oc = json.loads(old_contents)
+            nc = json.loads(new_contents)
+        except:
+            #no json
+            if old_contents != new_contents:
+                result += '[{}]\n{}->{}'.format(title, old_contents, new_contents)
+                print(result)
+                return result
+
+        if 'gooroom' in oc and 'policy' in oc['gooroom'] \
+            and 'gooroom' in nc and 'policy' in nc['gooroom']: 
+            oc = oc['gooroom']['policy']
+            nc = nc['gooroom']['policy']
+
+        for new_key in nc.keys():
+            if new_key in oc:
+                if isinstance(nc[new_key], list) \
+                    and isinstance(oc[new_key], list):
+                    nset = set(nc[new_key])
+                    oset = set(oc[new_key])
+                    if nset != oset:
+                        result += '{}:{}->{}\n'.format(
+                            new_key,
+                            oset,
+                            nset)
+                else:
+                    if nc[new_key] != oc[new_key]:
+                        if browser_first_log:
+                            result += '[{}]\n'.format(title)
+                            browser_first_log = False
+                        result += '{}:{}->{}\n'.format(
+                            new_key,
+                            oc[new_key],
+                            nc[new_key])
+
+        for old_key in oc.keys():
+            if not old_key in nc:
+                if browser_first_log:
+                    result += '[{}]\n'.format(title)
+                    browser_first_log = False
+                result += '{} removed'.format(old_key)
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
+
+    if result:
+        result = '\n' + result
+        if result[-1] == '\n':
+            result = result[:-1]
+        print(result)
+    return result
+
+def media_diff(old_fname, new_contents):
+    """
+    diff media/iptables
+    """
+
+    result = ''
+    try:
+        with open(old_fname) as f:
+            old_contents = f.read()
+
+        oc = json.loads(old_contents)
+        nc = json.loads(new_contents)
+
+        media_first_log = True
+        for media_name in nc.keys():
+            if media_name in oc:
+                #MEDIA STATE
+                old_state = oc[media_name] \
+                    if isinstance(oc[media_name], str) \
+                    else oc[media_name]['state']
+
+                new_state = nc[media_name] \
+                    if isinstance(nc[media_name], str) \
+                    else nc[media_name]['state']
+
+                if old_state != new_state:
+                    if media_first_log:
+                        result += '[meida]\n'
+                        media_first_log = False
+                    result += '{}:{}->{}\n'.format(
+                        media_name, old_state, new_state)
+
+                #BLUETOOTH WHITELIST
+                oc_whitelist_set = set()
+                if isinstance(oc[media_name], dict) \
+                    and 'mac_address' in oc[media_name]:
+                        oc_whitelist_set = set(oc[media_name]['mac_address'])
+                nc_whitelist_set = set()
+                if isinstance(nc[media_name], dict) \
+                    and 'mac_address' in nc[media_name]:
+                        nc_whitelist_set = set(nc[media_name]['mac_address'])
+                if oc_whitelist_set != nc_whitelist_set:
+                    if media_first_log:
+                        result += '[meida]\n'
+                        media_first_log = False
+                    result += '{} whitelist:{}->{}\n'.format(
+                        media_name, oc_whitelist_set, nc_whitelist_set)
+                    
+                #USB WHITELIST
+                oc_whitelist_set = set()
+                if isinstance(oc[media_name], dict) \
+                    and 'usb_serialno' in oc[media_name]:
+                        oc_whitelist_set = set(oc[media_name]['usb_serialno'])
+                nc_whitelist_set = set()
+                if isinstance(nc[media_name], dict) \
+                    and 'usb_serialno' in nc[media_name]:
+                        nc_whitelist_set = set(nc[media_name]['usb_serialno'])
+                if oc_whitelist_set != nc_whitelist_set:
+                    if media_first_log:
+                        result += '[meida]\n'
+                        media_first_log = False
+                    result += '{} whitelist:{}->{}\n'.format(
+                        media_name, oc_whitelist_set, nc_whitelist_set)
+            else:
+                #skip:never happened
+                pass
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
+
+    try:
+        #IPTABLES
+        old_network= oc['network']['rules']
+        new_network= nc['network']['rules']
+        iptables_first_log = True
+
+        ol_list = []
+        for ol in old_network:
+            m = '{} {} {} {} {} {}'.format(
+            ol['ipaddress'].strip(),
+            ol['state'].strip(),
+            ol['direction'].strip(),
+            ol['src_ports'].strip(),
+            ol['dst_ports'].strip(),
+            ol['protocol'].strip())
+            ol_list.append(m)
+        nl_list = []
+        for nl in new_network:
+            m = '{} {} {} {} {} {}'.format(
+            nl['ipaddress'].strip(),
+            nl['state'].strip(),
+            nl['direction'].strip(),
+            nl['src_ports'].strip(),
+            nl['dst_ports'].strip(),
+            nl['protocol'].strip())
+            nl_list.append(m)
+            
+        diff = difflib.ndiff(ol_list, nl_list)
+        if diff:
+            ll = []
+            for l in [d for d in diff if d and d[0] == '-' or d[0] == '+']:
+                t = l[1:]
+                l = l[0] + t.strip()
+                ll.append(l)
+            if ll:
+                if iptables_first_log:
+                    result += '[iptables]\n'
+                    iptables_first_log = False
+                result += '\n'.join(ll)
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
+
+    if result:
+        result = '\n' + result
+        if result[-1] == '\n':
+            result = result[:-1]
+        print(result)
+    return result
+
 def task_get_media_config(task, data_center):
     """
     get_media_config
@@ -887,6 +1071,14 @@ def task_get_media_config(task, data_center):
     if file_contents and len(file_contents) > 0:
         #if verifying is failed, exception occur
         verify_signature(signature, file_contents)
+
+        #meida policy diff
+        d_r = media_diff(file_name, file_contents)
+        if d_r:
+            send_journallog(
+                'media policy is changes$({})'.format(d_r),
+                JOURNAL_NOTICE, 
+                GRMCODE_CHANGE_MEDIA_POLICY)
 
         replace_file(file_name, file_contents, signature)
 
@@ -934,6 +1126,15 @@ def task_get_browser_config(task, data_center):
         
         #if verifying is failed, exception occur
         verify_signature(signature, file_contents)
+
+        #log policy diff
+        d_r = browser_diff(file_name, file_contents)
+        if d_r:
+            gc = GRMCODE_CHANGE_BROWSER_POLICY
+            send_journallog(
+                'browser policy is changes$({})'.format(d_r),
+                JOURNAL_NOTICE, 
+                GRMCODE_CHANGE_BROWSER_POLICY)
 
         replace_file(file_name, file_contents, signature)
 

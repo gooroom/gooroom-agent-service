@@ -2,6 +2,7 @@
 
 #-----------------------------------------------------------------------
 import simplejson as json
+import configparser
 import httplib2
 import datetime
 
@@ -156,6 +157,11 @@ class AgentMsslRest:
 
         if self._token:
             headers[H_TOKEN] = AgentMsslRest._token
+
+        parser = configparser.RawConfigParser()
+        parser.optionxform = str
+        parser.read('/etc/gooroom/gooroom-client-server-register/gcsr.conf')
+        headers['agent_client_id'] = parser.get('certificate', 'client_name')
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
