@@ -44,6 +44,39 @@ class AgentServerJobDispatcher(threading.Thread):
         #SPECIAL WORKER FOR SYNC
         self._special_worker = AgentJobWorker(CLIENTJOB, self.data_center)
 
+    def VERSIONING(self):
+        """
+        get server version
+        """
+
+        #get default server version(1.0)
+        server_version = self.data_center.server_version
+        try:
+            version_loop = True
+            INIT_RETRY_TIME = int(self.conf.get('MAIN', 'INIT_RETRY_TIME'))
+            version_ting = self.timing(INIT_RETRY_TIME)
+            while self.data_center.serverjob_dispatcher_thread_on and version_loop:
+                if next(version_ting):
+                    try:
+                        server_version = self.data_center.server_version_request()
+                        version_loop = False
+                    except OSError:
+                        if 'Network is unreachable' in agent_format_exc():
+                            self.logger.error(
+                                    'RETRY! SERVER-VERSION GET FAILED: Network is unreachable')
+                        else:
+                            raise
+                    except:
+                        raise
+
+            #notice that server-version is changed HERE
+            self.data_center.server_version = server_version
+            self.logger.info('server-version is {} from grm'.format(server_version))
+        except StopIteration:
+            pass
+        except:
+            self.logger.error('%s' % agent_format_exc())
+
     def run(self):
         """
         main loop   
@@ -51,15 +84,7 @@ class AgentServerJobDispatcher(threading.Thread):
 
         self.logger.debug('(serverjob) dispatcher run')
         
-        #get default server version(1.0)
-        server_version = self.data_center.server_version
-        try:
-            server_version = self.data_center.server_version_request()
-            #notice that server-version is changed HERE
-            self.data_center.server_version = server_version
-            self.logger.info('server-version is {} from grm'.format(server_version))
-        except:
-            self.logger.error('%s' % agent_format_exc())
+        self.VERSIONING()
 
         if self.data_center.server_version.startswith(SERVER_VERSION_1_0):
             ###################################
