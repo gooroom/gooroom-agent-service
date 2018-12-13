@@ -1102,6 +1102,22 @@ def task_get_media_config(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def remove_previous_browser_policies():
+    """
+    remove previous browser policies
+    """
+
+    policies = ['/usr/share/gooroom/browser/policies/mainpref.json', 
+        '/usr/share/gooroom/browser/policies/trust/managed/policy.json', 
+        '/usr/share/gooroom/browser/policies/untrust/managed/policy.json', 
+        '/usr/share/gooroom/browser/policies/trust/managed/ui-policy.json', 
+        '/usr/share/gooroom/browser/policies/untrust/managed/ui-policy.json']
+
+    for p in policies:
+        if os.path.exists(p):
+            os.remove(p)
+            print('{} removed'.format(p))
+            
 def task_get_browser_config(task, data_center):
     """
     get_browser_config
@@ -1125,6 +1141,8 @@ def task_get_browser_config(task, data_center):
     file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
     file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
     signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+    remove_previous_browser_policies()
 
     for idx in range(len(file_name_list)):
         file_name = file_name_list[idx]
@@ -1164,6 +1182,8 @@ def task_set_authority_config(task, data_center):
     file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
     file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
     signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+    remove_previous_browser_policies()
 
     for idx in range(len(file_name_list)):
         file_name = file_name_list[idx]
@@ -1547,6 +1567,8 @@ def task_client_user_sync(task, data_center):
         file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
         file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
         signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+
+        remove_previous_browser_policies()
 
         for idx in range(len(file_name_list)):
             file_name = file_name_list[idx]
