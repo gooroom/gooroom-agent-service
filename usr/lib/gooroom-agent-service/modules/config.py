@@ -195,16 +195,19 @@ def send_config_diff(file_contents):
     send config diff to journald
     """
 
-    module_path = \
-        AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
-    sys.path.append(module_path)
-    m = importlib.import_module('gooroom-security-logparser')
-    config_diff = getattr(m, 'config_diff')(file_contents)
-    if config_diff:
-        send_journallog(
-                    config_diff, 
-                    JOURNAL_NOTICE, 
-                    GRMCODE_LOG_CONFIG_CHANGED)
+    try:
+        module_path = \
+            AgentConfig.get_config().get('SECURITY', 'SECURITY_MODULE_PATH')
+        sys.path.append(module_path)
+        m = importlib.import_module('gooroom-security-logparser')
+        config_diff = getattr(m, 'config_diff')(file_contents)
+        if config_diff:
+            send_journallog(
+                        config_diff, 
+                        JOURNAL_NOTICE, 
+                        GRMCODE_LOG_CONFIG_CHANGED)
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
 
 def task_get_log_config(task, data_center):
     """
