@@ -997,8 +997,17 @@ def media_diff(old_fname, new_contents):
 
     try:
         #IPTABLES
-        old_network= oc['network']['rules']
-        new_network= nc['network']['rules']
+        if 'rules' in oc['network']:
+            old_network= oc['network']['rules']
+        else:
+            old_network = []
+        if 'rules' in nc['network']:
+            new_network= nc['network']['rules']
+        else:
+            new_network = []
+
+        #old_network= oc['network']['rules']
+        #new_network= nc['network']['rules']
         iptables_first_log = True
 
         ol_list = []
