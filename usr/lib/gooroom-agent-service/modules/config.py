@@ -884,7 +884,7 @@ def browser_diff(old_fname, new_contents):
             #no json
             if old_contents != new_contents:
                 result += '[{}]\n{}->{}'.format(title, old_contents, new_contents)
-                print(result)
+                #print(result)
                 return result
 
         if 'gooroom' in oc and 'policy' in oc['gooroom'] \
@@ -926,7 +926,7 @@ def browser_diff(old_fname, new_contents):
         result = '\n' + result
         if result[-1] == '\n':
             result = result[:-1]
-        print(result)
+        #print(result)
     return result
 
 def media_diff(old_fname, new_contents):
@@ -956,7 +956,7 @@ def media_diff(old_fname, new_contents):
 
                 if old_state != new_state:
                     if media_first_log:
-                        result += '[meida]\n'
+                        result += '[media]\n'
                         media_first_log = False
                     result += '{}:{}->{}\n'.format(
                         media_name, old_state, new_state)
@@ -972,7 +972,7 @@ def media_diff(old_fname, new_contents):
                         nc_whitelist_set = set(nc[media_name]['mac_address'])
                 if oc_whitelist_set != nc_whitelist_set:
                     if media_first_log:
-                        result += '[meida]\n'
+                        result += '[media]\n'
                         media_first_log = False
                     result += '{} whitelist:{}->{}\n'.format(
                         media_name, oc_whitelist_set, nc_whitelist_set)
@@ -988,7 +988,7 @@ def media_diff(old_fname, new_contents):
                         nc_whitelist_set = set(nc[media_name]['usb_serialno'])
                 if oc_whitelist_set != nc_whitelist_set:
                     if media_first_log:
-                        result += '[meida]\n'
+                        result += '[media]\n'
                         media_first_log = False
                     result += '{} whitelist:{}->{}\n'.format(
                         media_name, oc_whitelist_set, nc_whitelist_set)
@@ -1053,7 +1053,7 @@ def media_diff(old_fname, new_contents):
         result = '\n' + result
         if result[-1] == '\n':
             result = result[:-1]
-        print(result)
+        #print(result)
     return result
 
 def task_get_media_config(task, data_center):
@@ -1084,7 +1084,7 @@ def task_get_media_config(task, data_center):
         #if verifying is failed, exception occur
         verify_signature(signature, file_contents)
 
-        #meida policy diff
+        #media policy diff
         d_r = media_diff(file_name, file_contents)
         if d_r:
             send_journallog(
@@ -1119,7 +1119,7 @@ def remove_previous_browser_policies():
     for p in policies:
         if os.path.exists(p):
             os.remove(p)
-            print('{} removed'.format(p))
+            #print('{} removed'.format(p))
             
 def task_get_browser_config(task, data_center):
     """
