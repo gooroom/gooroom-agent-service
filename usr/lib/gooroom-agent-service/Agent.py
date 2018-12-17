@@ -48,7 +48,8 @@ class Agent(dbus.service.Object):
         self.logger.info('AGENT CREATED')
 
     def __del__(self):
-        self.logger.debug('AGENT DESTROYED')
+        #self.logger.debug('AGENT DESTROYED')
+        pass
 
     def run(self):
         """

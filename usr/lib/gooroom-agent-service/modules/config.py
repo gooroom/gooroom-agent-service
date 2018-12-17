@@ -1477,13 +1477,17 @@ def task_client_sync(task, data_center):
         len_signatures = len(signatures)
 
         if len_filenames != len_filecontents \
-            and len_filecontents != len_signatures:
+            or len_filecontents != len_signatures:
             raise Exception('!! invalid data len(filename)=%d len(filecontents)=%d len(signautres)=%d' 
                 % (len_filenames, len_filecontents, len_signatures))
         
         #check if do pkcon_exec(refresh)
         must_refresh = False
-        for n, c, s in zip(filenames, filecontents, signatures):
+        for idx in range(len(filenames)):
+            n = filenames[idx]
+            c = filecontents[idx]
+            s = signatures[idx]
+
             if not c:
                 AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
                 continue
