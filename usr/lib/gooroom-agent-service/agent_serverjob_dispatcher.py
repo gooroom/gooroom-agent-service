@@ -66,6 +66,8 @@ class AgentServerJobDispatcher(threading.Thread):
                                     'RETRY! SERVER-VERSION GET FAILED: Network is unreachable')
                         else:
                             raise
+                    except SOCKET_TIMEOUT:
+                        self.logger.error('RETRY! SERVER-VERSION GET FAILED: SOCKET_TIMEOUT')
                     except:
                         raise
 
