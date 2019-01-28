@@ -254,7 +254,8 @@ def apt_exec(cmd, timeout, pkg, data_center):
     
     #print('CMD={} PKG={}'.format(cmd, pkg))
     pp_result = ''
-    fullcmd = 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y {} {}'.format(cmd, pkg)
+    fullcmd = \
+        'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y {} {}'.format(cmd, pkg)
 
     for looping_cnt in range(timeout):
         if not data_center.serverjob_dispatcher_thread_on:
@@ -282,7 +283,8 @@ def apt_exec(cmd, timeout, pkg, data_center):
                     #print('pkgname={} errmsg={}'.format(pkg, pp_result))
                     #print('##################################################')
             else:
-                pp_result = pp_out
+                pp_result = 'OK {}:{}'.format(cmd, pkg)
+                #pp_result = pp_out
                 #print(pp_result)
                 break
         else:
@@ -369,3 +371,27 @@ def do_task(task):
     bus_interface = dbus.Interface(bus_object, dbus_interface=DBUS_IFACE)
     return bus_interface.do_debug(task)
 
+#-----------------------------------------------------------------------
+def send_notification(level, title, text):
+    """
+    notify-send
+    """
+
+    try: 
+        userid = catch_user_id()
+        if userid == '-':
+            return
+        elif userid[0] == '+':
+            userid = userid[1:]
+
+        cmd = '/bin/su "{}" -c "/usr/bin/notify-send -i {}'\
+            ' \'{}\' \'{}\'"'.format(userid, level, title, text)
+        pp = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                shell=True)
+        pp.communicate()
+    except:
+        print(agent_format_exc())
+        

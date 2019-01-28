@@ -14,7 +14,7 @@ import gnupg
 import stat
 import glob
 import pwd
-import apt
+#import apt
 import sys
 import os
 import re
@@ -22,11 +22,11 @@ import re
 from multiprocessing import Process
 import difflib
 
+from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
-from agent_util import pkcon_exec,verify_signature,send_journallog
 from agent_define import *
 
-import apt_pkg
+#import apt_pkg
 
 #-----------------------------------------------------------------------
 def do_task(task, data_center):
@@ -832,12 +832,15 @@ def task_get_update_server_config(task, data_center):
     with open('/etc/apt/apt.conf.d/99gooroom', 'w') as f:
         f.write(cvu)
 
+    apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+    '''
     import apt_pkg
     apt_pkg.init()
     cache = apt.cache.Cache()
     cache.update()
     cache.open()
     cache.close()
+    '''
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1510,13 +1513,18 @@ def task_client_sync(task, data_center):
             replace_file(n, c, s)
 
         #update cache
+        apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+
         if must_refresh:
-            #pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
+            apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+            '''
+            pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
             apt_pkg.init()
             cache = apt.cache.Cache()
             cache.update()
             cache.open()
             cache.close()
+            '''
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

@@ -16,6 +16,7 @@ from ctypes import util
 from socket import timeout as SOCKET_TIMEOUT
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc
+from agent_util import send_notification,send_journallog
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -216,13 +217,29 @@ class AgentJobWorker(threading.Thread):
         task_rsp_list = []
         job_status = AGENT_OK
 
+        noti = 'JOBNO {}\n전송받았습니다'.format(job_no)
+        send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti)
+        m = '$(JOBNO {})\nreceived from server'.format(job_no)
+        send_journallog(m, JOURNAL_NOTICE, GRMCODE_JOB_RECEIVED)
+
         for task in job:
+            taskname = task[J_MOD][J_TASK][J_TASKN]
+
             task_rsp_list.append(self.do_task(task))
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] == AGENT_OK:
                 if task[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
                     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = AGENT_DEFAULT_MESSAGE
+                noti = '{}:{}\n수행했습니다'.format(job_no,taskname)
+                send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti)
+                m = '$({}:{})processing ok'.format(job_no,taskname)
+                send_journallog(m, JOURNAL_NOTICE, GRMCODE_JOB_PROC_OK)
             else:
                 job_status = AGENT_NOK
+                noti = '{}:{}\n수행하지 못했습니다'.format(job_no,taskname)
+                send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti)
+                m = '$({}:{})processing nok:$({})'.format(
+                    job_no, taskname, task[J_MOD][J_TASK][J_OUT][J_MESSAGE])
+                send_journallog(m, JOURNAL_NOTICE, GRMCODE_JOB_PROC_NOK)
                 break
                 
         server_rsp, status_code, err_msg = \
@@ -231,8 +248,16 @@ class AgentJobWorker(threading.Thread):
             'shoot', job_no, server_rsp, status_code, err_msg)
         if status_code == AGENT_OK:
             self.logger.info(m)
+            noti = 'JOBNO {}\n결과를 전송했습니다'.format(job_no)
+            send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti)
+            m = '$({})transmit ok'.format(job_no)
+            send_journallog(m, JOURNAL_NOTICE, GRMCODE_JOB_TRANS_OK)
         else:
             self.logger.error(m)
+            noti = 'JOBNO {}\n결과를 전송하지 못했습니다'.format(job_no)
+            send_notification(NOTI_ERR, NOTI_DEFAULT_NAME, noti)
+            m = '$({})transmit nok:$({})'.format(job_no, err_msg)
+            send_journallog(m, JOURNAL_NOTICE, GRMCODE_JOB_TRANS_NOK)
 
     def run(self):
         """

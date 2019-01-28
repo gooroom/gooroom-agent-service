@@ -7,13 +7,13 @@ import dbus
 import sys
 import os
 
-from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 
 from agent_define import AGENT_OK,AGENT_NOK,J_MOD,J_MODN,J_TASK,J_TASKN
-from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_clientjob_dispatcher import AgentClientJobDispatcher
 from agent_serverjob_dispatcher import AgentServerJobDispatcher
+from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_data_center import AgentDataCenter
 
 #-----------------------------------------------------------------------
