@@ -42,6 +42,8 @@ class AgentDataCenter:
         #SERVER VERSION
         self.server_version = SERVER_VERSION_1_0
 
+        #PREV ACCESS DIFFTIME
+        self.prev_access_difftime = INIT_PREV_ACCESS_DIFFTIME
         self.show(once=True)
 
     def show(self, once=False):

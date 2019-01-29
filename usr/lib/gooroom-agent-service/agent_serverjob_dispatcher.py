@@ -13,6 +13,7 @@ from agent_job_worker import AgentJobManager,AgentJobWorker
 from agent_data_center import AgentDataCenter
 from agent_simple_parser import SimpleParser
 from agent_define import *
+from agent_error import *
 
 #-----------------------------------------------------------------------
 class AgentServerJobDispatcher(threading.Thread):
@@ -60,6 +61,16 @@ class AgentServerJobDispatcher(threading.Thread):
                     try:
                         server_version = self.data_center.server_version_request()
                         version_loop = False
+
+                    except AgentHttpStatusError as e:
+                        if '404' in str(e):
+                            raise
+                    except:
+                        e = agent_format_exc()
+                        self.logger.error(
+                                'RETRY! SERVER-VERSION GET FAILED: {}'.format(e))
+
+                    '''
                     except OSError:
                         if 'Network is unreachable' in agent_format_exc():
                             self.logger.error(
@@ -70,6 +81,7 @@ class AgentServerJobDispatcher(threading.Thread):
                         self.logger.error('RETRY! SERVER-VERSION GET FAILED: SOCKET_TIMEOUT')
                     except:
                         raise
+                    '''
 
             #notice that server-version is changed HERE
             self.data_center.server_version = server_version
@@ -77,7 +89,7 @@ class AgentServerJobDispatcher(threading.Thread):
         except StopIteration:
             pass
         except:
-            self.logger.error('%s' % agent_format_exc())
+            self.logger.error(agent_format_exc())
 
     def run(self):
         """
@@ -97,15 +109,23 @@ class AgentServerJobDispatcher(threading.Thread):
             self.agent_sync(SERVER_VERSION_NOT_1_0)
             #######################################
 
+        #동기화 과정이 오래 걸려서 메인루핑 내에서 동기화 과정이
+        #반복적으로 실행되는 것을 막는 플래그
         sync_done = True
 
         while self.data_center.serverjob_dispatcher_thread_on:
             if self.data_center.serverjob_looping_on[0]:
                 try:
                     agent_data, agent_status, err_msg = self.data_center.jobs_request()
-                    if not self.data_center.server_version.startswith(SERVER_VERSION_1_0) \
-                        and err_msg:
-                        prev_access_difftime = int(err_msg)
+                    if not self.data_center.server_version.startswith(SERVER_VERSION_1_0):
+                        prev_access_difftime = int(self.data_center.prev_access_difftime)
+                        if prev_access_difftime == INIT_PREV_ACCESS_DIFFTIME:
+                            raise Exception(
+                                '!! prev_access_difftime is init-value')
+                        else:
+                            self.data_center.prev_access_difftime = \
+                                INIT_PREV_ACCESS_DIFFTIME
+
                         if not sync_done and self.data_center.serverjob_dispatch_time \
                             - prev_access_difftime \
                             + 10 < 0:
@@ -120,13 +140,14 @@ class AgentServerJobDispatcher(threading.Thread):
                     if agent_data:
                         for job in agent_data:
                             self._job_manager.put_job(job)
+
                     if agent_status == AGENT_OK:
                         self.data_center.agent_grm_connection_status[0] = True
                     else:
                         self.data_center.agent_grm_connection_status[0] = False
                 except: 
-                    AgentLog.get_logger().error('%s' % agent_format_exc())
                     self.data_center.agent_grm_connection_status[0] = False
+                    AgentLog.get_logger().error(agent_format_exc())
 
             #start clientjob
             self.data_center.clientjob_looping_on[0] = True

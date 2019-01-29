@@ -181,3 +181,6 @@ NOTI_DEFAULT_NAME='AGENT'
 
 NOTI_INFO='info'
 NOTI_ERR='error'
+
+#prev access difftime
+INIT_PREV_ACCESS_DIFFTIME=-1

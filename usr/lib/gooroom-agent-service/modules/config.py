@@ -1470,7 +1470,10 @@ def task_client_sync(task, data_center):
         certificate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['certificate']
         if certificate != '':
             replace_file('/etc/gooroom/agent/server_certificate.crt', certificate)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
 
+    try:
         filenames = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
         filecontents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
         signatures = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
@@ -1487,44 +1490,38 @@ def task_client_sync(task, data_center):
         #check if do pkcon_exec(refresh)
         must_refresh = False
         for idx in range(len(filenames)):
-            n = filenames[idx]
-            c = filecontents[idx]
-            s = signatures[idx]
+            try:
+                n = filenames[idx]
+                c = filecontents[idx]
+                s = signatures[idx]
 
-            if not c:
-                AgentLog.get_logger().error('!! filecontents is empty(filename={})'.format(n))
-                continue
+                if not c:
+                    AgentLog.get_logger().error(
+                        '!! filecontents is empty(filename={})'.format(n))
+                    continue
 
-            if n == '/etc/hosts':
-                remake_etc_hosts(c, s)
-                continue
+                if n == '/etc/hosts':
+                    remake_etc_hosts(c, s)
+                    continue
 
-            if n == '/usr/lib/gooroom-security-utils/log.conf':
-                send_config_diff(c)
+                if n == '/usr/lib/gooroom-security-utils/log.conf':
+                    send_config_diff(c)
 
-            if n == '/etc/apt/sources.list.d/official-package-repositories.list' \
-                or n == '/etc/apt/preferences.d/gooroom.pref':
-                with open(n, 'r') as f:
-                    if c != f.read():
-                        must_refresh = True
+                if n == '/etc/apt/sources.list.d/official-package-repositories.list' \
+                    or n == '/etc/apt/preferences.d/gooroom.pref':
+                    with open(n, 'r') as f:
+                        if c != f.read():
+                            must_refresh = True
 
-            #if verifying is failed, exception occur
-            verify_signature(s, c)
-            replace_file(n, c, s)
-
-        #update cache
-        apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+                #if verifying is failed, exception occur
+                verify_signature(s, c)
+                replace_file(n, c, s)
+            except:
+                AgentLog.get_logger().error(agent_format_exc())
 
         if must_refresh:
+            #update cache
             apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
-            '''
-            pkcon_exec('refresh', PKCON_TIMEOUT_TEN_MINS, [], data_center)
-            apt_pkg.init()
-            cache = apt.cache.Cache()
-            cache.update()
-            cache.open()
-            cache.close()
-            '''
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1579,23 +1576,29 @@ def task_client_user_sync(task, data_center):
 
     #NETWORK & MEDIA & BROWSER
     try:
-        file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
-        file_contents_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
-        signature_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
+        file_name_list = \
+            server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
+        file_contents_list = \
+            server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents_list']
+        signature_list = \
+            server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature_list']
 
         remove_previous_browser_policies()
 
         for idx in range(len(file_name_list)):
-            file_name = file_name_list[idx]
-            file_contents = file_contents_list[idx]
-            if not file_contents:
-                continue
-            signature = signature_list[idx]
-            
-            #if verifying is failed, exception occur
-            verify_signature(signature, file_contents)
+            try:
+                file_name = file_name_list[idx]
+                file_contents = file_contents_list[idx]
+                if not file_contents:
+                    continue
+                signature = signature_list[idx]
+                
+                #if verifying is failed, exception occur
+                verify_signature(signature, file_contents)
 
-            replace_file(file_name, file_contents, signature)
+                replace_file(file_name, file_contents, signature)
+            except:
+                AgentLog.get_logger().error(agent_format_exc())
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

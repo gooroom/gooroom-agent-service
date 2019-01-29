@@ -67,6 +67,8 @@ def task_journal_remover(task, data_center):
         AgentLog.get_logger().info(
             'JOURNALD VACUUM FRO OLDER THAN {}days SO:{}'.format(remain_days, sout))
     
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
 #-----------------------------------------------------------------------
 def task_security_log(task, data_center):
     """

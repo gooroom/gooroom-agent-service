@@ -8,3 +8,11 @@ class AgentError(Exception):
 
     def __init__(self,*args,**kwargs):
         Exception.__init__(self,*args,**kwargs)
+
+class AgentHttpStatusError(Exception):
+    """
+    http status != 200
+    """
+
+    def __init__(self,*args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)

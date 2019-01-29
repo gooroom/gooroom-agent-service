@@ -9,6 +9,7 @@ import datetime
 from socket import timeout as SOCKET_TIMEOUT
 from agent_util import AgentConfig, AgentLog
 from agent_define import *
+from agent_error import *
 
 #-----------------------------------------------------------------------
 class AgentMsslRest:
@@ -60,6 +61,7 @@ class AgentMsslRest:
         if J_AGENT_STATUS_PREV_ACCESS_DIFFTIME in agent_status:
             prev_access_difftime = \
                 agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
+            self.data_center.prev_access_difftime = prev_access_difftime
 
         #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
@@ -67,9 +69,9 @@ class AgentMsslRest:
             err_msg = ''
 
             if J_AGENT_DATA in result:
-                return result[J_AGENT_DATA], agent_status_code, prev_access_difftime
+                return result[J_AGENT_DATA], agent_status_code, None
             else:
-                return [], agent_status_code, prev_access_difftime
+                return [], agent_status_code, None
         else:
             #token expired
             if not expired and agent_status_code == '401':
@@ -80,7 +82,7 @@ class AgentMsslRest:
             else:
                 err_msg = '!! request [agent] status %s' % agent_status_code
                 self.logger.error(err_msg)
-                return None, agent_status_code, prev_access_difftime
+                return None, agent_status_code, err_msg
 
     def auth(self):
         """
@@ -126,7 +128,8 @@ class AgentMsslRest:
         #http status 
         http_status_code = rsp_headers['status']
         if http_status_code != '200':
-            raise Exception('!! version [http] status %s' % http_status_code)
+            #raise Exception('!! version [http] status %s' % http_status_code)
+            raise AgentHttpStatusError('{}'.format(http_status_code))
 
         result = json.loads(rsp_body)
         agent_status = result[J_AGENT_STATUS]
