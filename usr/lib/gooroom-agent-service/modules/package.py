@@ -327,7 +327,6 @@ def task_update_package_version_to_server(task, data_center):
             task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'updating'
             task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = unmatched_pkg_list
 
-            #data_center.module_request(task, mustbedata=False)
             _send_pkg(data_center, task)
 
             #서버의 응답이 정상(module_request가 예외를 발생시키지 않으면)

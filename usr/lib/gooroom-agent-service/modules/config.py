@@ -14,7 +14,6 @@ import gnupg
 import stat
 import glob
 import pwd
-#import apt
 import sys
 import os
 import re
@@ -25,8 +24,6 @@ import difflib
 from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_define import *
-
-#import apt_pkg
 
 #-----------------------------------------------------------------------
 def do_task(task, data_center):
@@ -97,11 +94,11 @@ def task_set_homefolder_operation(task, data_center):
     homefolder_operation = \
         task[J_MOD][J_TASK][J_IN]['operation']
     if homefolder_operation == 'enable':
-        data_center.home_folder_delete_flag[0] = 'enable'#True
+        data_center.home_folder_delete_flag[0] = 'enable'
         lg = 'homefolder operation has been enabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_ENABLE
     else:
-        data_center.home_folder_delete_flag[0] = 'disable'#False
+        data_center.home_folder_delete_flag[0] = 'disable'
         lg = 'homefolder operation has been disabled'
         gc = GRMCODE_HOMEFOLDER_OPERATION_DISABLE
     if prev_v != homefolder_operation:

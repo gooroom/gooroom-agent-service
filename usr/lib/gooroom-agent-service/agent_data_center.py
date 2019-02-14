@@ -63,9 +63,6 @@ class AgentDataCenter:
                 self.serverjob_looping_on = [True]
                 self.clientjob_looping_on = [False]
 
-            #CLIENT ID
-            #self.client_id = self.extract_clientid_from_cert()
-        
             #SERVER DOMAIN
             self.server_domain = self.read_server_domain()
 
@@ -380,6 +377,13 @@ class AgentDataCenter:
             return cn
         else:
             return None
+
+    def reload_server_domain(self):
+        """
+        reload server domain
+        """
+
+        self.server_domain = self.read_server_domain()
 
     def read_server_domain(self):
         """

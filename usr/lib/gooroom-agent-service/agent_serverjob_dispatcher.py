@@ -70,19 +70,6 @@ class AgentServerJobDispatcher(threading.Thread):
                         self.logger.error(
                                 'RETRY! SERVER-VERSION GET FAILED: {}'.format(e))
 
-                    '''
-                    except OSError:
-                        if 'Network is unreachable' in agent_format_exc():
-                            self.logger.error(
-                                    'RETRY! SERVER-VERSION GET FAILED: Network is unreachable')
-                        else:
-                            raise
-                    except SOCKET_TIMEOUT:
-                        self.logger.error('RETRY! SERVER-VERSION GET FAILED: SOCKET_TIMEOUT')
-                    except:
-                        raise
-                    '''
-
             #notice that server-version is changed HERE
             self.data_center.server_version = server_version
             self.logger.info('server-version is {} from grm'.format(server_version))

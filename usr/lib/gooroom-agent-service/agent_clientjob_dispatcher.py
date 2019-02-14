@@ -3,7 +3,6 @@
 #-----------------------------------------------------------------------
 import simplejson as json
 import threading
-import time
 import copy
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc

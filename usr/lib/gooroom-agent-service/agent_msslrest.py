@@ -175,6 +175,10 @@ class AgentMsslRest:
         except SOCKET_TIMEOUT:
             self.data_center.increase_timeout_cnt()
             raise
+        except httplib2.ServerNotFoundError:
+            #단말이 재등록되어 grm url이 변경되었을 경우
+            self.data_center.reload_server_domain()
+            raise
 
         self.data_center.calc_max_response_time(datetime.datetime.now().timestamp() - t)
         self.logger.debug('RESPONSE=%s' % str(rsp_body)[:LOG_TEXT_LIMIT])
