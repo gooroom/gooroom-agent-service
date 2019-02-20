@@ -87,4 +87,21 @@
         </out>
     </task>
 
+    <task name="sched_info" bootable="yes" mustok="no" priority="9" versioninfo="!1.0">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <!-- terminalInfo -->
+            <param name="local_ip" type="string"/>
+            <param name="mac" type="string"/>
+            <param name="arp_list" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
 </module>

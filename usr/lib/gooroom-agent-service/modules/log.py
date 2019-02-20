@@ -3,6 +3,8 @@
 #-----------------------------------------------------------------------
 import subprocess
 import importlib
+import netifaces
+import ipaddress
 import datetime
 import socket
 import glob
@@ -170,6 +172,63 @@ def task_clear_security_alarm(task, data_center):
     gc = GRMCODE_ALERT_RELEASE
     send_journallog(lg, JOURNAL_NOTICE, gc)
 
+#-----------------------------------------------------------------------
+def get_arp_list():
+    """
+    arp list
+    """
+
+    pp = subprocess.Popen(
+        ['/usr/bin/arp-scan', '--localnet'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    sout, serr = pp.communicate()
+
+    if pp.returncode != 0:
+        print(serr.decode('utf8'))
+        raise Exception('arp-scan returns !0')
+
+    sout = sout.decode('utf8')
+
+    records = sout.split('\n')
+    arp_list = []
+    for record in records:
+        splited = record.split()
+        try:
+            it = ipaddress.ip_address(splited[0])
+            if isinstance(it, ipaddress.IPv4Address):
+                arp_list.append('{}-{}'.format(splited[0], splited[1]))
+        except:
+            pass
+
+    return arp_list
+
+def get_mac_for_ip(ip):
+    """
+    mac for ip
+    """
+    
+    ifaces = netifaces.interfaces()
+    for iface in ifaces:
+        addrs = netifaces.ifaddresses(iface)
+        if ip == addrs[netifaces.AF_INET][0]['addr']:
+            return addrs[netifaces.AF_PACKET][0]['addr']
+
+    return ''
+    
+def task_sched_info(task, data_center):
+    """
+    arp list
+    """
+
+    ip = remote_ipaddress()
+    mac = get_mac_for_ip(ip)
+    arp_list = get_arp_list()
+    
+    task[J_MOD][J_TASK][J_OUT]['local_ip'] = ip
+    task[J_MOD][J_TASK][J_OUT]['mac'] = mac
+    task[J_MOD][J_TASK][J_OUT]['arp_list'] = ','.join(arp_list)
+    
 #-----------------------------------------------------------------------
 def task_client_info(task, data_center):
     """
