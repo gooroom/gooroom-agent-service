@@ -1436,7 +1436,7 @@ def task_client_sync(task, data_center):
             tl = [int(t) for t in server_rsp[J_MOD][J_TASK][J_RESPONSE]['time'].split(',')]
             #_set_time(tuple(tl))
     except:
-        self.logger.error('%s' % agent_format_exc())
+        AgentLog.get_logger().error(agent_format_exc())
 
     #POLLING TIME
     try:
@@ -1448,7 +1448,7 @@ def task_client_sync(task, data_center):
                 config.write(f)
             data_center.reload_serverjob_dispatch_time()
     except:
-        self.logger.error('%s' % agent_format_exc())
+        AgentLog.get_logger().error(agent_format_exc())
 
     #HYPERVISOR
     try:

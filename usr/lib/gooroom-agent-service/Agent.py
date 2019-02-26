@@ -263,6 +263,15 @@ class Agent(dbus.service.Object):
 
         pass
 
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def set_noti(self, noti):
+        """
+        send signal to user session 
+        so as to set noti
+        """
+
+        pass
+
 #-----------------------------------------------------------------------
 if __name__ == '__main__':
     """

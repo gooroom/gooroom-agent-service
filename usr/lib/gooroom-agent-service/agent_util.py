@@ -372,10 +372,13 @@ def do_task(task):
     return bus_interface.do_debug(task)
 
 #-----------------------------------------------------------------------
-def send_notification(level, title, text):
+def send_notification(level, title, text, job):
     """
     notify-send
     """
+
+    if len(job) > 0 and job[0][J_MOD][J_TASK][J_TASKN] == 'set_noti':
+        return
 
     try: 
         userid = catch_user_id()
