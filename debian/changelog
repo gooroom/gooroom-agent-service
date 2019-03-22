@@ -1,3 +1,16 @@
+gooroom-agent-service (0.2.2+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [4a0674d3] updated package-module. added serverjob noti-msg. modified systemd service file.
+  * [2ca02d07] moved prev-access-difftime to data-center. splited exception of client-sync/client-user-sync policy files.
+  * [87ee0161] refactoring
+  * [e9a62b08] adding sched-info task
+  * [33bdfdfd] added noti
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 22 Mar 2019 17:03:29 +0900
+
 gooroom-agent-service (0.2.1+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
