@@ -1,3 +1,12 @@
+gooroom-agent-service (0.2.3+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [de4ede52] added new arp-function again
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 29 Mar 2019 11:44:10 +0900
+
 gooroom-agent-service (0.2.2+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
