@@ -178,6 +178,29 @@ def get_arp_list():
     arp list
     """
 
+    arp_list = []
+
+    with open('/proc/net/arp') as f:
+        for line in f.readlines():
+            splited =  line.split()
+            if len(splited) != 6:
+                continue
+            ip = splited[0].strip()
+            try:
+                it = ipaddress.ip_address(ip)
+                if isinstance(it, ipaddress.IPv4Address):
+                    mac = splited[3].strip()
+                    arp_list.append('{}-{}'.format(ip, mac))
+            except:
+                pass
+
+    return arp_list
+
+def get_arp_list_deprecated():
+    """
+    arp list
+    """
+
     pp = subprocess.Popen(
         ['/usr/bin/arp-scan', '--localnet'],
         stdout=subprocess.PIPE,
