@@ -231,7 +231,6 @@ def debconf_set_selections(pkg):
         stderr=subprocess.PIPE,
         shell=True)
     agree_list = p0.communicate()[0].decode('utf8').split('\n')
-    #print('agree_list=', agree_list)
     if agree_list and len(agree_list) > 0:
         for agree in agree_list:
             items = [i.strip() for i in agree.split('\t')]
@@ -245,17 +244,18 @@ def debconf_set_selections(pkg):
                         stderr=subprocess.PIPE, 
                         shell=True)
                 o, e = pp.communicate()
-                #print('o={} e={}'.format(o, e))
 
 def apt_exec(cmd, timeout, pkg, data_center):
     """
     apt-get -y
     """
     
-    #print('CMD={} PKG={}'.format(cmd, pkg))
     pp_result = ''
     fullcmd = \
-        'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -y {} {}'.format(cmd, pkg)
+        'DEBIAN_FRONTEND=noninteractive '\
+        'DEBIAN_PRIORITY=critical '\
+        '/usr/bin/apt-get -q -y -o '\
+        'Dpkg::Option::="--force-confnew" {} {}'.format(cmd, pkg)
 
     for looping_cnt in range(timeout):
         if not data_center.serverjob_dispatcher_thread_on:
@@ -274,6 +274,7 @@ def apt_exec(cmd, timeout, pkg, data_center):
             pp_err = pp_err.decode('utf8')
 
             if pp.returncode != 0:
+                '''
                 if cmd == 'install':
                     debconf_set_selections(pkg)
                 else:
@@ -282,10 +283,11 @@ def apt_exec(cmd, timeout, pkg, data_center):
                     #print('ERROR#############################################')
                     #print('pkgname={} errmsg={}'.format(pkg, pp_result))
                     #print('##################################################')
+                '''
+                pp_result = pp_err
+                data_center.logger.error(pp_err)
             else:
                 pp_result = 'OK {}:{}'.format(cmd, pkg)
-                #pp_result = pp_out
-                #print(pp_result)
                 break
         else:
             time.sleep(1)
@@ -398,3 +400,21 @@ def send_notification(level, title, text, job):
     except:
         print(agent_format_exc())
         
+#-----------------------------------------------------------------------
+def shell_cmd(cmd_and_arg_list):
+    """
+    execute shell command
+    """
+
+    pp_result = ''
+    pp = subprocess.Popen(cmd_and_arg_list,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    pp_out, pp_err = pp.communicate()
+    pp_out = pp_out.decode('utf8')
+    pp_err = pp_err.decode('utf8')
+
+    if pp.returncode != 0:
+        raise Exception('{} => {}'.format(cmd_and_arg_list, pp_err))
+    return '{} => {}'.format(cmd_and_arg_list, pp_out)
