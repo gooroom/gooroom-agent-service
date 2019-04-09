@@ -272,6 +272,15 @@ class Agent(dbus.service.Object):
 
         pass
 
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def agent_msg(self, msg):
+        """
+        send signal to user session 
+        so as to send agent-msg
+        """
+
+        pass
+
 #-----------------------------------------------------------------------
 if __name__ == '__main__':
     """
