@@ -44,6 +44,10 @@ class AgentDataCenter:
 
         #PREV ACCESS DIFFTIME
         self.prev_access_difftime = INIT_PREV_ACCESS_DIFFTIME
+
+        #VISA STATUS
+        self.visa_status = INIT_VISA_STATUS
+
         self.show(once=True)
 
     def show(self, once=False):

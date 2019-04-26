@@ -197,6 +197,45 @@ def create_journal_logger():
     return journal_logger
 
 #-----------------------------------------------------------------------
+def JLOG(grmcode, *args, level=JOURNAL_INFO):
+    """
+    journal logging wrapper
+    """
+
+    lg = ''
+    if grmcode == GRMCODE_POLLING_TIME:
+        lg = 'set polling time to $({})'.format(*args)
+    elif grmcode == GRMCODE_HYPERVISOR:
+        lg = 'set hypervisor operation to $({})'.format(*args)
+    elif grmcode == GRMCODE_CLIENT_POLICY:
+        fn = args[0].split('/')[-1]
+        lg = 'set the client policy of $({})'.format(fn)
+    elif grmcode == GRMCODE_HOMEFOLDER:
+        lg = 'set homefolder operation to $({})'.format(*args)
+    elif grmcode == GRMCODE_CLIENT_USER_POLICY:
+        fn = args[0].split('/')[-1]
+        lg = 'set the client-user policy of $({})'.format(fn)
+    elif grmcode == GRMCODE_UPDATER:
+        lg = 'set gooroom updater to $({})'.format(*args)
+    elif grmcode == GRMCODE_AGENT_CONNECTED:
+        lg = 'agent has been connected to server'
+    elif grmcode == GRMCODE_AGENT_DISCONNECTED:
+        lg = 'agent has been disconneted to server:$({})'.format(*args)
+    elif grmcode == GRMCODE_CLIENTJOB_SUCCESS:
+        lg = 'clientjob succes:$({})'.format(*args)
+    elif grmcode == GRMCODE_CERTIFICATE:
+        lg = 'set server ceriticate'
+    elif grmcode == GRMCODE_APP_LIST:
+        lg = 'set app list'
+    elif grmcode == GRMCODE_PUSH_UPDATE:
+        lg = 'set push-update to $({})'.format(*args)
+
+    if lg:
+        send_journallog(lg, level, grmcode)
+            
+
+        
+#-----------------------------------------------------------------------
 def send_journallog(msg, level, grmcode):
     """
     send log to journald

@@ -7,7 +7,7 @@ import threading
 import copy
 import time
 
-from agent_util import AgentConfig,AgentLog,agent_format_exc
+from agent_util import AgentConfig,AgentLog,agent_format_exc,JLOG
 from agent_msslrest import AgentMsslRest
 from agent_job_worker import AgentJobManager,AgentJobWorker
 from agent_data_center import AgentDataCenter
@@ -129,10 +129,16 @@ class AgentServerJobDispatcher(threading.Thread):
                             self._job_manager.put_job(job)
 
                     if agent_status == AGENT_OK:
+                        if not self.data_center.agent_grm_connection_status[0]:
+                            JLOG(GRMCODE_AGENT_CONNECTED, *('',))
                         self.data_center.agent_grm_connection_status[0] = True
                     else:
+                        if self.data_center.agent_grm_connection_status[0]:
+                            JLOG(GRMCODE_AGENT_DISCONNECTED, *(err_msg,))
                         self.data_center.agent_grm_connection_status[0] = False
                 except: 
+                    if self.data_center.agent_grm_connection_status[0]:
+                        JLOG(GRMCODE_AGENT_DISCONNECTED, *(agent_format_exc(),))
                     self.data_center.agent_grm_connection_status[0] = False
                     AgentLog.get_logger().error(agent_format_exc())
 

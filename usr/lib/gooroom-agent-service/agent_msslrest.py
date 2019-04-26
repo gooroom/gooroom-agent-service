@@ -63,6 +63,14 @@ class AgentMsslRest:
                 agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
             self.data_center.prev_access_difftime = prev_access_difftime
 
+        #check visa status
+        visa_status = ''
+        if J_AGENT_STATUS_VISA_STATUS in agent_status:
+            visa_status = \
+                agent_status[J_AGENT_STATUS_VISA_STATUS]
+            if visa_status:
+                self.data_center.visa_status = visa_status
+
         #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
         if agent_status_code == AGENT_OK:

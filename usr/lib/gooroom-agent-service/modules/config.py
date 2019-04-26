@@ -23,7 +23,7 @@ import difflib
 
 from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
-from agent_util import shell_cmd
+from agent_util import shell_cmd,JLOG
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -109,7 +109,7 @@ def task_set_homefolder_operation(task, data_center):
             config.write(f)
         send_journallog(
             lg,
-            JOURNAL_NOTICE, 
+            JOURNAL_INFO, 
             gc)
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -135,7 +135,7 @@ def _journal_config(server_rsp, data_center):
         data_center.journal_remain_days = remain_days
         send_journallog(
                     lm, 
-                    JOURNAL_NOTICE, 
+                    JOURNAL_INFO, 
                     GRMCODE_JOURNAL_CONFIG_CHANGED)
         config = AgentConfig.get_config()
         config.set('JOURNAL', 'REMAIN_DAYS', str(remain_days))
@@ -179,7 +179,7 @@ def _journal_config(server_rsp, data_center):
 
     send_journallog(
                 lm, 
-                JOURNAL_NOTICE, 
+                JOURNAL_INFO, 
                 GRMCODE_JOURNAL_CONFIG_CHANGED)
 
     svc = 'systemd-journald.service'
@@ -202,7 +202,7 @@ def send_config_diff(file_contents):
         if config_diff:
             send_journallog(
                         config_diff, 
-                        JOURNAL_NOTICE, 
+                        JOURNAL_INFO, 
                         GRMCODE_LOG_CONFIG_CHANGED)
     except:
         AgentLog.get_logger().info(agent_format_exc())
@@ -285,6 +285,8 @@ def task_get_app_list(task, data_center):
 
     if from_gpms:
         data_center.GOOROOM_AGENT.app_black_list(black_list)
+    else:
+        JLOG(GRMCODE_APP_LIST, *('',))
         
     task[J_MOD][J_TASK][J_OUT]['black_list'] = black_list
 
@@ -486,14 +488,14 @@ def task_get_update_operation(task, data_center):
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm & NO_EXEC)
         data_center.GOOROOM_AGENT.update_operation(1)
-        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_UPDATE_OPERATION_ENABLE)
+        send_journallog(jlog, JOURNAL_INFO, GRMCODE_UPDATE_OPERATION_ENABLE)
     else:
         EXEC = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         for ub in updating_binary:
             perm = stat.S_IMODE(os.lstat(ub).st_mode)
             os.chmod(ub, perm | EXEC)
         data_center.GOOROOM_AGENT.update_operation(0)
-        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_UPDATE_OPERATION_DISABLE)
+        send_journallog(jlog, JOURNAL_INFO, GRMCODE_UPDATE_OPERATION_DISABLE)
 
     data_center.update_operation[0] = operation
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
@@ -530,6 +532,7 @@ def task_set_package_operation(task, data_center):
         config.write(f)
 
     data_center.set_package_operation(operation)
+    JLOG(GRMCODE_PUSH_UPDATE, *(operation,))
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -734,7 +737,7 @@ def task_get_screen_time(task, data_center):
     screen_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['screen_time']
     data_center.GOOROOM_AGENT.dpms_on_x_off(int(screen_time))
     jlog = 'screen-saver time has been changed to $({})'.format(screen_time)
-    send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_SCREEN_SAVER)
+    send_journallog(jlog, JOURNAL_INFO, GRMCODE_SCREEN_SAVER)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -778,7 +781,7 @@ def task_get_password_cycle(task, data_center):
             
             chown_file(spath, fuser=login_id, fgroup=login_id)
             jlog = 'password cycle has been changed to $({})'.format(pwd_max_day)
-            send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE_LOCAL)
+            send_journallog(jlog, JOURNAL_INFO, GRMCODE_PASSWORD_CYCLE_LOCAL)
     #local account
     else:
         now_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -791,7 +794,7 @@ def task_get_password_cycle(task, data_center):
             raise Exception('local-count chage-cmd failed:{}'.serr.decode('utf8'))
 
         jlog = 'password cycle has been changed to $({})'.format(pwd_max_day)
-        send_journallog(jlog, JOURNAL_NOTICE, GRMCODE_PASSWORD_CYCLE_LOCAL)
+        send_journallog(jlog, JOURNAL_INFO, GRMCODE_PASSWORD_CYCLE_LOCAL)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1090,7 +1093,7 @@ def task_get_media_config(task, data_center):
         if d_r:
             send_journallog(
                 'media policy is changes$({})'.format(d_r),
-                JOURNAL_NOTICE, 
+                JOURNAL_INFO, 
                 GRMCODE_CHANGE_MEDIA_POLICY)
 
         replace_file(file_name, file_contents, signature)
@@ -1163,7 +1166,7 @@ def task_get_browser_config(task, data_center):
             gc = GRMCODE_CHANGE_BROWSER_POLICY
             send_journallog(
                 'browser policy is changes$({})'.format(d_r),
-                JOURNAL_NOTICE, 
+                JOURNAL_INFO, 
                 GRMCODE_CHANGE_BROWSER_POLICY)
 
         replace_file(file_name, file_contents, signature)
@@ -1654,6 +1657,7 @@ def task_client_sync(task, data_center):
             with open(CONFIG_FULLPATH, 'w') as f:
                 config.write(f)
             data_center.reload_serverjob_dispatch_time()
+            JLOG(GRMCODE_POLLING_TIME, *(dispatch_time,))
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1666,6 +1670,7 @@ def task_client_sync(task, data_center):
             tmp_task = \
                 {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':hyper_operation}, J_OUT:{}}}}
             getattr(m, 'task_daemon_able')(tmp_task, data_center)
+            JLOG(GRMCODE_HYPERVISOR, *(hyper_operation,))
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1674,6 +1679,7 @@ def task_client_sync(task, data_center):
         certificate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['certificate']
         if certificate != '':
             replace_file('/etc/gooroom/agent/server_certificate.crt', certificate)
+            JLOG(GRMCODE_CERTIFICATE, *('',))
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1720,6 +1726,7 @@ def task_client_sync(task, data_center):
                 #if verifying is failed, exception occur
                 verify_signature(s, c)
                 replace_file(n, c, s)
+                JLOG(GRMCODE_CLIENT_POLICY, *(n,))
             except:
                 AgentLog.get_logger().error(agent_format_exc())
 
@@ -1749,7 +1756,7 @@ def task_client_sync(task, data_center):
 
             send_journallog(
                 lg,
-                JOURNAL_NOTICE, 
+                JOURNAL_INFO, 
                 gc)
 
     except:
@@ -1813,6 +1820,7 @@ def task_client_user_sync(task, data_center):
                 verify_signature(signature, file_contents)
 
                 replace_file(file_name, file_contents, signature)
+                JLOG(GRMCODE_CLIENT_USER_POLICY, *(file_name,))
             except:
                 AgentLog.get_logger().error(agent_format_exc())
 
@@ -1822,7 +1830,6 @@ def task_client_user_sync(task, data_center):
         tmp_task = \
             {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
         getattr(m, 'task_daemon_reload')(tmp_task, data_center)
-
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
@@ -1843,6 +1850,7 @@ def task_client_user_sync(task, data_center):
                 perm = stat.S_IMODE(os.lstat(ub).st_mode)
                 os.chmod(ub, perm | EXEC)
         data_center.update_operation[0] = operation
+        JLOG(GRMCODE_UPDATER, *(operation,))
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

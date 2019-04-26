@@ -45,6 +45,142 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def pick_entrypoint_file():
+    """
+    pick browser url logfile to be entrypoint
+    """
+
+    URL_PATH = \
+        AgentConfig.get_config().get('BROWSER_URL', 'URL_PATH')
+    if not os.path.exists(URL_PATH):
+        return None
+
+    file_list = []
+    min_dt = 99991231
+    min_idx = -1
+    offset = 0
+    for url_file in glob.glob(URL_PATH+'/*'):
+        if os.path.getsize(url_file) == 0:
+            continue
+        dt = int(url_file.split('-')[-1])
+        if dt < min_dt:
+            min_dt = dt
+            min_idx = offset
+        file_list.append(url_file)
+        offset += 1
+
+    if min_idx == -1:
+        return None
+
+    AgentLog.get_logger().info('pick entrypoint {}'.format(file_list[min_idx]))
+
+    return file_list[min_idx]
+
+def pick_next_file(current_filename):
+    """
+    pick next date file
+    """
+
+    URL_PATH = \
+        AgentConfig.get_config().get('BROWSER_URL', 'URL_PATH')
+    if not os.path.exists(URL_PATH):
+        return None
+
+    current_dt = int(current_filename.split('-')[-1])
+    for url_file in glob.glob(URL_PATH+'/*'):
+        if os.path.getsize(url_file) == 0:
+            continue
+        dt = int(url_file.split('-')[-1])
+        if dt > current_dt:
+            AgentLog.get_logger().info('pick next {}'.format(url_file))
+            return url_file
+
+    return None
+
+def task_browser_url(task, data_center):
+    """
+    browser url
+    """
+
+    if data_center.visa_status != VISA_STATUS_APPROVED:
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+
+    AGENT_OWN_DIR = \
+        AgentConfig.get_config().get('MAIN', 'AGENT_OWN_DIR')
+
+    fname = linenum = None
+
+    URL_TAILED = AGENT_OWN_DIR + '/browser_url_tailed'
+    if os.path.exists(URL_TAILED):
+        try:
+            with open(URL_TAILED, 'r') as f:
+                fname, linenum = f.read().strip('\n').split(',')
+                linenum = int(linenum)
+            if not os.path.exists(fname):
+                fname = pick_next_file(fname)
+                linenum = 0
+                if not fname:
+                    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+                    return
+        except:
+            e = agent_format_exc()
+            AgentLog.get_logger().info(e)
+
+            fname = pick_entrypoint_file()
+            linenum = 0
+            if not fname:
+                task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+                return
+    else:
+        fname = pick_entrypoint_file()
+        linenum = 0
+        if not fname:
+            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+            return
+     
+    TRANSMIT_URL_NUM = \
+        AgentConfig.get_config().get('BROWSER_URL', 'TRANSMIT_URL_NUM')
+    MAX_URL_SIZE = \
+        AgentConfig.get_config().get('BROWSER_URL', 'MAX_URL_SIZE')
+
+    with open(fname, 'r') as f:
+        lines = f.readlines() 
+
+    if len(lines) == linenum:
+        fname = pick_next_file(fname)
+        linenum = 0
+        if not fname:
+            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+            return
+
+        with open(fname, 'r') as f:
+            lines = f.readlines()
+
+    logs = []
+    offset = 0
+    for line in lines[linenum:]:
+        splited = line.split(']')
+        lg = '{},{},{},{}'.format(
+                '1111-11-11 11:11:11',
+                'SARABAL', 
+                '0', 
+                ' '.join(splited[3:]))
+        logs.append(lg)
+        offset += 1
+    linenum += offset
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+    task[J_MOD][J_TASK][J_REQUEST]['logs'] =  logs
+    data_center.module_request(task, mustbedata=False)
+
+    with open(URL_TAILED, 'w') as f:
+        f.write('{},{}'.format(fname, linenum))
+        
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_journal_remover(task, data_center):
     """
     journal remover
@@ -170,7 +306,7 @@ def task_clear_security_alarm(task, data_center):
     
     lg = 'alert has been released'
     gc = GRMCODE_ALERT_RELEASE
-    send_journallog(lg, JOURNAL_NOTICE, gc)
+    send_journallog(lg, JOURNAL_INFO, gc)
 
 #-----------------------------------------------------------------------
 def get_arp_list():
@@ -208,7 +344,6 @@ def get_arp_list_deprecated():
     sout, serr = pp.communicate()
 
     if pp.returncode != 0:
-        print(serr.decode('utf8'))
         raise Exception('arp-scan returns !0')
 
     sout = sout.decode('utf8')
