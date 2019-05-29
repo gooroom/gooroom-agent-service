@@ -102,9 +102,11 @@ def task_browser_url(task, data_center):
     browser url
     """
 
+    '''
     if data_center.visa_status != VISA_STATUS_APPROVED:
         task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
         return
+    '''
 
     AGENT_OWN_DIR = \
         AgentConfig.get_config().get('MAIN', 'AGENT_OWN_DIR')
@@ -160,6 +162,8 @@ def task_browser_url(task, data_center):
     logs = []
     offset = 0
     for line in lines[linenum:]:
+        if offset >= TRANSMIT_URL_NUM:
+            break
         splited = line.split(']')
         lg = '{},{},{},{}'.format(
                 '1111-11-11 11:11:11',
