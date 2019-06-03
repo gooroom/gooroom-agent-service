@@ -147,6 +147,7 @@ def agent_format_exc():
     return '\n'.join(traceback.format_exc().split('\n')[-4:-1])
 
 #-----------------------------------------------------------------------
+'''
 def catch_user_id():
     """
     read current logined user_id from /var/run/utmp
@@ -184,6 +185,86 @@ def catch_user_id():
             raise Exception('user_id({}) does not existed in /etc/passwd'.format(user_id))
 
     return user_id
+'''
+#-----------------------------------------------------------------------
+def catch_user_id():
+    """
+    get session login id
+    (-) not login
+    (+user) local user
+    (user) remote user
+    """
+
+    import subprocess
+    import os
+    pp = subprocess.Popen(
+        ['loginctl', 'list-sessions'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    pp_out, pp_err = pp.communicate()
+    pp_out = pp_out.decode('utf8').split('\n')
+
+    for l in pp_out:
+        l = l.split()
+        if len(l) < 3:
+            continue
+        try:
+            sn = l[0].strip()
+            if not sn.isdigit():
+                continue
+            uid = l[1].strip()
+            if not uid.isdigit():
+                continue
+            user = l[2].strip()
+            pp2 = subprocess.Popen(
+                ['loginctl', 'show-session', sn],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+
+            pp2_out, pp2_err = pp2.communicate()
+            pp2_out = pp2_out.decode('utf8').split('\n')
+            service_lightdm = False
+            state_active = False
+            active_yes = False
+            for l2 in pp2_out:
+                l2 = l2.split('=')
+                if len(l2) != 2:
+                    continue
+                k, v = l2
+                k = k.strip()
+                v = v.strip()
+                if k == 'Id'and v != sn:
+                    break
+                elif k == 'User'and v != uid:
+                    break
+                elif k == 'Name' and v != user:
+                    break
+                elif k == 'Service':
+                    if v == 'lightdm':
+                        service_lightdm = True
+                    else:
+                        break
+                elif k == 'State':
+                    if v == 'active':
+                        state_active = True
+                    else:
+                        break
+                elif k == 'Active':
+                    if v == 'yes':
+                        active_yes = True
+
+                if service_lightdm and state_active and active_yes:
+                    remote_user_file = \
+                        '/var/run/user/{}/gooroom/.grm-user'.format(uid)
+                    if os.path.exists(remote_user_file):
+                        return user
+                    else:
+                        return '+{}'.format(user)
+        except:
+            AgentLog.get_logger().debug(agent_format_exc())
+
+    return '-'
 
 #-----------------------------------------------------------------------
 def create_journal_logger():

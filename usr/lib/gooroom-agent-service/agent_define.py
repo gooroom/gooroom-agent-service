@@ -53,7 +53,6 @@ T_PRIORITY='priority'
 T_ID='id'
 T_DBUS='dbus'
 T_MUSTOK='mustok'
-T_VERSIONINFO='versioninfo'
 
 #agent와 server가 송수신하는 job에 대한 json의 키값
 J_OB='job'
@@ -91,7 +90,6 @@ H_TOKEN='gooroom-client-token'
 H_AUTH='auth'
 H_CID='client_id'
 H_CERT='gooroom-client-cert'
-H_VERSION='version'
 
 #TEMPLATE EXTENTION
 T_EXT='tmpl'
@@ -139,11 +137,6 @@ PKCON_TIMEOUT_TEN_MINS=600
 PKCON_TIMEOUT_FIVE_MINS=300
 PKCON_TIMEOUT_DEFAULT=180
 PKCON_TIMEOUT_ONCE=1
-
-#server version
-SERVER_VERSION_ALL='0.0'
-SERVER_VERSION_1_0='1.0'
-SERVER_VERSION_NOT_1_0='!1.0'
 
 #syslog identifier
 AGENT_SYSLOG_IDENTIFIER='gooroom-agent'

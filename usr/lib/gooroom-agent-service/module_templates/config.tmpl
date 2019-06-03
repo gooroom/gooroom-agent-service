@@ -38,7 +38,7 @@
     </task>
 
     <!-- GET UPDATE SERVER CONFIG FILE -->
-    <task name="get_update_server_config" bootable="yes" mustok="no" priority="3">
+    <task name="get_update_server_config">
         <param name="task_name" type="string"/>
 
         <in>
@@ -59,7 +59,7 @@
     </task>
 
     <!-- APPEND CONTENTS HOSTS -->
-    <task name="append_contents_etc_hosts" bootable="yes" mustok="no" priority="3">
+    <task name="append_contents_etc_hosts">
         <param name="task_name" type="string"/>
 
         <in>
@@ -156,7 +156,7 @@
     </task>
 
     <!-- GET_SERVERJOB_DISPATCH_TIME -->
-    <task name="get_serverjob_dispatch_time" bootable="yes" mustok="no">
+    <task name="get_serverjob_dispatch_time">
         <param name="task_name" type="string"/>
 
         <in>
@@ -174,7 +174,7 @@
     </task>
 
     <!-- GET_NTP_LIST_CONFIG -->
-    <task name="get_ntp_list_config" bootable="yes" priority="5" mustok="no">
+    <task name="get_ntp_list_config">
         <param name="task_name" type="string"/>
 
         <in>
@@ -226,7 +226,7 @@
     </task>
 
     <!-- GET_HYPERVISOR_OPERATION -->
-    <task name="get_hypervisor_operation" bootable="yes" mustok="no">
+    <task name="get_hypervisor_operation">
         <param name="task_name" type="string"/>
 
         <in>
@@ -267,25 +267,6 @@
 
         <out>
             <param name="operation" type="string"/>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-        </out>
-    </task>
-
-    <!-- GET SERVER CERTIFICATE -->
-    <task name="get_server_certificate" bootable="yes" priority="-1">
-        <param name="task_name" type="string"/>
-
-        <in>
-        </in>
-
-        <request id='null' seq="null">
-        </request>
-        <response>
-            <param name="file_contents" type="string"/>
-        </response>
-
-        <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>
@@ -389,44 +370,8 @@
         </out>
     </task>
 
-    <!-- SET APT CONF -->
-    <task name="set_apt_conf">
-        <param name="task_name" type="string"/>
-
-        <in>
-        </in>
-
-        <request id='null' seq="null">
-        </request>
-        <response>
-            <param name="update_base_urls" type="string"/>
-        </response>
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-        </out>
-    </task>
-
-    <!-- SET GPG KEY -->
-    <task name="set_gpg_key">
-        <param name="task_name" type="string"/>
-
-        <in>
-        </in>
-
-        <request id='null' seq="null">
-        </request>
-        <response>
-            <param name="update_base_urls" type="string"/>
-        </response>
-        <out>
-            <param name="status" type="string"/>
-            <param name="message" type="string"/>
-        </out>
-    </task>
-
     <!-- CLIENT SYNC -->
-    <task name="client_sync" bootable="yes" mustok="yes" priority="-2" versioninfo="!1.0">
+    <task name="client_sync" bootable="yes" mustok="yes" priority="-2">
         <param name="task_name" type="string"/>
 
         <in>
@@ -456,7 +401,7 @@
     </task>
 
     <!-- CLIENT USER SYNC -->
-    <task name="client_user_sync" bootable="yes" mustok="yes" priority="-1" versioninfo="!1.0">
+    <task name="client_user_sync" bootable="yes" mustok="yes" priority="-1">
         <param name="task_name" type="string"/>
 
         <in>

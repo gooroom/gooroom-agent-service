@@ -84,12 +84,8 @@ class SimpleParser:
 
                 polltime = int(salt[T_POLLTIME])
 
-                version = SERVER_VERSION_1_0
-                if T_VERSIONINFO in salt:
-                    version = salt[T_VERSIONINFO]
-
                 infos.setdefault(polltime, []).append(
-                    ({J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}, version))
+                    ({J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}))
 
         return infos
 
@@ -114,13 +110,9 @@ class SimpleParser:
                         if T_PRIORITY in salt:
                             priority = int(salt[T_PRIORITY])
                         
-                        version = SERVER_VERSION_1_0
-                        if T_VERSIONINFO in salt:
-                            version = salt[T_VERSIONINFO]
-
                         module = {J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}
-                        for_priority_sort.append((priority,module,mustok,version))
+                        for_priority_sort.append((priority,module,mustok))
 
         from operator import itemgetter
-        return [(m,mok,v) for p, m, mok, v in sorted(for_priority_sort, key=itemgetter(0))]
+        return [(m,mok) for p, m, mok in sorted(for_priority_sort, key=itemgetter(0))]
 

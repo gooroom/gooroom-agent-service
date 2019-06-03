@@ -123,32 +123,6 @@ class AgentMsslRest:
         self.logger.debug('new token=%s' % AgentMsslRest._token)
         return True, '200', None
 
-    def version(self):
-        """
-        get server version
-        """
-
-        body = {J_AGENT_DATA_CLIENTID:self.data_center.get_client_id()}
-
-        rsp_headers, rsp_body = self.shoot(
-            self.data_center.server_version_api, body=json.dumps(body))
-
-        #http status 
-        http_status_code = rsp_headers['status']
-        if http_status_code != '200':
-            #raise Exception('!! version [http] status %s' % http_status_code)
-            raise AgentHttpStatusError('{}'.format(http_status_code))
-
-        result = json.loads(rsp_body)
-        agent_status = result[J_AGENT_STATUS]
-
-        #agent status
-        agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
-        if agent_status_code != AGENT_OK:
-            raise Exception('!! version [agent] status %s' % agent_status_code)
-
-        return rsp_headers[H_VERSION]
-
     def shoot(self, 
             rest_api, 
             body=None,

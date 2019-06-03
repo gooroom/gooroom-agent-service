@@ -49,7 +49,7 @@ class AgentClientJobDispatcher(threading.Thread):
         main loop   
         """
 
-        self.logger.debug('(client) dispatcher run')
+        self.logger.debug('(clientjob) dispatcher run')
 
         intervals = 0
 
@@ -63,11 +63,7 @@ class AgentClientJobDispatcher(threading.Thread):
                     for polltime in self.data_center.clientjob_book.keys():
                         if intervals % polltime is 0:
                             #clientjob은 task 단위로 처리
-                            for task, version in self.data_center.clientjob_book[polltime]:
-                                if self.data_center.server_version == SERVER_VERSION_1_0 \
-                                    and version != SERVER_VERSION_1_0:
-                                    continue
-
+                            for task in self.data_center.clientjob_book[polltime]:
                                 self._job_manager.put_job(copy.deepcopy(task))
 
                     if intervals % 60 is 0:

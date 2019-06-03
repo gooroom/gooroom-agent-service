@@ -39,9 +39,6 @@ class AgentDataCenter:
         self.clientjob_dispatcher_thread_on = True
         self.serverjob_dispatcher_thread_on = True
 
-        #SERVER VERSION
-        self.server_version = SERVER_VERSION_1_0
-
         #PREV ACCESS DIFFTIME
         self.prev_access_difftime = INIT_PREV_ACCESS_DIFFTIME
 
@@ -73,7 +70,6 @@ class AgentDataCenter:
             #SERVERJOB DISPATCHER VARIABLES
             self.jobs_api = self.conf.get('REST_API', 'JOBS')
             self.server_api = self.conf.get('REST_API', 'SERVER')
-            self.server_version_api = self.conf.get('REST_API', 'SERVER_VERSION')
             self.serverjob_dispatch_time = self.get_serverjob_dispatch_time()
             self.serverjob_max_dispatch_time = int(self.conf.get('SERVERJOB', 'MAX_DISPATCH_TIME'))
 
@@ -281,13 +277,6 @@ class AgentDataCenter:
         return self.restful.request(
             self.jobs_api, body=json.dumps(b))
 
-    def server_version_request(self):
-        """
-        request server version
-        """
-
-        return self.restful.version()
-
     def create_agentbody(self, agent, code, err, job_no, module_rsp):
         """
         create agent body(agent status + agent data)
@@ -377,7 +366,7 @@ class AgentDataCenter:
 
         if cert:
             cn = cert.get_subject().CN
-            self.logger.debug('client_id=%s', cn)
+            self.logger.debug('extract_clientid_from_cert=%s', cn)
             return cn
         else:
             return None

@@ -293,135 +293,10 @@ def task_get_app_list(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def task_set_gpg_key(task, data_center):
-    """
-    set_gpg_key
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    AGENT_MARK = 'AGENT-'
-    path = '/etc/apt/trusted.gpg.d/'
-    mch = re.compile(AGENT_MARK)
-
-    for old_fname in (f for f in glob.glob(path+'*') if mch.search(f)):
-        os.remove(old_fname)
-
-    server_rsp = data_center.module_request(task)
-    urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
-
-    gpg = gnupg.GPG(gnupghome='/var/tmp/gooroom-agent-service')
-    try:
-        for url in urls:
-            domain = url.split()[1].strip()
-            proto_len = 0
-            if domain.startswith('https://'):
-                proto_len = 8
-            elif domain.startswith('http://'):
-                proto_len = 7
-
-            if proto_len == 0:
-                continue
-
-            protocol = domain[:proto_len]
-            hostname = domain[proto_len:].split('/')[0]
-            agent_http = httplib2.Http(ca_certs=data_center.agent_ca_cert, 
-                    timeout=data_center.rest_timeout)
-            agent_http.add_certificate(key=data_center.agent_key, 
-                    cert=data_center.agent_cert, domain='')
-            rsp_headers, rsp_body = \
-                agent_http.request(protocol+hostname+'/archive.key', method='GET')
-
-            if rsp_headers['status'] == '200':
-                new_fname = path+AGENT_MARK + hostname.replace('.', '-') +'.gpg'
-                res = gpg.import_keys(rsp_body)
-                os.chmod('/var/tmp/gooroom-agent-service/pubring.gpg', 644)
-                shutil.copyfile('/var/tmp/gooroom-agent-service/pubring.gpg', new_fname)
-                AgentLog.get_logger().info('GPG KEY OK')
-    except:
-        AgentLog.get_logger().info(agent_format_exc())
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-#-----------------------------------------------------------------------
-ATP_CONF_TEMPL = '''APT::Sandbox::User "root";
-
-Acquire::https::%s {
-    Verify-Peer "true";
-    Verify-Host "true";
-
-    SslCert "%s";
-    SslKey "%s";
-}'''
-
-def task_set_apt_conf(task, data_center):
-    """
-    set_apt_conf
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    server_rsp = data_center.module_request(task)
-    urls = server_rsp[J_MOD][J_TASK][J_RESPONSE]['update_base_urls'].split('\n')
-
-    AGENT_MARK = 'AGENT-'
-    path = '/etc/apt/apt.conf.d/'
-    mch = re.compile(AGENT_MARK)
-
-    cert_path = AgentConfig.get_config().get('MAIN', 'AGENT_CERT')
-    key_path = AgentConfig.get_config().get('MAIN', 'AGENT_KEY')
-
-    for old_fname in (f for f in glob.glob(path+'*') if mch.search(f)):
-        os.remove(old_fname)
-
-    try:
-        for url in urls:
-            domain = url.split()[1].strip()
-            if not domain.startswith('https://'):
-                continue
-
-            proto_len = 8
-            hostname = domain[proto_len:].split('/')[0]
-            agent_http = httplib2.Http(timeout=data_center.rest_timeout)
-            rsp_headers, rsp_body = agent_http.request(domain, method='GET')
-
-            if rsp_headers['status'] == '400':
-                new_fname = path + '20' + AGENT_MARK + hostname.replace('.', '-')
-                with open(new_fname, 'w') as f:
-                    f.write(ATP_CONF_TEMPL % (hostname, cert_path, key_path))
-
-                AgentLog.get_logger().info('APT CONF OK')
-    except:
-        AgentLog.get_logger().info(agent_format_exc())
-
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-
-#-----------------------------------------------------------------------
 def task_tell_update_operation(task, data_center):
     """
     tell_update_operation
     """
-
-    '''
-    login_id = catch_user_id()
-    if data_center.server_version == SERVER_VERSION_1_0:
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
-
-    server_rsp = data_center.module_request(task)
-    operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['operation']
-    '''
 
     task[J_MOD][J_TASK][J_OUT]['operation'] = \
         data_center.update_operation[0]
@@ -466,14 +341,8 @@ def task_get_update_operation(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version.startswith(SERVER_VERSION_1_0):
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -498,23 +367,6 @@ def task_get_update_operation(task, data_center):
         send_journallog(jlog, JOURNAL_INFO, GRMCODE_UPDATE_OPERATION_DISABLE)
 
     data_center.update_operation[0] = operation
-    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-
-#-----------------------------------------------------------------------
-def task_get_server_certificate(task, data_center):
-    """
-    get_server_certificate
-    """
-
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {}
-
-    server_rsp = data_center.module_request(task)
-
-    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
-
-    replace_file('/etc/gooroom/agent/server_certificate.crt', file_contents)
-
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -556,6 +408,11 @@ def task_set_hypervisor_operation(task, data_center):
 
     svc = 'gop-daemon.service'
     m = importlib.import_module('modules.daemon_control')
+
+    getattr(m, 'task_daemon_status')(
+        {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}},
+        data_center)
+
     tmp_task = \
         {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':operation}, J_OUT:{}}}}
 
@@ -575,6 +432,11 @@ def task_get_hypervisor_operation(task, data_center):
 
     svc = 'gop-daemon.service'
     m = importlib.import_module('modules.daemon_control')
+
+    getattr(m, 'task_daemon_status')(
+        {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}},
+        data_center)
+
     tmp_task = \
         {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':operation}, J_OUT:{}}}}
 
@@ -623,6 +485,34 @@ def task_get_serverjob_dispatch_time(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
+def ntp_list_config(ntp_list, data_center):
+    """
+    real procedure to task_ntp_list_configs
+    """
+
+    ntp_conf_path = '/etc/systemd/timesyncd.conf'
+    ntp_config = AgentConfig.get_config(ntp_conf_path)
+    ntp_config.set('Time', 'NTP', ntp_list)
+
+    with open(ntp_conf_path, 'w') as f:
+        ntp_config.write(f)
+
+    #load daemon_control of agent
+    svc = 'systemd-timesyncd.service'
+    m = importlib.import_module('modules.daemon_control')
+    tmp_task = {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
+
+    #get daemon status
+    getattr(m, 'task_daemon_status')(tmp_task, data_center)
+    sts = tmp_task[J_MOD][J_TASK][J_OUT]['daemon_status']
+
+    #restart ntp daemon
+    if sts.split(',')[0] == 'active':
+        getattr(m, 'task_daemon_restart')(tmp_task, data_center)
+    else:
+        AgentLog.get_logger().info(
+            '%s is not active (current status=%s)' % (svc, sts))
+
 def task_set_ntp_list_config(task, data_center):
     """
     set_ntp_list_config
@@ -682,53 +572,17 @@ def task_get_server_time(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def ntp_list_config(ntp_list, data_center):
-    """
-    real procedure to task_ntp_list_configs
-    """
-
-    ntp_conf_path = '/etc/systemd/timesyncd.conf'
-    ntp_config = AgentConfig.get_config(ntp_conf_path)
-    ntp_config.set('Time', 'NTP', ntp_list)
-
-    with open(ntp_conf_path, 'w') as f:
-        ntp_config.write(f)
-
-    #load daemon_control of agent
-    svc = 'systemd-timesyncd.service'
-    m = importlib.import_module('modules.daemon_control')
-    tmp_task = {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
-
-    #get daemon status
-    getattr(m, 'task_daemon_status')(tmp_task, data_center)
-    sts = tmp_task[J_MOD][J_TASK][J_OUT]['daemon_status']
-
-    #restart ntp daemon
-    if sts.split(',')[0] == 'active':
-        getattr(m, 'task_daemon_restart')(tmp_task, data_center)
-    else:
-        AgentLog.get_logger().info(
-            '%s is not active (current status=%s)' % (svc, sts))
-
-#-----------------------------------------------------------------------
 def task_get_screen_time(task, data_center):
     """
     get_screen_time
     """
 
     login_id = catch_user_id()
-    if data_center.server_version.startswith(SERVER_VERSION_1_0):
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        #not logged in
-        if login_id == '-':
-            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-            return
-        elif login_id[0] == '+':
-            login_id = ''
+    if login_id == '-':
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+    elif login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -748,16 +602,9 @@ def task_get_password_cycle(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version.startswith(SERVER_VERSION_1_0):
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        #not logged in
-        if login_id == '-':
-            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
-            return
+    if login_id == '-':
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -834,14 +681,6 @@ def task_get_update_server_config(task, data_center):
         f.write(cvu)
 
     apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
-    '''
-    import apt_pkg
-    apt_pkg.init()
-    cache = apt.cache.Cache()
-    cache.update()
-    cache.open()
-    cache.close()
-    '''
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1066,14 +905,8 @@ def task_get_media_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version.startswith(SERVER_VERSION_1_0):
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -1130,14 +963,8 @@ def task_get_browser_config(task, data_center):
     """
 
     login_id = catch_user_id()
-    if data_center.server_version.startswith(SERVER_VERSION_1_0):
-        if login_id == '-':
-            raise Exception('The client did not log in.')
-        elif login_id[0] == '+':
-            raise Exception('The client logged in as local user.')
-    else:
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -1667,10 +1494,16 @@ def task_client_sync(task, data_center):
         if hyper_operation != '':
             svc = 'gop-daemon.service'
             m = importlib.import_module('modules.daemon_control')
+
+            getattr(m, 'task_daemon_status')(
+                {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}},
+                data_center)
+
             tmp_task = \
                 {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':hyper_operation}, J_OUT:{}}}}
             getattr(m, 'task_daemon_able')(tmp_task, data_center)
             JLOG(GRMCODE_HYPERVISOR, *(hyper_operation,))
+
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

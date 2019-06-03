@@ -70,7 +70,7 @@
         </out>
     </task>
 
-    <task name="journal_remover" bootable="yes" mustok="no" polltime="3600" versioninfo="!1.0">
+    <task name="journal_remover" bootable="yes" mustok="no" polltime="3600">
         <param name="task_name" type="string"/>
 
         <in>
@@ -88,11 +88,11 @@
         </out>
     </task>
 
-    <task name="sched_info" bootable="yes" mustok="no" priority="9" versioninfo="!1.0">
+    <!--
+    <task name="sched_info" bootable="yes" mustok="no" priority="9">
         <param name="task_name" type="string"/>
 
         <in>
-            <!-- terminalInfo -->
             <param name="local_ip" type="string"/>
             <param name="mac" type="string"/>
             <param name="arp_list" type="string"/>
@@ -105,7 +105,7 @@
         </out>
     </task>
 
-    <task name="browser_url" polltime="60" versioninfo="!1.0">
+    <task name="browser_url" polltime="60">
         <param name="task_name" type="string"/>
 
         <in>
@@ -128,5 +128,5 @@
 
         </out>
     </task>
-
+    -->
 </module>
