@@ -122,3 +122,25 @@ def task_set_noti(task, data_center):
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
+#-----------------------------------------------------------------------
+def task_set_multiple_login_msg(task, data_center):
+    """
+    set multiple login msg
+    """
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        raise Exception('current login-id({}) is not gpms-id'.format(login_id))
+
+    gpms_id = task[J_MOD][J_TASK][J_IN]['login_id']
+    if gpms_id != login_id:
+        raise Exception('gpms-id({}) and login-id({}) is not equal'.format(
+                                                                    gpms_id,
+                                                                    login_id))
+    msg = '{}:{}'.format(
+        GRMCODE_NO_JOURNAL_DEFAULT, 
+        task[J_MOD][J_TASK][J_IN]['msg'])
+
+    task[J_MOD][J_TASK].pop(J_IN)
+
+    data_center.GOOROOM_AGENT.agent_msg(msg)
+

@@ -47,4 +47,20 @@
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- set_noti -->
+    <task name="set_multiple_login_msg">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+            <param name="msg" type="string"/>
+        </in>
+
+        <out>
+            <param name="noti_info" type="string_json"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
 </module>
