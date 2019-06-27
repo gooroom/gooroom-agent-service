@@ -73,16 +73,9 @@ def task_get_noti(task, data_center):
     """
 
     login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-    with open('/etc/passwd') as f:
-        pws = f.readlines()
-    for pw in pws:
-        splited = pw.split(':')
-        if splited[0] == login_id:
-            if not 'gooroom-online-account' in splited[4]:
-                login_id = ''
-            break
-    else:
-        raise Exception('no user in /etc/passwd')
+    uid = pwd.getpwnam(login_id).pw_uid
+    if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}

@@ -62,15 +62,8 @@ def task_dpms_off_time(task, data_center):
 
     if 'login_id' in task[J_MOD][J_TASK][J_IN]:
         login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        with open('/etc/passwd') as f:
-            pws = f.readlines()
-        for pw in pws:
-            splited = pw.split(':')
-            if splited[0] == login_id:
-                if not 'gooroom-online-account' in splited[4]:
-                    login_id = ''
-                break
-        else:
+        uid = pwd.getpwnam(login_id).pw_uid
+        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
             login_id = ''
     else:
         login_id = catch_user_id()
@@ -257,15 +250,8 @@ def task_get_app_list(task, data_center):
 
     if 'login_id' in task[J_MOD][J_TASK][J_IN]:
         login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        with open('/etc/passwd') as f:
-            pws = f.readlines()
-        for pw in pws:
-            splited = pw.split(':')
-            if splited[0] == login_id:
-                if not 'gooroom-online-account' in splited[4]:
-                    login_id = ''
-                break
-        else:
+        uid = pwd.getpwnam(login_id).pw_uid
+        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
             login_id = ''
     else:
         login_id = catch_user_id()
@@ -613,7 +599,7 @@ def task_get_password_cycle(task, data_center):
 
     #online account
     if login_id[0] != '+':
-        spath = '/var/run/user/%s/gooroom/.grm-user' % pwd.getpwnam(login_id).pw_uid
+        spath = '/var/run/user/{}/gooroom/.grm-user'.format(pwd.getpwnam(login_id).pw_uid)
 
         with open(spath) as f:
             jsondata = json.loads(f.read().strip('\n'))
