@@ -55,6 +55,63 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def polkit_config(pk):
+    """
+    apply polkit config
+    """
+
+    PKLA_PATH = '/etc/polkit-1/localauthority/90-mandatory.d/GPMS.pkla'
+    PKLA_TMPL = '[{}]\n'\
+                 'Identity=unix-user:*\n'\
+                 'Action={}\n'\
+                 'ResultAny=no\n'\
+                 'ResultInactive=no\n'\
+                 'ResultActive={}\n\n'
+    contents = ''
+
+    config = AgentConfig.get_config()
+    if not 'POLKIT' in config:
+        raise Exception('[POLKIT] section not found')
+
+    for pk_name in pk:
+        pk_v = pk[pk_name]
+        pk_name = pk_name.upper()
+        if pk_name in config['POLKIT']:
+            action_ids = config['POLKIT'][pk_name]
+            contents += PKLA_TMPL.format(pk_name, action_ids, pk_v)
+        else:
+            AgentLog.get_logger().error(
+                '!! {} not found in agent configuration'.format(pk_name))
+    if contents:
+        with open(PKLA_PATH, 'w') as f:
+            f.write(contents)
+        with open(CONFIG_PATH+'/polkit.json', 'w') as f2:
+            f2.write(json.dumps(pk))
+
+def task_get_polkit_config(task, data_center):
+    """
+    get polkit config
+    """
+
+    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
+        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+        uid = pwd.getpwnam(login_id).pw_uid
+        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
+            login_id = ''
+    else:
+        login_id = catch_user_id()
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    server_rsp = data_center.module_request(task)
+    pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
+    polkit_config(pk)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_dpms_off_time(task, data_center):
     """
     dpms off time
@@ -1005,18 +1062,23 @@ def task_set_authority_config(task, data_center):
     remove_previous_browser_policies()
 
     for idx in range(len(file_name_list)):
-        file_name = file_name_list[idx]
-        if '$(LOGINID)' in file_name:
-            file_name = \
-                file_name.replace('$(LOGINID)', '%s' % login_id)
+        try:
+            file_name = file_name_list[idx]
+            file_contents = file_contents_list[idx]
+            signature = signature_list[idx]
+            
+            #if verifying is failed, exception occur
+            verify_signature(signature, file_contents)
 
-        file_contents = file_contents_list[idx]
-        signature = signature_list[idx]
-        
-        #if verifying is failed, exception occur
-        verify_signature(signature, file_contents)
+            replace_file(file_name, file_contents, signature)
+        except:
+            AgentLog.get_logger().error(agent_format_exc())
 
-        replace_file(file_name, file_contents, signature)
+    try:
+        pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
+        polkit_config(pk)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1673,4 +1735,26 @@ def task_client_user_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
+    #POLKIT 
+    dummy = '''{
+        "polkit": {
+          "gooroom_agent": "yes",
+          "gooroom_register": "yes",
+          "gooroom_update": "yes",
+          "wire_wireless": "yes",
+          "network_config": "yes",
+          "printer": "yes",
+          "disk_mount": "yes",
+          "pkexec": "yes"
+        }
+    }'''
+
+    try:
+        #pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
+        pk = json.loads(dummy)['polkit']
+        polkit_config(pk)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+

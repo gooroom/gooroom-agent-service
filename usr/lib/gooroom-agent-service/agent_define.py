@@ -3,16 +3,8 @@
 #-----------------------------------------------------------------------
 
 #full path of config
-CONFIG_FULLPATH='/etc/gooroom/agent/Agent.conf'
-
-#default log path
-DEFAULT_LOG_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/default-log.conf'
-
-#log path
-LOG_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/log.conf'
-
-#log sign path
-LOG_SIGN_PATH='/home/user/gooroom-agent-service/etc/gooroom/agent/log.conf.sign'
+CONFIG_PATH='/etc/gooroom/agent'
+CONFIG_FULLPATH=CONFIG_PATH+'/Agent.conf'
 
 #WORKER
 WORKER_GOT_FIRED='go home buddy...'
