@@ -38,14 +38,11 @@ def task_grm_heartbit(task, data_center):
     do do_task
     """
 
-    pass
+    task[J_MOD][J_TASK].pop(J_IN)
+    if data_center.agent_grm_connection_status[0]:
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+    else:
+        task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
+            'agent is failing to connect to server'
     
-#-----------------------------------------------------------------------
-def task_raise_traffic(task, data_center):
-    """
-    raise_traffic
-    """
-
-    ts = task[J_MOD][J_TASK][J_IN]['traffic_size']
-    task[J_MOD][J_TASK][J_OUT]['traffic'] = '*' * int(ts)
-

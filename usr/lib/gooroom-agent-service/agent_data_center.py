@@ -15,6 +15,7 @@ import sys
 import re
 
 from agent_util import AgentConfig,AgentLog,catch_user_id,create_journal_logger
+from agent_util import agent_format_exc,verify_signature
 from agent_simple_parser import SimpleParser
 from agent_msslrest import AgentMsslRest
 from agent_define import *
@@ -34,6 +35,16 @@ class AgentDataCenter:
 
         self.center_lock = threading.Lock()
 
+        #THREAD ESCAPE FLAG
+        self.clientjob_dispatcher_thread_on = True
+        self.serverjob_dispatcher_thread_on = True
+
+        #PREV ACCESS DIFFTIME
+        self.prev_access_difftime = INIT_PREV_ACCESS_DIFFTIME
+
+        #VISA STATUS
+        self.visa_status = INIT_VISA_STATUS
+
         self.show(once=True)
 
     def show(self, once=False):
@@ -50,17 +61,9 @@ class AgentDataCenter:
                 #DISPATCHERS CONTROLL FLAG
                 #client_dispatcher와 server_dispatcher는 이 플래그값을 가지고
                 #서로의 looping을 제어한다.
-                #client_dispatcher가 초기화작업이 완료되면 serverjob의
-                #looping을 True로 변경한다.
-                #server_dispatcher가 서버와의 통신에 장애가 발생하면 
-                #clinetjob의 looping을 False로 변경하고 
-                #통신이 정상화되면 다시 looping을 True로 변경한다.
-                self.serverjob_looping_on = [False]
-                self.clientjob_looping_on = [True]
+                self.serverjob_looping_on = [True]
+                self.clientjob_looping_on = [False]
 
-            #CLIENT ID
-            #self.client_id = self.extract_clientid_from_cert()
-        
             #SERVER DOMAIN
             self.server_domain = self.read_server_domain()
 
@@ -130,18 +133,77 @@ class AgentDataCenter:
             #FOR SUMMARY_LOG
             self.summary_log_first_execution = True
 
+            #CLIENT MAX RESPONSE TIME
+            self.max_response_time = 0.0
+
+            #CLIENT TIMEOUT COUNT
+            self.timeout_cnt = 0
+
+            #CLIENT INFO
+            #product-id,os-ver,kernel-ver,ip,home-size,home-used,pss
+            self.client_info_set = {'','','','',-1,-1,''}
+
             #HOME FOLDER DELETE FLAG
             self.home_folder_delete_flag = ['disable']
             hf_operation = self.conf.get('CLIENTJOB', 'HOMEFOLDER_OPERATION')
             self.home_folder_delete_flag[0] = hf_operation
 
-            self.logger.info('END SHOW()')
+            #JOURNAL REMAIN DAYS
+            self.journal_remain_days = int(self.conf.get('JOURNAL', 'REMAIN_DAYS'))
 
+            #AGENT-GRM CONNECTION STATUS
+            self.agent_grm_connection_status = [False]
+
+            #UPDATE OPERATION
+            self.update_operation = ['disable']
         except:
             raise
 
         finally:
             self.center_lock.release()
+
+    def clear_max_response_time(self):
+        """
+        clear max response time
+        """
+
+        self.max_response_time = 0.0
+
+    def clear_timeout_cnt(self):
+        """
+        clear timeout cnt
+        """
+
+        self.timeout_cnt = 0
+
+    def calc_max_response_time(self, v):
+        """
+        set max response time
+        """
+        
+        if self.max_response_time < v:
+            self.max_response_time = v
+        
+    def increase_timeout_cnt(self):
+        """
+        increase timeout cnt
+        """
+
+        self.timeout_cnt += 1
+
+    def get_max_response_time(self):
+        """
+        get max response time
+        """
+        
+        return self.max_response_time
+        
+    def get_timeout_cnt(self):
+        """
+        get timeout cnt
+        """
+
+        return self.timeout_cnt
 
     def create_httplib2_http(self):
         """
@@ -206,7 +268,12 @@ class AgentDataCenter:
             user_id = '***TERMINAL ERROR***'
             raise
 
-        b = {'client_id':self.get_client_id(), 'user_id':user_id, 'type:':0}
+        b = {'client_id':self.get_client_id(), 
+            'user_id':user_id, 
+            'type:':0, 
+            'max_rsp_time':round(self.get_max_response_time(), 3), 
+            'timeout_cnt':self.get_timeout_cnt()}
+
         return self.restful.request(
             self.jobs_api, body=json.dumps(b))
 
@@ -264,7 +331,7 @@ class AgentDataCenter:
         get dispatch time from config
         """
 
-        min_dt = 5.0
+        min_dt = 3.0
         dt = None
         try:
             dt = float(self.conf.get(SERVERJOB, 'DISPATCH_TIME'))
@@ -299,10 +366,17 @@ class AgentDataCenter:
 
         if cert:
             cn = cert.get_subject().CN
-            self.logger.debug('client_id=%s', cn)
+            self.logger.debug('extract_clientid_from_cert=%s', cn)
             return cn
         else:
             return None
+
+    def reload_server_domain(self):
+        """
+        reload server domain
+        """
+
+        self.server_domain = self.read_server_domain()
 
     def read_server_domain(self):
         """

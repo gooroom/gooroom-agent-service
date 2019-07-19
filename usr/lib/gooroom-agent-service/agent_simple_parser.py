@@ -85,7 +85,7 @@ class SimpleParser:
                 polltime = int(salt[T_POLLTIME])
 
                 infos.setdefault(polltime, []).append(
-                    {J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}})
+                    ({J_MOD:{J_MODN:mod_name, J_TASK:{J_TASKN:task_name, J_IN:{}}}}))
 
         return infos
 

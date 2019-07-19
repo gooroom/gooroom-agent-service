@@ -1,3 +1,72 @@
+gooroom-agent-service (0.2.3+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [de4ede52] added new arp-function again
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 29 Mar 2019 11:44:10 +0900
+
+gooroom-agent-service (0.2.2+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [4a0674d3] updated package-module. added serverjob noti-msg. modified systemd service file.
+  * [2ca02d07] moved prev-access-difftime to data-center. splited exception of client-sync/client-user-sync policy files.
+  * [87ee0161] refactoring
+  * [e9a62b08] adding sched-info task
+  * [33bdfdfd] added noti
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 22 Mar 2019 17:03:29 +0900
+
+gooroom-agent-service (0.2.1+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [92fd929e] Beginning fourth.
+  * [49027182] changed copyright to GPLv3
+  * [66ebdd2f] adding server-version
+  * [6487ac4b] modified homefolder-deletion logic
+  * [cdcebae8] added server-version
+  * [89de53c3] changed server-version naming rule
+  * [42eb86e4] added new log system
+  * [763fd826] added client-user-sync(policy)
+  * [71a9b9ea] modified homefoler. added new browser policy files.
+  * [3e95c651] fixed app-black-list
+  * [2c47222a] added homefolder operation cofigure
+  * [e10c1e23] added dpms-off-time-task
+  * [7bf4bc38] fixed screen-time, password-cycle
+  * [f614bea2] added log and journal configuration
+  * [9bf2a855] fixed log and journal settings
+  * [b8031226] changed task logic of grm_heartbit and update_operation
+  * [05370429] comment homefolder sync journal log
+  * [d325284e] disabled server time sync
+  * [67c1ec23] fixed mistyping in get-browser-config
+  * [45f8ac6e] added packagekit-tools in debian/control
+  * [c4599da4] fixed case of existed package installation by pkcon #2
+  * [5e0649a8] added connection status when ip is blocked by grm
+  * [61ffd7cd] edited profiling/homefolder logics
+  * [044b958f] changed client(user)-sync logic
+  * [3f244346] added eval_level to agent-log
+  * [fcf0f1c4] changed password-cycle grmcode of log
+  * [d738378d] added journald vacuum stdout/stderr
+  * [221d1e14] changed journald vacuum output message
+  * [7c315290] changed update_server mustok value to no in tmpl
+  * [a90865cd] added alert-release message to journal log
+  * [18264327] added user_id to security log
+  * [529bfb6a] added media/browser policy change log. turn on update_package_to_server.
+  * [c6a507fb] added re-connection on getting server-version
+  * [03e686af] fixed iptables log bug
+  * [018ba4b9] added to remove previous browser files. changed homefolder deletion span from 5m to 1m.
+  * [302222aa] added try-statement in log-diff
+  * [cbd50a08] fixed mistype from meida to media. remove print in config.py.
+  * [26e9f315] fixed client_sync logic
+  * [5c4d481a] added timeout exception in versioning. disabled homefolder operation.
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Wed, 16 Jan 2019 10:07:32 +0900
+
 gooroom-agent-service (0.1.2+grm1u1) unstable; urgency=medium
 
   [ hmkim ]

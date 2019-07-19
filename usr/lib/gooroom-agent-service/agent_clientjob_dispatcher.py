@@ -3,7 +3,6 @@
 #-----------------------------------------------------------------------
 import simplejson as json
 import threading
-import time
 import copy
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc
@@ -27,9 +26,6 @@ class AgentClientJobDispatcher(threading.Thread):
         #DATA CENTER
         self.data_center = data_center
 
-        #THREAD ESCAPE FLAG
-        self._turn_on = True
-
         #THREAD EVENT
         #시스템 시간을 변경했을 때 문제가 있어서 교체
         self._collect_event = threading.Event()
@@ -38,7 +34,7 @@ class AgentClientJobDispatcher(threading.Thread):
         #WORKER MANAGER
         self._job_manager = AgentJobManager(CLIENTJOB, self.data_center)
 
-        #SPECIAL WORKER FOR DBUS AND BOOTABLE
+        #SPECIAL WORKER FOR DBUS
         self._special_worker = AgentJobWorker(CLIENTJOB, self.data_center)
 
     def dbus_do_task(self, task):
@@ -48,73 +44,16 @@ class AgentClientJobDispatcher(threading.Thread):
 
         return self._special_worker.do_clientjob(task)
 
-    def timing(self, tm):
-        """
-        when init-step is failed it defines waiting time for retrying
-        """
-
-        i = 0
-        while self._turn_on:
-            yield i % tm == 0
-            i += 1
-            time.sleep(1)
-
-    def init_agent(self):
-        """
-        init agent
-        """
-        
-        try:
-            INIT_RETRY_TIME = int(self.conf.get('MAIN', 'INIT_RETRY_TIME'))
-
-            ting = self.timing(INIT_RETRY_TIME)
-
-            for task_info in self.data_center.bootable_tasks:
-                task, mustok = task_info
-                ting = self.timing(INIT_RETRY_TIME)
-                sent_journal = False
-
-                while True:
-                    if next(ting):
-                        result = self._special_worker.do_clientjob(copy.deepcopy(task))
-
-                        if result[J_MOD][J_TASK][J_OUT][J_STATUS] != AGENT_OK:
-                            task_name = result[J_MOD][J_TASK][J_TASKN]
-
-                            if not sent_journal:
-                                self.data_center.journal_logger.error('%s:%s' % 
-                                    (task_name, result[J_MOD][J_TASK][J_OUT][J_MESSAGE]))
-                                sent_journal = True
-
-                            if mustok == 'no':
-                                break
-
-                            self.logger.error('RETRY after %dsecs in INIT-TASK(%s)' 
-                                % (INIT_RETRY_TIME, task_name))
-                        else:
-                            break
-
-        except StopIteration:
-            pass
-        except:
-            self.logger.error('%s' % agent_format_exc())
-            
-        self.data_center.serverjob_looping_on[0] = True
-
     def run(self):
         """
         main loop   
         """
 
-        self.logger.debug('(client) dispatcher run')
-
-        ###############################################################
-        self.init_agent()
-        ###############################################################
+        self.logger.debug('(clientjob) dispatcher run')
 
         intervals = 0
 
-        while self._turn_on:
+        while self.data_center.clientjob_dispatcher_thread_on:
             if self.data_center.clientjob_looping_on[0]:
                 try:
                     intervals += 1
@@ -127,6 +66,9 @@ class AgentClientJobDispatcher(threading.Thread):
                             for task in self.data_center.clientjob_book[polltime]:
                                 self._job_manager.put_job(copy.deepcopy(task))
 
+                    if intervals % 60 is 0:
+                        self.data_center.clear_max_response_time()
+                        self.data_center.clear_timeout_cnt()
                 except:
                     self.logger.error('%s' % agent_format_exc())
 
@@ -143,7 +85,7 @@ class AgentClientJobDispatcher(threading.Thread):
         thread down
         """
 
-        self._turn_on = False
+        self.data_center.clientjob_dispatcher_thread_on = False
         self._collect_event.set()
         self.join()
 

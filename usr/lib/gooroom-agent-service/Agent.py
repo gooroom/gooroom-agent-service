@@ -5,16 +5,15 @@ import simplejson as json
 import dbus.service
 import dbus
 import sys
-import os
 
-from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 
-from agent_define import AGENT_OK,AGENT_NOK,J_MOD,J_MODN,J_TASK,J_TASKN
-from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_clientjob_dispatcher import AgentClientJobDispatcher
 from agent_serverjob_dispatcher import AgentServerJobDispatcher
+from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_data_center import AgentDataCenter
+from agent_define import *
 
 #-----------------------------------------------------------------------
 #for decorator parameter
@@ -47,9 +46,6 @@ class Agent(dbus.service.Object):
 
         self.logger.info('AGENT CREATED')
 
-    def __del__(self):
-        self.logger.debug('AGENT DESTROYED')
-
     def run(self):
         """
         AGENT's main loop
@@ -57,6 +53,7 @@ class Agent(dbus.service.Object):
 
         self.logger.info('AGENT RUNNING')
 
+        #DATA CENTER
         self.data_center = AgentDataCenter(self)
         
         #CLIENT-JOB DISPATCHER
@@ -67,6 +64,7 @@ class Agent(dbus.service.Object):
         self.server_dispatcher = AgentServerJobDispatcher(self.data_center)
         self.server_dispatcher.start()
 
+        #LOOPING ON
         self._loop.run()
 
         self.logger.info('AGENT QUIT')
@@ -110,27 +108,29 @@ class Agent(dbus.service.Object):
     @dbus.service.method(DBUS_IFACE, sender_keyword='sender', in_signature='v', out_signature='v')
     def do_task(self, args, sender=None):
         """
-        app, daemon 등에서 전송한 client job을 수행
-
-        self.get_sender_pid(sender)
+        외부에서 dbus를 통해 전송된 client job을 수행
         """
         
         try:
             self.logger.info('DBUS CLIENTJOB -> %s' % args)
             task = json.loads(args)
 
+            #설정파일에 기재된 화이트리스트를 확인
+            #절대경로로 전송자를 인증
             '''
             if not self.watch_process(sender):
                 task['WARNNING'] = 'You are an unauthenticated process.'
-                self.logger.error('!!!!!!!!!! UNAUTHENTICATED ACCESS !!!!!!!!!!')
+                self.logger.error('!! UNAUTHENTICATED ACCESS !!')
                 return json.dumps(task)
             '''
 
+            #템플릿에서 dbus 허용이 되어있는 태스크만 허용
             if not self.watch_task(task):
                 task['WARNNING'] = 'You are an unauthorized process.'
-                self.logger.error('!!!!!!!!!! UNAUTHORIZED ACCESS !!!!!!!!!!')
+                self.logger.error('!! UNAUTHORIZED ACCESS !!')
                 return json.dumps(task)
                 
+            #이 태스크는 dbus에서 전송되었음을 worker에게 알림
             task['FROM'] = 'dbus'
 
             ret = json.dumps(self.client_dispatcher.dbus_do_task(task))
@@ -226,13 +226,13 @@ class Agent(dbus.service.Object):
 
         try:
             bus_object = dbus.SystemBus().get_object(
-                'org.freedesktop.DBus', '/org/freedesktop/DBus')#DBUS_NAME, DBUS_OBJ)
+                'org.freedesktop.DBus', '/org/freedesktop/DBus')
             bus_interface = dbus.Interface(
-                bus_object, dbus_interface='org.freedesktop.DBus')#DBUS_IFACE)
+                bus_object, dbus_interface='org.freedesktop.DBus')
             pid = bus_interface.GetConnectionUnixProcessID(sender)
 
         except:
-            AgentLog.get_logger().error('(do_task) %s' % agent_format_exc())
+            AgentLog.get_logger().error(agent_format_exc())
 
         return pid
 
@@ -249,7 +249,34 @@ class Agent(dbus.service.Object):
     def update_operation(self, tm):
         """
         send signal to user session 
-        so as to set dpms_on_ac_off and dpms_on_battery_off
+        so as to set update-operation
+        """
+
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def app_black_list(self, tm):
+        """
+        send signal to user session 
+        so as to set app-black-list
+        """
+
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def set_noti(self, noti):
+        """
+        send signal to user session 
+        so as to set noti
+        """
+
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def agent_msg(self, msg):
+        """
+        send signal to user session 
+        so as to send agent-msg
         """
 
         pass
@@ -276,7 +303,7 @@ if __name__ == '__main__':
         me.run()
 
     except:
-        AgentLog.get_logger().error('(main) %s' % agent_format_exc())
+        AgentLog.get_logger().error(agent_format_exc())
 
         if me:
             me.stop('')

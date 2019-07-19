@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="noti" version="1.0" xmlns="http://www.gooroom.kr/job">
+    <desc>
+    </desc>
+
+    <param name="module_name" type="string"/>
+
+    <!-- get_noti -->
+    <task name="get_noti" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <request id="null" seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="noti_info" type="string_json"/>
+        </response>
+
+        <out>
+            <param name="noti_info" type="string_json"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- set_noti -->
+    <task name="set_noti">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="noti_info" type="string_json"/>
+        </response>
+
+        <out>
+            <param name="noti_info" type="string_json"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- set_noti -->
+    <task name="set_multiple_login_msg">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+            <param name="msg" type="string"/>
+        </in>
+
+        <out>
+            <param name="noti_info" type="string_json"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+</module>
