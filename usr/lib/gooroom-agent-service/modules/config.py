@@ -55,6 +55,41 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_get_controlcenter_items(task, data_center):
+    """
+    get_controlcneter_items
+    """
+
+    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
+        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+        uid = pwd.getpwnam(login_id).pw_uid
+        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
+            login_id = ''
+    else:
+        login_id = catch_user_id()
+        if login_id == '-' or login_id[0] == '+':
+            login_id = ''
+
+    if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
+        from_gpms = True
+    else:
+        from_gpms = False
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+
+    server_rsp = data_center.module_request(task)
+    controlcenter_items = \
+        server_rsp[J_MOD][J_TASK][J_RESPONSE]['controlcenter_items']
+
+    if from_gpms:
+        data_center.GOOROOM_AGENT.app_black_list(controlcenter_items)
+        
+    task[J_MOD][J_TASK][J_OUT]['controlcenter_items'] = controlcenter_items
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def polkit_config(pk):
     """
     apply polkit config

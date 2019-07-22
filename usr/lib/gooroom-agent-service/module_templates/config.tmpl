@@ -434,8 +434,7 @@
         <request id='null' seq="null">
             <param name="login_id" type="string"/>
         </request>
-        <response>
-            <param name="black_list" type="string"/>
+        <response> <param name="black_list" type="string"/>
         </response>
         <out>
             <param name="black_list" type="string"/>
@@ -494,6 +493,27 @@
 
         <out>
             <param name="screen_time" type="int"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET CONTROLCENTER ITEMS -->
+    <task name="get_controlcenter_items" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string" optional="yes"/>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="controlcenter_items" type="string"/>
+        </response>
+        <out>
+            <param name="controlcenter_items" type="string"/>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>

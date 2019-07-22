@@ -281,6 +281,15 @@ class Agent(dbus.service.Object):
 
         pass
 
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def controlcenter_items(self, tm):
+        """
+        send signal to user session 
+        so as to set controlcenter-items
+        """
+
+        pass
+
 #-----------------------------------------------------------------------
 if __name__ == '__main__':
     """
