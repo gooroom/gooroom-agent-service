@@ -156,7 +156,7 @@ def task_upgrade_all(task, data_center):
 #-----------------------------------------------------------------------
 def task_profiling_packages(task, data_center):
     """
-    insert_all_packages_to_server
+    profiling packages
     """
 
     profile_no = copy.deepcopy(task[J_MOD][J_TASK][J_IN]['profile_no'])
@@ -206,14 +206,20 @@ def task_insert_all_packages_to_server(task, data_center):
     first_time = True
 
     pkg_list = read_all_pkgs_list_in_cache()
+    pkg_num = len(pkg_list)
+    total_cnt = 0
 
     for pkg in pkg_list:
+        total_cnt += 1
         if cnt >= MAX_PACKAGE_NUM:
             task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = tmp_list
             data_center.module_request(task, mustbedata=False)
 
             task[J_MOD][J_TASK][T_REQUEST] = {}
-            task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'next'
+            if total_cnt != pkg_num:
+                task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'next'
+            else:
+                task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'tail'
             cnt = 0
             tmp_list = []
             
@@ -222,6 +228,7 @@ def task_insert_all_packages_to_server(task, data_center):
 
     if len(tmp_list):
         task[J_MOD][J_TASK][J_REQUEST]['pkg_list'] = tmp_list
+        task[J_MOD][J_TASK][J_REQUEST][J_ID] = 'tail'
         data_center.module_request(task, mustbedata=False)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
