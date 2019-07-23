@@ -1,3 +1,21 @@
+gooroom-agent-service (0.2.4+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [64ff8ed3] added contents in /etc/apt/apt.conf.d
+  * [f295e6f4] added homefolder operation
+  * [283f78f4] added local account config and remote account privilege logic
+  * [21a32fa0] blocked serverjob notification msg
+  * [852ffaf1] added browser log task and journal log of config tasks.
+  * [8783a2c8] changed browser log logic
+  * [fe55690c] removed v1.0 logic. changed catch_user_id function.
+  * [42c1106a] added multiple login task
+  * [54ee996f] changed how to check online account by confirming the .grm-user file but gooroom-online-account in passwd.
+  * [348bc7b9] 1.4 Release
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 23 Jul 2019 18:25:30 +0900
+
 gooroom-agent-service (0.2.3+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
