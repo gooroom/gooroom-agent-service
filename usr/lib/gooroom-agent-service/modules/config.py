@@ -83,7 +83,7 @@ def task_get_controlcenter_items(task, data_center):
         server_rsp[J_MOD][J_TASK][J_RESPONSE]['controlcenter_items']
 
     if from_gpms:
-        data_center.GOOROOM_AGENT.app_black_list(controlcenter_items)
+        data_center.GOOROOM_AGENT.controlcenter_items(controlcenter_items)
         
     task[J_MOD][J_TASK][J_OUT]['controlcenter_items'] = controlcenter_items
 
@@ -123,9 +123,9 @@ def polkit_config(pk):
         with open(CONFIG_PATH+'/polkit.json', 'w') as f2:
             f2.write(json.dumps(pk))
 
-def task_get_polkit_config(task, data_center):
+def task_get_policykit_config(task, data_center):
     """
-    get polkit config
+    get policykit config
     """
 
     if 'login_id' in task[J_MOD][J_TASK][J_IN]:
@@ -1771,22 +1771,8 @@ def task_client_user_sync(task, data_center):
         AgentLog.get_logger().error(agent_format_exc())
 
     #POLKIT 
-    dummy = '''{
-        "polkit": {
-          "gooroom_agent": "yes",
-          "gooroom_register": "yes",
-          "gooroom_update": "yes",
-          "wire_wireless": "yes",
-          "network_config": "yes",
-          "printer": "yes",
-          "disk_mount": "yes",
-          "pkexec": "yes"
-        }
-    }'''
-
     try:
-        #pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
-        pk = json.loads(dummy)['polkit']
+        pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
         polkit_config(pk)
     except:
         AgentLog.get_logger().error(agent_format_exc())
