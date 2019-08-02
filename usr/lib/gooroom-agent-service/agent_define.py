@@ -194,3 +194,7 @@ INIT_VISA_STATUS='denied'
 VISA_STATUS_APPROVED='approved'
 VISA_STATUS_DENIED='denied'
 
+#polkit json file name
+POLKIT_JSON_FILE_NAME='polkit.json'
+
+

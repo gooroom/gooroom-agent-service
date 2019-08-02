@@ -90,10 +90,12 @@ def task_get_controlcenter_items(task, data_center):
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
-def polkit_config(pk):
+def polkit_config(file_contents):
     """
     apply polkit config
     """
+
+    pk = json.loads(file_contents)
 
     PKLA_PATH = '/etc/polkit-1/localauthority/90-mandatory.d/GPMS.pkla'
     PKLA_TMPL = '[{}]\n'\
@@ -120,7 +122,7 @@ def polkit_config(pk):
     if contents:
         with open(PKLA_PATH, 'w') as f:
             f.write(contents)
-        with open(CONFIG_PATH+'/polkit.json', 'w') as f2:
+        with open(CONFIG_PATH+'/'+POLKIT_JSON_FILE_NAME, 'w') as f2:
             f2.write(json.dumps(pk))
 
 def task_get_policykit_config(task, data_center):
@@ -141,8 +143,14 @@ def task_get_policykit_config(task, data_center):
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
     server_rsp = data_center.module_request(task)
-    pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
-    polkit_config(pk)
+
+    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
+    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+    signature = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+    verify_signature(signature, file_contents)
+    replace_file(file_name, file_contents, signature)
+
+    polkit_config(file_contents)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1106,14 +1114,12 @@ def task_set_authority_config(task, data_center):
             verify_signature(signature, file_contents)
 
             replace_file(file_name, file_contents, signature)
+
+            #POLKIT 
+            if file_name.endswith(POLKIT_JSON_FILE_NAME):
+                polkit_config(file_contents)
         except:
             AgentLog.get_logger().error(agent_format_exc())
-
-    try:
-        pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
-        polkit_config(pk)
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1737,6 +1743,11 @@ def task_client_user_sync(task, data_center):
 
                 replace_file(file_name, file_contents, signature)
                 JLOG(GRMCODE_CLIENT_USER_POLICY, *(file_name,))
+
+                #POLKIT 
+                if file_name.endswith(POLKIT_JSON_FILE_NAME):
+                    polkit_config(file_contents)
+
             except:
                 AgentLog.get_logger().error(agent_format_exc())
 
@@ -1767,13 +1778,6 @@ def task_client_user_sync(task, data_center):
                 os.chmod(ub, perm | EXEC)
         data_center.update_operation[0] = operation
         JLOG(GRMCODE_UPDATER, *(operation,))
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
-
-    #POLKIT 
-    try:
-        pk = server_rsp[J_MOD][J_TASK][J_RESPONSE]['polkit']
-        polkit_config(pk)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 

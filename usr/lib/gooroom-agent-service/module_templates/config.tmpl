@@ -19,6 +19,7 @@
             <enum value="/usr/share/gooroom/browser/policies/trust/managed/ui-policy.json"/>
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/ui-policy.json"/>
             <enum value="/usr/lib/gooroom-security-utils/log.conf"/>
+            <enum value="/etc/gooroom/agent/polkit.json"/>
         </restriction>
     </simpleType>
 
@@ -283,6 +284,7 @@
             <param name="login_id" type="string"/>
         </request>
         <response>
+            <param name="file_name" type="string"/>
             <param name="file_contents" type="string"/>
             <param name="signature" type="string"/>
         </response>
@@ -514,6 +516,28 @@
         </response>
         <out>
             <param name="controlcenter_items" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET POLICYKIT CONFIG -->
+    <task name="get_policykit_config">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="file_name" type="string"/>
+            <param name="file_contents" type="string"/>
+            <param name="signature" type="string"/>
+        </response>
+
+        <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
         </out>
