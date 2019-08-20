@@ -55,6 +55,45 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_get_account_config(task, data_center):
+    """
+    get_account_config
+    """
+
+    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+
+    #ROOT USE
+    if 'root_use' in response:
+        try:
+            if response['root_use'] == 'disallow':
+                what_shell = '/usr/sbin/nologin'
+            else:
+                what_shell = '/bin/bash'
+            res = shell_cmd([
+                '/usr/sbin/usermod',
+                '-s',
+                what_shell, 
+                'root'])
+            AgentLog.get_logger().info('RU::'+res)
+        except:
+            AgentLog.get_logger().error(agent_format_exc())
+            
+    #SUDO USE
+    if 'sudo_use' in response:
+        try:
+            if response['sudo_use'] == 'disallow':
+                cmd = '/usr/sbin/deluser'
+            else:
+                cmd = '/usr/sbin/adduser'
+            username = pwd.getpwuid(1000).pw_name
+            res = shell_cmd([cmd, username, 'sudo'])
+            AgentLog.get_logger().info('MS::'+res)
+        except:
+            AgentLog.get_logger().error(agent_format_exc())
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_get_controlcenter_items(task, data_center):
     """
     get_controlcneter_items
@@ -546,6 +585,17 @@ def task_set_serverjob_dispatch_time_config(task, data_center):
 
     data_center.reload_serverjob_dispatch_time()
 
+    update_polling_time_task = {"module":{
+                                    "module_name":"config", 
+                                    "task":{
+                                        "task_name":"update_polling_time", 
+                                        "request":{
+                                            "polling_time":dispatch_time
+                                        }
+                                    }
+                                }}
+    data_center.module_request(update_polling_time_task, mustbedata=False)
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -567,6 +617,17 @@ def task_get_serverjob_dispatch_time(task, data_center):
         config.write(f)
 
     data_center.reload_serverjob_dispatch_time()
+
+    update_polling_time_task = {"module":{
+                                    "module_name":"config", 
+                                    "task":{
+                                        "task_name":"update_polling_time", 
+                                        "request":{
+                                            "polling_time":dispatch_time
+                                        }
+                                    }
+                                }}
+    data_center.module_request(update_polling_time_task, mustbedata=False)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
