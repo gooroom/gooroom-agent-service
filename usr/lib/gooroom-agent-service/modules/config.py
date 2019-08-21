@@ -55,17 +55,15 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
-def task_get_account_config(task, data_center):
+def account_config(response):
     """
-    get_account_config
+    enable/disable root/sudo account
     """
-
-    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
 
     #ROOT USE
     if 'root_use' in response:
         try:
-            if response['root_use'] == 'disallow':
+            if response['root_use'] == 'false':
                 what_shell = '/usr/sbin/nologin'
             else:
                 what_shell = '/bin/bash'
@@ -81,7 +79,7 @@ def task_get_account_config(task, data_center):
     #SUDO USE
     if 'sudo_use' in response:
         try:
-            if response['sudo_use'] == 'disallow':
+            if response['sudo_use'] == 'false':
                 cmd = '/usr/sbin/deluser'
             else:
                 cmd = '/usr/sbin/adduser'
@@ -90,6 +88,19 @@ def task_get_account_config(task, data_center):
             AgentLog.get_logger().info('MS::'+res)
         except:
             AgentLog.get_logger().error(agent_format_exc())
+
+
+def task_get_account_config(task, data_center):
+    """
+    get_account_config
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+    account_config(response)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
@@ -1399,213 +1410,6 @@ def chown_file(fname, fuser=None, fgroup=None):
         shutil.chown(fname, user=fuser, group=fgroup)
 
 #-----------------------------------------------------------------------
-def apply_local_account_config(server_rsp, data_center):
-    """
-    apply get-local-account-config
-    """
-
-    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
-
-    #ROOT USE
-    if 'root_use' in response:
-        try:
-            if response['root_use'] == 'disable':
-                what_shell = '/usr/sbin/nologin'
-            else:
-                what_shell = '/bin/bash'
-            res = shell_cmd([
-                '/usr/sbin/usermod',
-                '-s',
-                what_shell, 
-                'root'])
-            AgentLog.get_logger().info('RU::'+res)
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-            
-    #MAKING SUDOER
-    if 'making_sudoer' in response:
-        try:
-            ms = response['making_sudoer']
-            user_id = ms['user_id']
-            salt = ms['salt']
-            hash_v = ms['hash']
-            #assume algorithm  is sha512
-            algo = ms['algo']
-
-            #check if gpms account exists in local
-            users = shell_cmd(['/usr/bin/getent', 'passwd']).split('\n')
-            status = 'make'
-            for user in users:
-                if not user:
-                    continue
-                user_info = user.split(':')
-                user_id = user_info[0]
-                uid = int(user_info[2])
-                if user_id == user:
-                    if uid == 800:
-                        status = 'make'
-                    else:
-                        status = 'already'
-                    break
-                elif uid == 800:
-                    status = 'remake'
-                    break
-
-            if status == 'already':
-                raise Exception('userid({}) is one of local users')
-                
-            if status == 'remake':
-                res = shell_cmd(['/usr/sbin/deluser', user_id])
-                AgentLog.get_logger().info('MS::'+res)
-
-            #create user
-            if status == 'make' or status == 'remake':
-                res = shell_cmd([
-                    '/usr/sbin/adduser', 
-                    '--disabled-password',
-                    '--gecos',
-                    '""',
-                    '-u',
-                    '800',
-                    user_id])
-                AgentLog.get_logger().info('MS::'+res)
-
-                res = shell_cmd(['/usr/sbin/adduser', user_id, 'sudo'])
-                AgentLog.get_logger().info('MS::'+res)
-
-            #change password
-            with open('/etc/shadow', 'r') as f:
-                shadows = f.read()
-            AGENT_OWN_DIR = \
-                AgentConfig.get_config().get('MAIN', 'AGENT_OWN_DIR')
-            with open(AGENT_OWN_DIR+'/shadow.new', 'w') as f:
-                for shadow in shadows:
-                    splited = shadow.split(':')
-                    if splited[0] == user_id:
-                        #algo is assumed to be sha512 and is ignored
-                        splited[1] = '$6${}${}'.format(salt, hash_v)
-                        f.write('{}\n'.format(':'.join(splited)))
-                    else:
-                        f.write('{}\n'.fomat(shadow))
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-            
-    #LOCAL SUDOER USE
-    if 'local_sudoer_use' in response:
-        try:
-            res = shell_cmd(['/usr/bin/getent', 'group', 'sudo'])
-            AgentLog.get_logger().info('LS::'+res)
-            sudoers = res.split(':')[-1].split(',')
-
-            if response['local_sudoer_use'] == 'disable':
-                what_shell = '/usr/bin/nologin'
-            else:
-                what_shell = '/bin/bash'
-
-            users = shell_cmd(['/usr/bin/getent', 'passwd']).split('\n')
-            for user in users:
-                if not user:
-                    continue
-                user_info = user.split(':')
-                if len(user_info) < 3:
-                    continue
-                uid = int(user_info[2])
-                if uid < 1000: #skip gpms and system account
-                    continue
-                user_id = user_info[0]
-                if not user_id in sudoers:
-                    continue
-                res = shell_cmd(
-                    ['/usr/sbin/usermod', '-s', what_shell, user_id])
-                AgentLog.get_logger().info('LS::'+res)
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-
-    #LOCAL ACCOUNT USE
-    if 'local_account_use' in response:
-        try:
-            res = shell_cmd(['/usr/bin/getent', 'group', 'sudo'])
-            AgentLog.get_logger().info('LA::'+res)
-            sudoers = res.split(':')[-1].split(',')
-
-            if response['local_account_use'] == 'disable':
-                what_shell = '/usr/bin/nologin'
-            else:
-                what_shell = '/bin/bash'
-
-            users = shell_cmd(['/usr/bin/getent', 'passwd']).split('\n')
-            for user in users:
-                if not user:
-                    continue
-                user_info = user.split(':')
-                if len(user_info) < 3:
-                    continue
-                uid = int(user_info[2])
-                if uid < 1000: #skip gpms and system account
-                    continue
-                user_id = user_info[0]
-                if user_id in sudoers:
-                    continue
-                res = shell_cmd(
-                    ['/usr/sbin/usermod', '-s', what_shell, user_id])
-                AgentLog.get_logger().info('LA::'+res)
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-
-#-----------------------------------------------------------------------
-def apply_remote_account_privilege(server_rsp, data_center):
-    """
-    apply get-remote-account-privilege
-    """
-
-    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
-
-    if 'network_privilege' in response:
-        try:
-            if response['network_privilege'] == 'disable':
-                text = 'auth_admin'
-            else:
-                text = 'yes'
-            np_path = \
-                '/usr/share/polkit-1/actions/org.freedesktop.NetworkManager.policy'
-            if os.path.exists(np_path):
-                tree = etree.parse(np_path).getroot()
-                policyconfig = tree.getroot()
-
-                for action in policyconfig.findall('action'):
-                    if action.attrib['id'] == \
-                        'org.freedesktop.NetworkManager.network-control':
-                        action.find('defaults').find('allow_inactive').text = text
-                        action.find('defaults').find('allow_active').text = text
-
-                tree.write(np_path, encoding="UTF-8",xml_declaration=True)
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-
-    if 'update_privilege' in response:
-        try:
-            if response['update_privilege'] == 'disable':
-                text = 'auth_admin'
-            else:
-                text = 'yes'
-            np_path = \
-                '/usr/share/polkit-1/actions/com.ubuntu.pkexec.synaptic.policy'
-            if os.path.exists(np_path):
-                tree = etree.parse(np_path).getroot()
-                policyconfig = tree.getroot()
-
-                for action in policyconfig.findall('action'):
-                    if action.attrib['id'] == \
-                        'com.ubuntu.pkexec.synaptic':
-                        action.find('defaults').find('allow_inactive').text = text
-                        action.find('defaults').find('allow_active').text = text
-
-                tree.write(np_path, encoding="UTF-8",xml_declaration=True)
-            pass
-        except:
-            AgentLog.get_logger().error(agent_format_exc())
-        
-#-----------------------------------------------------------------------
 def task_client_sync(task, data_center):
     """
     client sync
@@ -1751,18 +1555,12 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
-    #LOCAL ACCOUNT CONFIG
+    #ROOT/SUDO 
     try:
-        apply_local_account_config(server_rsp, data_center)
+        account_config(server_rsp[J_MOD][J_TASK][J_RESPONSE])
     except:
         AgentLog.get_logger().error(agent_format_exc())
-        
-    #REMOTE ACCOUNT PRIVILEGE
-    try:
-        apply_remote_account_privilege(server_rsp, data_center)
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
-        
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
