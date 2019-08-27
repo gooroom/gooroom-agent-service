@@ -55,6 +55,64 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_set_authority_config_local(task, data_center):
+    """
+    set authority config local
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+    polkit_admin = response['polkit_admin']
+    polkit_admin_config(polkit_admin)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def polkit_admin_config(polkit_admin):
+    """
+    set polkit admin
+    """
+
+    try:
+        pa_comment = '[Configuration]\nAdminIdentities=unix-{}:{}'
+        pa_path = '/etc/polkit-1/localauthority.conf.d/52-gpms.conf'
+        if polkit_admin == 'sudo':
+            with open(pa_path, 'w') as  f:
+                f.write(pa_comment.format('gorup', 'sudo'))
+        elif polkit_admin == 'user':
+            login_id = catch_user_id()
+            #local user
+            if login_id[0] == '+':
+                with open(pa_path, 'w') as  f:
+                    f.write(pa_comment.format('user', login_id[1:]))
+            #remote user, not login
+            else:
+                with open(pa_path, 'w') as  f:
+                    f.write(pa_comment.format('gorup', 'sudo'))
+        else:
+            raise Exception('invalid polkit-admin={}'.format(polkit_admin))
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+def task_get_polkit_admin_config(task, data_center):
+    """
+    get polkit admin config
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+    polkit_admin = response['polkit_admin']
+    account_config(polkit_admin)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def account_config(response):
     """
     enable/disable root/sudo account
@@ -74,7 +132,7 @@ def account_config(response):
                 'root'])
             AgentLog.get_logger().info('RU::'+res)
         except:
-            AgentLog.get_logger().error(agent_format_exc())
+            AgentLog.get_logger().warn(agent_format_exc())
             
     #SUDO USE
     if 'sudo_use' in response:
@@ -87,7 +145,7 @@ def account_config(response):
             res = shell_cmd([cmd, username, 'sudo'])
             AgentLog.get_logger().info('MS::'+res)
         except:
-            AgentLog.get_logger().error(agent_format_exc())
+            AgentLog.get_logger().warn(agent_format_exc())
 
 
 def task_get_account_config(task, data_center):
@@ -1192,6 +1250,13 @@ def task_set_authority_config(task, data_center):
                 polkit_config(file_contents)
         except:
             AgentLog.get_logger().error(agent_format_exc())
+
+    try:
+        response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+        polkit_admin = response['polkit_admin']
+        polkit_admin_config(polkit_admin)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 

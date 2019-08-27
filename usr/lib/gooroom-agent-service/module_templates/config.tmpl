@@ -572,6 +572,47 @@
         <request id='null' seq="null">
         </request>
         <response>
+            <param name="root_use" type="string"/>
+            <param name="sudo_use" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET POLKIT ADMIN CONFIG -->
+    <task name="get_polkit_admin_config">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="polkit_admin" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SET AUTHORITY CONFIG LOCAL-->
+    <task name="set_authority_config_local" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="polkit_admin" type="string"/>
         </response>
 
         <out>
