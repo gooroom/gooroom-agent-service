@@ -65,7 +65,7 @@ class AgentDataCenter:
                 self.clientjob_looping_on = [False]
 
             #SERVER DOMAIN
-            self.server_domain = self.read_server_domain()
+            self.server_domain = None #self.read_server_domain()
 
             #SERVERJOB DISPATCHER VARIABLES
             self.jobs_api = self.conf.get('REST_API', 'JOBS')

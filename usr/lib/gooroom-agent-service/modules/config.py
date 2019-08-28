@@ -81,7 +81,7 @@ def polkit_admin_config(polkit_admin):
         pa_path = '/etc/polkit-1/localauthority.conf.d/52-gpms.conf'
         if polkit_admin == 'sudo':
             with open(pa_path, 'w') as  f:
-                f.write(pa_comment.format('gorup', 'sudo'))
+                f.write(pa_comment.format('group', 'sudo'))
         elif polkit_admin == 'user':
             login_id = catch_user_id()
             #local user
@@ -91,7 +91,7 @@ def polkit_admin_config(polkit_admin):
             #remote user, not login
             else:
                 with open(pa_path, 'w') as  f:
-                    f.write(pa_comment.format('gorup', 'sudo'))
+                    f.write(pa_comment.format('group', 'sudo'))
         else:
             raise Exception('invalid polkit-admin={}'.format(polkit_admin))
     except:
