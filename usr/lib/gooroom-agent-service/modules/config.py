@@ -108,7 +108,7 @@ def task_get_polkit_admin_config(task, data_center):
     server_rsp = data_center.module_request(task)
     response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
     polkit_admin = response['polkit_admin']
-    account_config(polkit_admin)
+    polkit_admin_config(polkit_admin)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
