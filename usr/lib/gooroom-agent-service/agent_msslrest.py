@@ -133,8 +133,8 @@ class AgentMsslRest:
         shoot
         """
 
-        if not self.data_center:
-            self.data_center = self.data_center.read_server_domain()
+        if not self.data_center.server_domain:
+            self.data_center.server_domain = self.data_center.read_server_domain()
 
         agent_http = None
 
