@@ -1626,6 +1626,14 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
+    #POLKIT ADMIN CONFIG
+    try:
+        response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+        polkit_admin = response['polkit_admin']
+        polkit_admin_config(polkit_admin)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
