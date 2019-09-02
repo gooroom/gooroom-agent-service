@@ -128,10 +128,12 @@ def task_set_multiple_login_msg(task, data_center):
     if gpms_id != login_id:
         raise Exception('gpms-id({}) and login-id({}) is not equal'.format(
                                                                     gpms_id,
-                                                                    login_id))
+    '''                                                                login_id))
     msg = '{}:{}'.format(
         GRMCODE_NO_JOURNAL_DEFAULT, 
         task[J_MOD][J_TASK][J_IN]['msg'])
+    '''
+    msg = '다른 장치에서 접속을 시도했습니다'
 
     task[J_MOD][J_TASK].pop(J_IN)
 
