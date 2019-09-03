@@ -272,7 +272,8 @@ class AgentDataCenter:
             'user_id':user_id, 
             'type:':0, 
             'max_rsp_time':round(self.get_max_response_time(), 3), 
-            'timeout_cnt':self.get_timeout_cnt()}
+            'timeout_cnt':self.get_timeout_cnt(),
+            'polling_time':int(self.serverjob_dispatch_time)}
 
         return self.restful.request(
             self.jobs_api, body=json.dumps(b))

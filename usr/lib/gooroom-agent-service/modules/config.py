@@ -446,6 +446,17 @@ def task_set_serverjob_dispatch_time_config(task, data_center):
 
     data_center.reload_serverjob_dispatch_time()
 
+    update_polling_time_task = {"module":{
+                                    "module_name":"config", 
+                                    "task":{
+                                        "task_name":"update_polling_time", 
+                                        "request":{
+                                            "polling_time":dispatch_time
+                                        }
+                                    }
+                                }}
+    data_center.module_request(update_polling_time_task, mustbedata=False)
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -467,6 +478,17 @@ def task_get_serverjob_dispatch_time(task, data_center):
         config.write(f)
 
     data_center.reload_serverjob_dispatch_time()
+
+    update_polling_time_task = {"module":{
+                                    "module_name":"config", 
+                                    "task":{
+                                        "task_name":"update_polling_time", 
+                                        "request":{
+                                            "polling_time":dispatch_time
+                                        }
+                                    }
+                                }}
+    data_center.module_request(update_polling_time_task, mustbedata=False)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
