@@ -218,16 +218,10 @@ class AgentJobWorker(threading.Thread):
         task_rsp_list = []
         job_status = AGENT_OK
 
-        noti = 'JOBNO {}\n전송받았습니다'.format(job_no)
-        #send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti, job)
-        '''
-        self.data_center.GOOROOM_AGENT.agent_msg('{}:{}\n{}'.format(
-                                                GRMCODE_SERVERJOB_STATUS, 
-                                                NOTI_DEFAULT_NAME, 
-                                                noti))
-        '''
         m = '$(JOBNO {})\nreceived from server'.format(job_no)
         send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_RECEIVED)
+        #noti = 'JOBNO {}\n전송받았습니다'.format(job_no)
+        #self.data_center.GOOROOM_AGENT.agent_msg(noti)
 
         for task in job:
             taskname = task[J_MOD][J_TASK][J_TASKN]
@@ -236,29 +230,17 @@ class AgentJobWorker(threading.Thread):
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] == AGENT_OK:
                 if task[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
                     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = AGENT_DEFAULT_MESSAGE
-                noti = '{}:{}\n수행했습니다'.format(job_no,taskname)
-                #send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti, job)
-                '''
-                self.data_center.GOOROOM_AGENT.agent_msg('{}:{}\n{}'.format(
-                                                        GRMCODE_SERVERJOB_STATUS, 
-                                                        NOTI_DEFAULT_NAME, 
-                                                        noti))
-                '''
                 m = '$({}:{})processing ok'.format(job_no,taskname)
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_OK)
+                noti = '{}:{}\n수행했습니다'.format(job_no,taskname)
+                self.data_center.GOOROOM_AGENT.agent_msg(noti)
             else:
                 job_status = AGENT_NOK
-                noti = '{}:{}\n수행하지 못했습니다'.format(job_no,taskname)
-                #send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti, job)
-                '''
-                self.data_center.GOOROOM_AGENT.agent_msg('{}:{}\n{}'.format(
-                                                        GRMCODE_SERVERJOB_STATUS, 
-                                                        NOTI_DEFAULT_NAME, 
-                                                        noti))
-                '''
                 m = '$({}:{})processing nok:$({})'.format(
                     job_no, taskname, task[J_MOD][J_TASK][J_OUT][J_MESSAGE])
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_NOK)
+                noti = '{}:{}\n수행하지 못했습니다'.format(job_no,taskname)
+                self.data_center.GOOROOM_AGENT.agent_msg(noti)
                 break
                 
         server_rsp, status_code, err_msg = \
@@ -267,28 +249,16 @@ class AgentJobWorker(threading.Thread):
             'shoot', job_no, server_rsp, status_code, err_msg)
         if status_code == AGENT_OK:
             self.logger.info(m)
-            noti = 'JOBNO {}\n결과를 전송했습니다'.format(job_no)
-            #send_notification(NOTI_INFO, NOTI_DEFAULT_NAME, noti, job)
-            '''
-            self.data_center.GOOROOM_AGENT.agent_msg('{}:{}\n{}'.format(
-                                                    GRMCODE_SERVERJOB_STATUS, 
-                                                    NOTI_DEFAULT_NAME, 
-                                                    noti))
-            '''
             m = '$({})transmit ok'.format(job_no)
             send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_TRANS_OK)
+            #noti = 'JOBNO {}\n결과를 전송했습니다'.format(job_no)
+            #self.data_center.GOOROOM_AGENT.agent_msg(noti)
         else:
             self.logger.error(m)
-            noti = 'JOBNO {}\n결과를 전송하지 못했습니다'.format(job_no)
-            #send_notification(NOTI_ERR, NOTI_DEFAULT_NAME, noti, job)
-            '''
-            self.data_center.GOOROOM_AGENT.agent_msg('{}:{}\n{}'.format(
-                                                    GRMCODE_SERVERJOB_STATUS, 
-                                                    NOTI_DEFAULT_NAME, 
-                                                    noti))
-            '''
             m = '$({})transmit nok:$({})'.format(job_no, err_msg)
             send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_TRANS_NOK)
+            #noti = 'JOBNO {}\n결과를 전송하지 못했습니다'.format(job_no)
+            #self.data_center.GOOROOM_AGENT.agent_msg(noti)
 
     def run(self):
         """
