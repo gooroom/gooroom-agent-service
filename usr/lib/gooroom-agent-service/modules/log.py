@@ -217,6 +217,12 @@ def task_security_log(task, data_center):
     load security log on journal
     """
 
+    disk_usage = agentdir_usage()
+    if disk_usage >= 99:
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        AgentLog.get_logger().error('agent disk full')
+        return
+
     backup_path = AgentConfig.get_config().get('MAIN', 'AGENT_BACKUP_PATH')
     if backup_path[-1] != '/':
         backup_path += '/'
@@ -585,3 +591,36 @@ def homedir_size():
     except:
         logger.info(agent_format_exc())
         return -1, -1
+
+#-----------------------------------------------------------------------
+def agentdir_usage():
+    """
+    get agent directory usage
+    """
+    
+    try:
+        p = subprocess.Popen(
+            ['df', '-B1', '/var/tmp'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+        sout, serr = p.communicate()
+        if serr:
+            AgentLog.get_logger().info(serr)
+            return 0
+
+        sout = sout.decode('utf8')
+        infos = [l.split() for l in sout.split('\n')]
+
+        for info in infos: 
+            if len(info) < 6:
+                continue
+            usage = info[4].strip()[:-1]
+            if not usage.isdigit():
+                continue
+            return int(usage)
+        else:
+            return 0
+    except:
+        AgentLog.get_logger().info(agent_format_exc())
+        return 0
