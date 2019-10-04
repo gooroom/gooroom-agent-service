@@ -248,6 +248,7 @@ def _send_pkg(data_center, task):
             task, 
             mustbedata=False, 
             remove_request=False)
+        task[J_MOD][J_TASK][J_REQUEST][J_ID] += '-continue'
 
 def task_update_package_version_to_server(task, data_center):
     """
