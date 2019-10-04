@@ -130,7 +130,20 @@ def account_config(response):
                 '-s',
                 what_shell, 
                 'root'])
-            AgentLog.get_logger().info('RU::'+res)
+            AgentLog.get_logger().info('RU-first::'+res)
+        except:
+            AgentLog.get_logger().warn(agent_format_exc())
+
+        try:
+            if response['root_use'] == 'false':
+                pw_opt = '-l'
+            else:
+                pw_opt = '-u'
+            res = shell_cmd([
+                '/usr/bin/passwd',
+                pw_opt,
+                'root'])
+            AgentLog.get_logger().info('RU-second::'+res)
         except:
             AgentLog.get_logger().warn(agent_format_exc())
             
