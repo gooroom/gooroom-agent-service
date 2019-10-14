@@ -24,7 +24,7 @@ DBUS_IFACE = AgentConfig.get_config().get('MAIN', 'DBUS_IFACE')
 #-----------------------------------------------------------------------
 class Agent(dbus.service.Object):
     """
-    |AGENT|
+    |AGENT.|
     """
 
     def __init__(self):
