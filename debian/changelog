@@ -1,3 +1,18 @@
+gooroom-agent-service (0.2.5+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [0bff165a] added polling_time
+  * [d4c59feb] moved read-server-domain to msslrest
+  * [2b4a39e0] removed local/remote account setting for 4local
+  * [11ba9a82] added checking agent disk usage in security log
+  * [e2e6580a] fixed the bug that package numbers is mismatched in gpms
+  * [f247938a] changed copyright email address
+  * [05fc0bd3] changed Source of copyright
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 05 Nov 2019 18:41:36 +0900
+
 gooroom-agent-service (0.2.4+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
