@@ -6,9 +6,8 @@ import base64
 import pwd
 import os
 
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA256
+from OpenSSL import crypto
+import OpenSSL
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_define import *
@@ -57,13 +56,10 @@ def get_signing_and_session_id(client_id, login_id):
 
     key_path = AgentConfig.get_config().get('MAIN', 'AGENT_KEY')
     with open(key_path) as f:
-        private_key = RSA.importKey(f.read())
+        private_key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read(), None)
 
-    signer = PKCS1_v1_5.new(private_key)
-    digest = SHA256.new()
     msg = '{}&{}'.format(client_id, session_id)
-    digest.update(msg.encode('utf8'))
-    signing = base64.b64encode(signer.sign(digest)).decode('utf8')
+    signing = base64.b64encode(OpenSSL.crypto.sign(private_key, msg, 'sha256'))
 
     return signing, session_id
 
