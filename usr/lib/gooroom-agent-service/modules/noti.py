@@ -48,8 +48,7 @@ def get_signing_and_session_id(client_id, login_id):
 
     session_id = ''
     if login_id:
-        uid = pwd.getpwnam(login_id).pw_uid
-        grm_user_path = '/var/run/user/{}/gooroom/.grm-user'.format(uid)
+        grm_user_path = '/home/{}/.gooroom/.grm-user'.format(login_id)
         with open(grm_user_path) as f:
             gu = json.loads(f.read())
             session_id = gu['data']['loginInfo']['login_token']
@@ -68,9 +67,8 @@ def task_get_noti(task, data_center):
     get noti
     """
 
-    login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-    uid = pwd.getpwnam(login_id).pw_uid
-    if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
         login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)

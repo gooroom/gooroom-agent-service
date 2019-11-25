@@ -213,9 +213,8 @@ def catch_user_id():
                         active_yes = True
 
                 if service_lightdm and state_active and active_yes:
-                    remote_user_file = \
-                        '/var/run/user/{}/gooroom/.grm-user'.format(uid)
-                    if os.path.exists(remote_user_file):
+                    gecos = getpwnam(user).pw_gecos.split(',')
+                    if len(gecos) >= 5 and gecos[4] == 'gooroom-account':
                         return user
                     else:
                         return '+{}'.format(user)

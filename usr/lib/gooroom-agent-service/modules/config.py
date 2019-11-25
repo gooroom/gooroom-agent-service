@@ -181,15 +181,9 @@ def task_get_controlcenter_items(task, data_center):
     get_controlcneter_items
     """
 
-    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
-        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        uid = pwd.getpwnam(login_id).pw_uid
-        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
-            login_id = ''
-    else:
-        login_id = catch_user_id()
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
         from_gpms = True
@@ -251,15 +245,9 @@ def task_get_policykit_config(task, data_center):
     get policykit config
     """
 
-    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
-        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        uid = pwd.getpwnam(login_id).pw_uid
-        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
-            login_id = ''
-    else:
-        login_id = catch_user_id()
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -281,15 +269,9 @@ def task_dpms_off_time(task, data_center):
     dpms off time
     """
 
-    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
-        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        uid = pwd.getpwnam(login_id).pw_uid
-        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
-            login_id = ''
-    else:
-        login_id = catch_user_id()
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
@@ -469,15 +451,9 @@ def task_get_app_list(task, data_center):
     get_app_list
     """
 
-    if 'login_id' in task[J_MOD][J_TASK][J_IN]:
-        login_id = task[J_MOD][J_TASK][J_IN]['login_id']
-        uid = pwd.getpwnam(login_id).pw_uid
-        if not os.path.exists('/var/run/user/{}/gooroom/.grm-user'.format(uid)):
-            login_id = ''
-    else:
-        login_id = catch_user_id()
-        if login_id == '-' or login_id[0] == '+':
-            login_id = ''
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
 
     if 'from_gpms' in task[J_MOD][J_TASK][J_IN]:
         from_gpms = True
@@ -842,7 +818,7 @@ def task_get_password_cycle(task, data_center):
 
     #online account
     if login_id[0] != '+':
-        spath = '/var/run/user/{}/gooroom/.grm-user'.format(pwd.getpwnam(login_id).pw_uid)
+        spath = '/home/{}/.gooroom/.grm-user'.format(login_id)
 
         with open(spath) as f:
             jsondata = json.loads(f.read().strip('\n'))
