@@ -220,27 +220,38 @@ class AgentJobWorker(threading.Thread):
 
         m = '$(JOBNO {})\nreceived from server'.format(job_no)
         send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_RECEIVED)
-        #noti = 'JOBNO {}\n전송받았습니다'.format(job_no)
-        #self.data_center.GOOROOM_AGENT.agent_msg(noti)
 
         for task in job:
-            taskname = task[J_MOD][J_TASK][J_TASKN]
+            job_process_msg = taskname = task[J_MOD][J_TASK][J_TASKN]
+            taskdesc = tasktype = None
+            if J_TASK_DESC in task[J_MOD][J_TASK]:
+                taskdesc = task[J_MOD][J_TASK][J_TASK_DESC]
+                if taskdesc:
+                    job_process_msg = taskdesc
+            if J_TASK_TYPE in task[J_MOD][J_TASK]:
+                tasktype = task[J_MOD][J_TASK][J_TASK_TYPE]
 
             task_rsp_list.append(self.do_task(task))
             if task[J_MOD][J_TASK][J_OUT][J_STATUS] == AGENT_OK:
                 if task[J_MOD][J_TASK][J_OUT][J_MESSAGE] == SKEEP_SERVER_REQUEST:
                     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = AGENT_DEFAULT_MESSAGE
+
                 m = '$({}:{})processing ok'.format(job_no,taskname)
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_OK)
-                noti = '{}:{}\n수행했습니다'.format(job_no,taskname)
-                self.data_center.GOOROOM_AGENT.agent_msg(noti)
+
+                if not tasktype or not 'invisable' in tasktype:
+                    ma = '{}:{}\n수행했습니다'.format(job_no,job_process_msg)
+                    self.data_center.GOOROOM_AGENT.agent_msg(ma)
             else:
                 job_status = AGENT_NOK
+
                 m = '$({}:{})processing nok:$({})'.format(
                     job_no, taskname, task[J_MOD][J_TASK][J_OUT][J_MESSAGE])
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_NOK)
-                noti = '{}:{}\n수행하지 못했습니다'.format(job_no,taskname)
-                self.data_center.GOOROOM_AGENT.agent_msg(noti)
+
+                if not tasktype or not 'invisable' in tasktype:
+                        ma = '{}:{}\n수행하지 못했습니다'.format(job_no,job_process_msg)
+                        self.data_center.GOOROOM_AGENT.agent_msg(ma)
                 break
                 
         server_rsp, status_code, err_msg = \
@@ -251,14 +262,10 @@ class AgentJobWorker(threading.Thread):
             self.logger.info(m)
             m = '$({})transmit ok'.format(job_no)
             send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_TRANS_OK)
-            #noti = 'JOBNO {}\n결과를 전송했습니다'.format(job_no)
-            #self.data_center.GOOROOM_AGENT.agent_msg(noti)
         else:
             self.logger.error(m)
             m = '$({})transmit nok:$({})'.format(job_no, err_msg)
             send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_TRANS_NOK)
-            #noti = 'JOBNO {}\n결과를 전송하지 못했습니다'.format(job_no)
-            #self.data_center.GOOROOM_AGENT.agent_msg(noti)
 
     def run(self):
         """

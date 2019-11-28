@@ -77,6 +77,9 @@ J_STATUS='status'
 J_OUTPUT='output'
 J_MESSAGE='message'
 
+J_TASK_DESC = 'task_desc'
+J_TASK_TYPE = 'task_type'
+
 #IN HEADER
 H_TOKEN='gooroom-client-token'
 H_AUTH='auth'
