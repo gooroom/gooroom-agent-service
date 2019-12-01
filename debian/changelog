@@ -1,3 +1,50 @@
+gooroom-agent-service (0.3.1+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [283f78f4] added local account config and remote account privilege logic
+  * [21a32fa0] blocked serverjob notification msg
+  * [852ffaf1] added browser log task and journal log of config tasks.
+  * [8783a2c8] changed browser log logic
+  * [fe55690c] removed v1.0 logic. changed catch_user_id function.
+  * [42c1106a] added multiple login task
+  * [54ee996f] changed how to check online account by confirming the .grm-user file but gooroom-online-account in passwd.
+  * [72b6fad4] added polkit task
+  * [f37457da] added get_controlcenter_items task
+  * [10f96626] added tail-id in insert_all_package_to_server.
+  * [46a2a8f6] changed polkit task name from get_polkit_config to get_policykit_confg.
+  * [ff441044] fixed polkit json file name. added grac-editor to polkit items.
+  * [543b6288] added polling_time in jobs restapi
+  * [60f47767] removed kr.gooroom.package-update in update polkit policy
+  * [01a5f411] added update_polling_time in set_serverjob_dispatch_time task. adding get_account_config task.
+  * [1c6ee71d] added get_account_config task
+  * [d3938054] added polkit admin config
+  * [f0d22bb7] moved the position getting server_domain. fixed mistyping in polkit_admin_config.
+  * [b1955a61] fixed mistyping in task_get_polkit_admin_config
+  * [95aa95fd] added polkit_admin_config in client_sync
+  * [21989836] fixed server_domain bug
+  * [0bd7cd93] changed comment of multiple login
+  * [931d1fa6] fixed mistyping bug in multiple login
+  * [177c3581] changed printer polkit actions
+  * [d4671a16] added agent-msg about server-jobs
+  * [fe12763e] added checking agent disk usage in security log
+  * [34cf1578] added passwd expiry control to root_use of get_account_config
+  * [b603e8a4] fixed the bug that package numbers is mismatched in gpms
+  * [bf7545e2] changed printer polkit action-id
+  * [b72e6448] updated codereview
+  * [d91d46ea] changed copyright email address
+  * [f0945a0e] changed Source of copyright
+  * [0030e7c5] changed the method of signing of noti
+  * [0d7473b6] changed how to check whether remote user or not to gecos
+  * [64fef38b] added task desc and task type
+  * [967ba272] changed copyright from GPL-3 to GPL-2.0
+
+  [ jongkyung.woo ]
+  * [a128318f] Updated copyright
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sun, 01 Dec 2019 16:20:44 +0900
+
 gooroom-agent-service (0.2.3+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
