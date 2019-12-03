@@ -8,6 +8,18 @@ Homepage: http://www.gooroom.kr
 
 Package: gooroom-agent-service
 Architecture: all
-Depends: python3-dbus, python3-openssl, python3-simplejson, python3-httplib2, python3-apt, python3-systemd, python3-psutil, python3-gnupg, packagekit-tools, python3-netifaces, python3-crypto, arp-scan
-Description: Gooroom Agent Service is a Daemon that communicates with Gooroom Platform Management Server and runs tasks to manage the client as set by the server.
- 
+Depends: python3-dbus,
+         python3-openssl,
+         python3-simplejson,
+         python3-httplib2,
+         python3-apt,
+         python3-systemd,
+         python3-psutil,
+         python3-gnupg,
+         packagekit-tools,
+         python3-netifaces,
+         python3-crypto,
+         arp-scan
+Description: Gooroom Agent Service
+ It is a Daemon that communicates with Gooroom Platform Management Server
+ and runs tasks to manage the client as set by the server.
