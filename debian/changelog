@@ -1,3 +1,13 @@
+gooroom-agent-service (0.2.6+grm1u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [a8a5ffab] changed copyright from GPL-3 to GPL-2.0
+  * [6d57bf1b] formatted debian/control
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 06 Dec 2019 17:17:57 +0900
+
 gooroom-agent-service (0.2.5+grm1u1) unstable; urgency=medium
 
   [ hmkim ]
