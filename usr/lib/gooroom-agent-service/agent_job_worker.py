@@ -16,7 +16,7 @@ from ctypes import util
 from socket import timeout as SOCKET_TIMEOUT
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc,JLOG
-from agent_util import send_notification,send_journallog
+from agent_util import send_journallog
 from agent_define import *
 
 #-----------------------------------------------------------------------

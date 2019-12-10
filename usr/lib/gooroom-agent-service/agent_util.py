@@ -291,36 +291,10 @@ def dpkg_configure_a():
     """
 
     pp = subprocess.Popen(
-        '/usr/bin/dpkg --configure -a',
+        ['/usr/bin/dpkg', '--configure', '-a'],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True)
+        stderr=subprocess.PIPE)
     pp.communicate()
-
-def debconf_set_selections(pkg):
-    """
-    debconf-set_selections
-    """
-
-    p0 = subprocess.Popen(
-        '/usr/bin/debconf-get-selections | grep {}'.format(pkg),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True)
-    agree_list = p0.communicate()[0].decode('utf8').split('\n')
-    if agree_list and len(agree_list) > 0:
-        for agree in agree_list:
-            items = [i.strip() for i in agree.split('\t')]
-            if items and len(items) == 4 and items[3] == 'false':
-                items[3] = 'true'
-                c = 'echo "{} {} {} {}" | /usr/bin/debconf-set-selections'.format(
-                        items[0], items[1], items[2], items[3]) 
-                pp = subprocess.Popen(
-                        c, 
-                        stdout=subprocess.PIPE, 
-                        stderr=subprocess.PIPE, 
-                        shell=True)
-                o, e = pp.communicate()
 
 def apt_exec(cmd, timeout, pkg, data_center):
     """
@@ -328,11 +302,13 @@ def apt_exec(cmd, timeout, pkg, data_center):
     """
     
     pp_result = ''
-    fullcmd = \
-        'DEBIAN_FRONTEND=noninteractive '\
-        'DEBIAN_PRIORITY=critical '\
-        '/usr/bin/apt-get -q -y -o '\
-        'Dpkg::Option::="--force-confnew" {} {}'.format(cmd, pkg)
+    fullcmd = [
+        'env',
+        'DEBIAN_FRONTEND=noninteractive',
+        'DEBIAN_PRIORITY=critical',
+        '/usr/bin/apt-get', '-q', '-y', '-o Dpkg::Option::="--force-confnew"', 
+        cmd, 
+        *pkg.strip().split()]
 
     for looping_cnt in range(timeout):
         if not data_center.serverjob_dispatcher_thread_on:
@@ -343,24 +319,13 @@ def apt_exec(cmd, timeout, pkg, data_center):
             pp = subprocess.Popen(
                 fullcmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True)
+                stderr=subprocess.PIPE)
 
             pp_out, pp_err = pp.communicate()
             pp_out = pp_out.decode('utf8')
             pp_err = pp_err.decode('utf8')
 
             if pp.returncode != 0:
-                '''
-                if cmd == 'install':
-                    debconf_set_selections(pkg)
-                else:
-                    pp_result = pp_err
-                    data_center.logger.error(pp_err)
-                    #print('ERROR#############################################')
-                    #print('pkgname={} errmsg={}'.format(pkg, pp_result))
-                    #print('##################################################')
-                '''
                 pp_result = pp_err
                 data_center.logger.error(pp_err)
             else:
@@ -450,33 +415,6 @@ def do_task(task):
     bus_interface = dbus.Interface(bus_object, dbus_interface=DBUS_IFACE)
     return bus_interface.do_debug(task)
 
-#-----------------------------------------------------------------------
-def send_notification(level, title, text, job):
-    """
-    notify-send
-    """
-
-    if len(job) > 0 and job[0][J_MOD][J_TASK][J_TASKN] == 'set_noti':
-        return
-
-    try: 
-        userid = catch_user_id()
-        if userid == '-':
-            return
-        elif userid[0] == '+':
-            userid = userid[1:]
-
-        cmd = '/bin/su "{}" -c "/usr/bin/notify-send -i {}'\
-            ' \'{}\' \'{}\'"'.format(userid, level, title, text)
-        pp = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                shell=True)
-        pp.communicate()
-    except:
-        print(agent_format_exc())
-        
 #-----------------------------------------------------------------------
 def shell_cmd(cmd_and_arg_list):
     """
