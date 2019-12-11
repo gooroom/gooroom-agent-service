@@ -239,7 +239,7 @@ class AgentJobWorker(threading.Thread):
                 m = '$({}:{})processing ok'.format(job_no,taskname)
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_OK)
 
-                if not tasktype or not 'invisable' in tasktype:
+                if not tasktype or not 'invisiable' in tasktype:
                     ma = '{}:{}\n수행했습니다'.format(job_no,job_process_msg)
                     self.data_center.GOOROOM_AGENT.agent_msg(ma)
             else:
@@ -249,7 +249,7 @@ class AgentJobWorker(threading.Thread):
                     job_no, taskname, task[J_MOD][J_TASK][J_OUT][J_MESSAGE])
                 send_journallog(m, JOURNAL_INFO, GRMCODE_JOB_PROC_NOK)
 
-                if not tasktype or not 'invisable' in tasktype:
+                if not tasktype or not 'invisiable' in tasktype:
                         ma = '{}:{}\n수행하지 못했습니다'.format(job_no,job_process_msg)
                         self.data_center.GOOROOM_AGENT.agent_msg(ma)
                 break
