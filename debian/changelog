@@ -1,3 +1,14 @@
+gooroom-agent-service (0.3.3+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [44a9f32e] removed shell argument of popen
+  * [ddc61d55] fixed mistyping
+  * [f772dc21] fixed mistyping of printer polkit actionid
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 11 Feb 2020 09:38:37 +0900
+
 gooroom-agent-service (0.3.2+grm2u1) unstable; urgency=medium
 
   * Initial Release
