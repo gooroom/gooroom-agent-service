@@ -117,12 +117,10 @@ class Agent(dbus.service.Object):
 
             #설정파일에 기재된 화이트리스트를 확인
             #절대경로로 전송자를 인증
-            '''
             if not self.watch_process(sender):
                 task['WARNNING'] = 'You are an unauthenticated process.'
                 self.logger.error('!! UNAUTHENTICATED ACCESS !!')
                 return json.dumps(task)
-            '''
 
             #템플릿에서 dbus 허용이 되어있는 태스크만 허용
             if not self.watch_task(task):
