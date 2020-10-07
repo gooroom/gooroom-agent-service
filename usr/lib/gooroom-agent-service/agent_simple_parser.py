@@ -5,8 +5,11 @@ import xml.etree.ElementTree as etree
 import simplejson as json
 import datetime
 import glob
+import os
 
+from agent_util import AgentConfig
 from agent_define import *
+from agent_lsf import *
 
 #-----------------------------------------------------------------------
 class SimpleParser:
@@ -32,6 +35,8 @@ class SimpleParser:
         load mododule templates
         """
         
+        lsf_on = lsf_interlock()
+
         tmpl_fullpath = '%s*.%s' % (self.mod_tmpl_path, T_EXT)
 
         #each module
@@ -46,6 +51,11 @@ class SimpleParser:
 
             #each task
             for t_task in t_tasks:
+                if T_LSF in t_task.attrib \
+                    and t_task.attrib[T_LSF].lower() == 'yes':
+                    if not lsf_on:
+                        continue
+
                 t_in = t_task.find(self.ns+T_IN)
                 t_out = t_task.find(self.ns+T_OUT)
 

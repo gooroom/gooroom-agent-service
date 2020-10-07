@@ -20,6 +20,7 @@
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/ui-policy.json"/>
             <enum value="/usr/lib/gooroom-security-utils/log.conf"/>
             <enum value="/etc/gooroom/agent/polkit.json"/>
+            <enum value="/var/tmp/lsf/private/whitelist.policy"/>
         </restriction>
     </simpleType>
 
@@ -618,6 +619,73 @@
         <out>
             <param name="status" type="string"/>
             <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- GET SECUREAPP CONFIG -->
+    <task name="get_secureapp_config" bootable="yes" mustok="no" priority="9" lsf="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+            <param name="require_key" type="string"/>
+        </request>
+        <response>
+            <param name="file_name" type="string"/>
+            <param name="file_contents" type="string"/>
+            <param name="signature" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- CLIENT EVENT USB WHITELIST -->
+    <task name="client_event_usb_whitelist" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="action" type="string"/>
+            <param name="datetime" type="string"/>
+            <param name="login_id" type="string"/>
+            <param name="usb_name" type="string"/>
+            <param name="usb_product" type="string"/>
+            <param name="usb_size" type="string"/>
+            <param name="usb_vendor" type="string"/>
+            <param name="usb_serial" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+            <param name="state" type="string"/>
+        </out>
+    </task>
+
+    <!-- SERVER EVENT USB WHITELIST -->
+    <task name="server_event_usb_whitelist">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="action" type="string"/>
+            <param name="datetime" type="string"/>
+            <param name="login_id" type="string"/>
+            <param name="usb_name" type="string"/>
+            <param name="usb_product" type="string"/>
+            <param name="usb_size" type="string"/>
+            <param name="usb_vendor" type="string"/>
+            <param name="usb_serial" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+            <param name="state" type="string"/>
         </out>
     </task>
 

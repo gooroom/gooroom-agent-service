@@ -45,6 +45,12 @@ class AgentDataCenter:
         #VISA STATUS
         self.visa_status = INIT_VISA_STATUS
 
+        #LSF SYMM KEY
+        self.lsf_symm_key = None
+
+        #LSF ACCESS TOKEN
+        self.lsf_access_token = None
+
         self.show(once=True)
 
     def show(self, once=False):

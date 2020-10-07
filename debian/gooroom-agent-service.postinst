@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+if [ ! -d "/var/log/gooroom-lsf" ]; then
+    /bin/mkdir /var/log/gooroom-lsf || true
+fi
+
+exit 0

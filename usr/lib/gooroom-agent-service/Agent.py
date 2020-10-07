@@ -14,6 +14,7 @@ from agent_serverjob_dispatcher import AgentServerJobDispatcher
 from agent_util import AgentLog,AgentConfig,agent_format_exc
 from agent_data_center import AgentDataCenter
 from agent_define import *
+from agent_lsf import *
 
 #-----------------------------------------------------------------------
 #for decorator parameter
@@ -113,7 +114,15 @@ class Agent(dbus.service.Object):
         
         try:
             self.logger.info('DBUS CLIENTJOB -> %s' % args)
+
             task = json.loads(args)
+
+
+            ############ LSF MESSAGE ###########
+            if 'seal' in task:
+                return self.lsf_processing(task)
+            ####################################
+
 
             #설정파일에 기재된 화이트리스트를 확인
             #절대경로로 전송자를 인증
@@ -141,6 +150,25 @@ class Agent(dbus.service.Object):
 
             return args
         
+    def lsf_processing(self, task):
+        """
+        process gooroom security framework message
+        """
+
+        try:
+            seal = task['seal']
+            if seal['glyph'] == LSF_GLYPH_AUTH:
+                r = lsf_auth(self.data_center)
+                if r != 0:
+                    raise Exception('FAIL TO AUTH')
+                return
+
+            letter = task['letter']
+            dec_m = lsf_dec_msg(self.data_center, letter)
+            print('decrypted message={}'.format(dec_m))
+        except:
+            self.logger.error(agent_format_exc())
+
     @dbus.service.method(DBUS_IFACE)
     def stop(self, args):
         """

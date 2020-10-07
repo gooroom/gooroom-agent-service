@@ -88,6 +88,42 @@
         </out>
     </task>
 
+    <task name="app_info" bootable="yes" mustok="no" priority="9" polltime="180" lsf="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
+    <task name="app_log" bootable="yes" mustok="no" priority="9" polltime="60" lsf="yes">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id="null" seq="null">
+        </request>
+        <response>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+
+        </out>
+    </task>
+
     <!--
     <task name="sched_info" bootable="yes" mustok="no" priority="9">
         <param name="task_name" type="string"/>

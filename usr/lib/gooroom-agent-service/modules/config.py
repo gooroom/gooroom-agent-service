@@ -13,6 +13,7 @@ import ctypes
 import gnupg
 import stat
 import glob
+import dbus
 import pwd
 import sys
 import os
@@ -24,7 +25,9 @@ import difflib
 from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_util import shell_cmd,JLOG
+from agent_modfunc import *
 from agent_define import *
+from agent_lsf import *
 
 #-----------------------------------------------------------------------
 def do_task(task, data_center):
@@ -53,6 +56,204 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_get_usb_whitelist_max(task, data_center):
+    """
+    get_usb_whitelist_max
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    wl_max = server_rsp[J_MOD][J_TASK][J_RESPONSE]['usb_whitelist_max']
+    path = AgentConfig.get_config().get('MAIN', 'USB_POLICY_PATH')
+    dir_path = '/'.join(path.split('/')[:-1])
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+
+    with open(path, 'w') as f:
+        f.write(wl_max)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def proc_usb_whitelist_state(*args):
+    """
+    processing usb whitelist state
+    """
+
+    state = args[2]
+    serial = args[0]
+
+    if state == 'registering-cancel' \
+        or state == 'unregister-approval' \
+        or state == 'register-deny-item-remove':
+
+        delete_usb_whitelist_state(serial)
+
+    elif state == 'register-approval' \
+        or state == 'register-approval-cancel' \
+        or state == 'register-deny' \
+        or state == 'unregister-deny' \
+        or state == 'registering' \
+        or state == 'unregistering':
+
+        if state == 'registering':
+            delete_usb_whitelist_state(serial)
+
+        update_usb_whitelist_state(*args)
+
+def task_server_event_usb_whitelist(task, data_center):
+    """
+    server event usb whitelist
+    """
+
+    DT = 'datetime'
+    UN = 'usb_name'
+    UP = 'usb_product'
+    USIZE = 'usb_size'
+    UV = 'usb_vendor'
+    USERIAL = 'usb_serial'
+    UM = 'usb_model'
+    SEQ = 'req_seq'
+
+    j_in = task[J_MOD][J_TASK][J_IN]
+    server_login_id = task[J_MOD][J_TASK][J_IN]['login_id']
+
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
+
+    if login_id == server_login_id:
+        action = j_in['action']
+        userial = j_in[USERIAL]
+        dt = j_in[DT] if DT in j_in and j_in[DT] else 'None'
+        un = j_in[UN] if UN in j_in and j_in[UN] else 'None'
+        up = j_in[UP] if UP in j_in and j_in[UP] else 'None'
+        usize = j_in[USIZE] if USIZE in j_in and j_in[USIZE] else 'None'
+        uv = j_in[UV] if UV in j_in and j_in[UV] else 'None'
+        um = j_in[UM] if UM in j_in and j_in[UM] else 'None'
+        seq = j_in[SEQ] if SEQ in j_in and j_in[SEQ] else 'None'
+
+        msg = usb_whitelist_signal_msg(action, userial, un)
+        data_center.GOOROOM_AGENT.agent_msg(msg)
+
+        proc_usb_whitelist_state(userial,
+                                    dt,
+                                    action,
+                                    un,
+                                    up,
+                                    usize,
+                                    uv,
+                                    um,
+                                    seq)
+
+        
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_client_event_usb_whitelist(task, data_center):
+    """
+    client event usb whitelist
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        raise Exception('INVALID LOGINID')
+
+    DT = 'datetime'
+    UN = 'usb_name'
+    UP = 'usb_product'
+    USIZE = 'usb_size'
+    UV = 'usb_vendor'
+    USERIAL = 'usb_serial'
+    UM = 'usb_model'
+    SEQ = 'req_seq'
+
+    j_in = task[J_MOD][J_TASK][J_IN]
+    #action is state
+    action = j_in['action']
+    userial = j_in[USERIAL]
+    dt = j_in[DT] if DT in j_in and j_in[DT] else 'None'
+    un = j_in[UN] if UN in j_in and j_in[UN] else 'None'
+    up = j_in[UP] if UP in j_in and j_in[UP] else 'None'
+    usize = j_in[USIZE] if USIZE in j_in and j_in[USIZE] else 'None'
+    uv = j_in[UV] if UV in j_in and j_in[UV] else 'None'
+    um = j_in[UM] if UM in j_in and j_in[UM] else 'None'
+    seq = j_in[SEQ] if SEQ in j_in and j_in[SEQ] else 'None'
+
+    task[J_MOD][J_TASK][J_REQUEST] = task[J_MOD][J_TASK][J_IN]
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST]['login_id'] = login_id
+
+    server_rsp = data_center.module_request(task)
+    if seq == 'None' and SEQ in server_rsp[J_MOD][J_TASK][J_RESPONSE]:
+        seq = server_rsp[J_MOD][J_TASK][J_RESPONSE][SEQ]
+    server_state = server_rsp[J_MOD][J_TASK][J_RESPONSE]['state']
+
+    #################### NEW ERROR PROCESSING ###################
+    if server_state == 'ERROR':
+        task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
+
+        if J_MESSAGE in server_rsp[J_MOD][J_TASK][J_RESPONSE]:
+            task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = \
+                server_rsp[J_MOD][J_TASK][J_RESPONSE][J_MESSAGE]
+        if 'errorcode' in server_rsp[J_MOD][J_TASK][J_RESPONSE]:
+            task[J_MOD][J_TASK][J_OUT]['errorcode'] = \
+                server_rsp[J_MOD][J_TASK][J_RESPONSE]['errorcode']
+        return
+    #############################################################
+
+    if server_state == 'registering-cancel' \
+        or server_state == 'register-deny-item-remove' \
+        or server_state == 'register-approval' \
+        or server_state == 'register-deny' \
+        or server_state == 'unregister-approval' \
+        or server_state == 'unregister-deny':
+
+        msg = usb_whitelist_signal_msg(server_state, userial, un)
+        data_center.GOOROOM_AGENT.agent_msg(msg)
+
+    proc_usb_whitelist_state(userial,
+                                dt,
+                                server_state,
+                                un,
+                                up,
+                                usize,
+                                uv,
+                                um,
+                                seq)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_get_secureapp_config(task, data_center):
+    """
+    get secureapp config
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    task[J_MOD][J_TASK][J_REQUEST] = {'require_key':"true"}
+    server_rsp = data_center.module_request(task)
+
+    file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
+    file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
+    signature = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
+    '''
+    verify_signature(signature, file_contents)
+    replace_file(file_name, file_contents, signature)
+    '''
+
+    create_lsf_public_info(data_center, file_contents)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_set_authority_config_local(task, data_center):
@@ -1143,6 +1344,12 @@ def task_get_media_config(task, data_center):
             {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}}
         getattr(m, 'task_daemon_reload')(tmp_task, data_center)
 
+        #USB REGISTER STATE
+        '''
+        if file_name == '/etc/gooroom/grac.d/user.rules':
+            write_usb_register_state(file_contents)
+        '''
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -1237,6 +1444,11 @@ def task_set_authority_config(task, data_center):
             #POLKIT 
             if file_name.endswith(POLKIT_JSON_FILE_NAME):
                 polkit_config(file_contents)
+
+            #USB REGISTER STATE
+            if file_name == '/etc/gooroom/grac.d/user.rules':
+                write_usb_register_state(file_contents)
+
         except:
             AgentLog.get_logger().error(agent_format_exc())
 
@@ -1464,6 +1676,78 @@ def chown_file(fname, fuser=None, fgroup=None):
         shutil.chown(fname, user=fuser, group=fgroup)
 
 #-----------------------------------------------------------------------
+def create_lsf_public_info(data_center, contents):
+    """
+    create light weight framework public infomation
+    """
+
+    c = json.loads(contents)
+    public_policy = {}
+    public_policy['policy'] = []
+    for policy in c['policy']:
+        dbus_name = policy['dbus_name']
+        if 'public_key' in policy:
+            public_key = policy['public_key']
+        else:
+            public_key = ''
+        abs_path = policy['abs_path']
+        settings = policy['settings']
+        public_policy['policy'].append({'dbus_name':dbus_name,
+                                        'public_key':public_key,
+                                        'abs_path':abs_path,
+                                        'settings':settings})
+        
+    lsf_public_info_dir = '/'.join(LSF_PUBLIC_INFO_PATH.split('/')[:-1])
+    if not os.path.isdir(lsf_public_info_dir):
+        os.makedirs(lsf_public_info_dir)
+    '''
+    with open(LSF_PUBLIC_INFO_PATH, 'w') as f:
+        f.write(json.dumps(public_policy))
+    '''
+
+    on_auth = True
+    if not data_center.lsf_symm_key \
+        or not data_center.lsf_access_token:
+        r = lsf_auth(data_center);
+        if r != 0:
+            on_auth = False
+
+    for p in public_policy['policy']:
+        try:
+            dname = p['dbus_name']
+            m = {}
+            shoot = False
+
+            if dname == 'kr.gooroom.ahnlab.v3':
+                m['seal'] = {'glyph':'~'}
+                m['letter'] = { 
+                    'from':'kr.gooroom.gclient',
+                    'to':dname,
+                    'function':'reload_policy', 
+                    'params':{}}
+                shoot = True
+
+            elif dname == 'kr.gooroom.ghub':
+                if on_auth:
+                    m = {}
+                    m['seal'] = {'glyph':'{}'.format(LSF_GLYPH_RELOAD)}
+                    m['letter'] = {} 
+                    shoot = True
+
+            if shoot:
+                dobj = '/' + dname.replace('.', '/') + '/LSFO'
+                diface = dname + '.LSFI'
+
+                sb = dbus.SystemBus()
+                bo = sb.get_object(dname, dobj)
+                bi = dbus.Interface(bo, dbus_interface=diface)
+
+                sm = json.dumps(m)
+                bi.do_task(sm)
+        except:
+            AgentLog.get_logger().error(agent_format_exc())
+
+#-----------------------------------------------------------------------
 def task_client_sync(task, data_center):
     """
     client sync
@@ -1567,6 +1851,7 @@ def task_client_sync(task, data_center):
                 #if verifying is failed, exception occur
                 verify_signature(s, c)
                 replace_file(n, c, s)
+
                 JLOG(GRMCODE_CLIENT_POLICY, *(n,))
             except:
                 AgentLog.get_logger().error(agent_format_exc())
@@ -1623,6 +1908,20 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
+    #USB WHITELIST MAX
+    try:
+        wl_max = server_rsp[J_MOD][J_TASK][J_RESPONSE]['usb_whitelist_max']
+        path = AgentConfig.get_config().get('MAIN', 'USB_POLICY_PATH')
+
+        dir_path = '/'.join(path.split('/')[:-1])
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
+
+        with open(path, 'w') as f:
+            f.write(wl_max)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
@@ -1668,6 +1967,12 @@ def task_client_user_sync(task, data_center):
                 #POLKIT 
                 if file_name.endswith(POLKIT_JSON_FILE_NAME):
                     polkit_config(file_contents)
+
+                #USB REGISTER STATE
+                '''
+                if file_name == '/etc/gooroom/grac.d/user.rules':
+                    write_usb_register_state(file_contents)
+                '''
 
             except:
                 AgentLog.get_logger().error(agent_format_exc())

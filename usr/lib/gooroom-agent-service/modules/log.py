@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 #-----------------------------------------------------------------------
+import simplejson as json
 import subprocess
 import importlib
 import netifaces
@@ -8,6 +9,7 @@ import ipaddress
 import datetime
 import socket
 import glob
+import dbus
 import sys
 import os
 
@@ -43,6 +45,169 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_app_info(task, data_center):
+    """
+    app_info
+    """
+
+    dname = 'kr.gooroom.ahnlab.v3'
+    dobj = '/' + dname.replace('.', '/') + '/LSFO'
+    diface = dname + '.LSFI'
+
+    sb = dbus.SystemBus()
+    bo = sb.get_object(dname, dobj)
+    bi = dbus.Interface(bo, dbus_interface=diface)
+
+    m = {}
+    m['seal'] = {'glyph':'~'}
+    m['letter'] = { 
+        'from':'kr.gooroom.gclient',
+        'to':dname,
+        'function':'get_stats', 
+        'params':{}}
+
+    sm = json.dumps(m)
+    app_resp_string = bi.do_task(sm)
+    app_resp = json.loads(app_resp_string)['letter']
+
+    if app_resp['return']['status'] == 'success':
+        v = app_resp['return']['values']
+
+        #diff response and saved info
+
+        task[J_MOD][J_TASK].pop(J_IN)
+        task[J_MOD][J_TASK][J_REQUEST] = {}
+        task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
+        task[J_MOD][J_TASK][J_REQUEST]['app_name'] = dname
+        task[J_MOD][J_TASK][J_REQUEST]['ip'] = v['ip']
+        task[J_MOD][J_TASK][J_REQUEST]['hostname'] = v['hostname']
+        task[J_MOD][J_TASK][J_REQUEST]['rt_inspect'] = v['rt_inspect']
+        task[J_MOD][J_TASK][J_REQUEST]['cur_engine_ver'] = v['cur_engine_ver']
+        data_center.module_request(task, mustbedata=False)
+    else:
+        AgentLog.get_logger().error(app_resp_string)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+    
+#-----------------------------------------------------------------------
+def proc_app_log(fname_prefix, seek_path, log_type, today, logs):
+    """
+    proc app log
+    """
+
+    try:
+        if os.path.exists(seek_path):
+            with open(seek_path, 'r') as f:
+                date_src, n = f.read().strip().split(':')
+                fday = datetime.datetime.strptime(date_src, '%Y-%m-%d')
+                fpos = int(n)
+        else:
+            fday = today
+            fpos = 0
+        diffdays = (today - fday).days + 1
+
+        if diffdays < 0:
+            #what happened?
+            diffdays = 1
+            fday = today
+            fpos = 0
+        
+        to_save_fday = None
+        to_save_fpos = None
+        logs_len = 0
+        esc = False
+        for d in range(diffdays): 
+            fname = '{}-{}-{:02d}-{:02d}.log'.format(
+                                                    fname_prefix,
+                                                    fday.year, 
+                                                    fday.month, 
+                                                    fday.day)
+
+            if not os.path.exists(fname):
+                fday = fday + datetime.timedelta(days=1)
+                fpos = 0
+                continue
+
+            with open(fname, 'r') as f:
+                f.seek(fpos)
+                for l in f.readlines():
+                    l_real_len = len(l.encode('utf8'))
+
+                    l = l.strip()
+                    if not l:
+                        continue
+
+                    logs.append('{},{}'.format(log_type, l))
+                    fpos += l_real_len
+                    logs_len += l_real_len
+                    to_save_fday = fday
+                    to_save_fpos = fpos
+                    if logs_len > LSF_MAX_APP_LOG_SIZE:
+                        esc = True
+                        break
+            if esc:
+                break
+
+            fday = fday + datetime.timedelta(days=1)
+            fpos = 0
+
+        seek_info = ''
+        if logs_len > 0:
+            seek_info = '{}:{}'.format(to_save_fday.strftime('%Y-%m-%d'), to_save_fpos)
+            
+        return logs_len, seek_info
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+        return 0, ''
+
+def task_app_log(task, data_center):
+    """
+    app_log
+    """
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+    APP_LOG_PATH = '/var/log/gooroom-lsf'
+    if not os.path.isdir(APP_LOG_PATH):
+        os.makedirs(APP_LOG_PATH)
+        return
+
+    AHNLAB_LOG_PATH = '/var/log/gooroom-lsf/kr.gooroom.ahnlab.v3'
+    if not os.path.exists(AHNLAB_LOG_PATH):
+        return
+
+    MSEEK_PATH = '/var/tmp/gooroom-agent-service/ahnlab_log_mal_seek'
+    ESEEK_PATH = '/var/tmp/gooroom-agent-service/ahnlab_log_event_seek'
+    today = datetime.datetime.now()
+    logs = []
+    mlen, mseekinfo = proc_app_log(AHNLAB_LOG_PATH+'/ahnlab-v3-malware',
+                        MSEEK_PATH,
+                        'malcode',
+                        today,
+                        logs)
+    elen, eseekinfo = proc_app_log(AHNLAB_LOG_PATH+'/ahnlab-v3-event',
+                        ESEEK_PATH,
+                        'update',
+                        today,
+                        logs)
+
+    if elen + mlen > 0:
+        task[J_MOD][J_TASK].pop(J_IN)
+        task[J_MOD][J_TASK][J_REQUEST] = {}
+        task[J_MOD][J_TASK][J_REQUEST]['user_id'] = catch_user_id()
+        task[J_MOD][J_TASK][J_REQUEST]['app_name'] = 'kr.gooroom.ahnlab.v3'
+        task[J_MOD][J_TASK][J_REQUEST]['logs'] = logs
+        data_center.module_request(task, mustbedata=False)
+
+        if mlen > 0:
+            with open(MSEEK_PATH, 'w') as mf:
+                mf.write(mseekinfo)
+
+        if elen > 0:
+            with open(ESEEK_PATH, 'w') as ef:
+                ef.write(eseekinfo)
 
 #-----------------------------------------------------------------------
 def pick_entrypoint_file():

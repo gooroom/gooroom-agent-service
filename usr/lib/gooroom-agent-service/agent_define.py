@@ -45,6 +45,7 @@ T_PRIORITY='priority'
 T_ID='id'
 T_DBUS='dbus'
 T_MUSTOK='mustok'
+T_LSF='lsf'
 
 #agent와 server가 송수신하는 job에 대한 json의 키값
 J_OB='job'
@@ -199,3 +200,22 @@ VISA_STATUS_DENIED='denied'
 
 #polkit json file name
 POLKIT_JSON_FILE_NAME='polkit.json'
+
+#lsf path info
+LSF_PUBLIC_INFO_PATH='/var/tmp/lsf/public/public_key.set'
+LSF_POLICY_PATH='/var/tmp/lsf/private/whitelist.policy'
+
+#lsf interlock 
+LSF_INTERLOCK_PATH='/etc/gooroom/lsf/lsf.conf'
+LSF_INTERLOCK_SECTION='MAIN'
+LSF_INTERLOCK_KEY='interlock'
+LSF_INTERLOCK_ON='on'
+LSF_PHRASE= '0p7pqDJ1pN2UvBtF42qS5e8rLHaA+X2hp3N+uf02d10='
+LSF_LIB_PATH= '/usr/lib/liblsf.so'
+
+#lsf glyph
+LSF_GLYPH_AUTH='?'
+LSF_GLYPH_RELOAD='O'
+
+#lsf log
+LSF_MAX_APP_LOG_SIZE=10240
