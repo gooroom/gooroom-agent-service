@@ -1858,7 +1858,14 @@ def task_client_sync(task, data_center):
 
         if must_refresh:
             #update cache
-            apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+            #apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
+            pass
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #EMERG
+    try:
+        apt_exec('update', PKCON_TIMEOUT_ONCE, '', data_center)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
