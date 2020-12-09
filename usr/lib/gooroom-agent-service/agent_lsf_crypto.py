@@ -297,17 +297,3 @@ def lsf_magic_crypto_usable(api):
 
     api.lsf_crypto_free(crypto_error)
 
-#-----------------------------------------------------------------------
-if __name__ == '__main__':
-
-    api = get_crypto_api()
-    enc_m = lsf_encrypt_RSA(api, 'MESSAGE:hmkim')
-    dec_m = lsf_decrypt_RSA(api, enc_m)
-    print('dec_m={}'.format(dec_m))
-
-    key = '12345678901234567890123456789012'
-    iv = '1234567890123456'
-    aria_enc_m = lsf_encrypt_ARIA(api, key, iv, 'SARABAL!')
-    aria_dec_m = lsf_decrypt_ARIA(api, key, iv, aria_enc_m)
-    print('aria_dec_m={}'.format(aria_dec_m))
-
