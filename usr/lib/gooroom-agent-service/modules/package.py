@@ -41,6 +41,7 @@ def task_svr_apt_update(task, data_center):
     """
 
     apt_exec('update', PKCON_TIMEOUT_DEFAULT, '', data_center)
+    apt_exec('--fix-broken', PKCON_TIMEOUT_DEFAULT, 'install', data_center)
 
 #-----------------------------------------------------------------------
 def task_profiling(task, data_center):

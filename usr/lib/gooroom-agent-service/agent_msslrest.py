@@ -170,13 +170,12 @@ class AgentMsslRest:
             kcmvp_on_off = parser.get('certificate', 'kcmvp_on_off').lower()
         except:
             kcmvp_on_off = 'off'
-            AgentLog.get_logger().error(agent_format_exc())
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
         t = datetime.datetime.now().timestamp()
         try:
-            #print('NORMAL body={}'.format(body))
+            #print('NORMAL headers={}\nbody={}'.format(headers, body))
             if kcmvp_on_off == 'on' \
                 and AgentMsslRest._crypto_api \
                 and body:
@@ -196,7 +195,7 @@ class AgentMsslRest:
                                                     body['enc_msg'])
                 body = json.dumps(body)
             
-            #print('ENC body={}'.format(body))
+            #print('ENC headers={}\nbody={}'.format(headers, body))
             rsp_headers, rsp_body = agent_http.request(
                 uri, method=method, headers=headers, body=body)
 
@@ -214,6 +213,10 @@ class AgentMsslRest:
                     rsp_body = lsf_decrypt_RSA(
                                             AgentMsslRest._crypto_api,
                                             rsp_body['enc_msg'])
+                    #print('***** headers={}'.format(rsp_headers))
+                    rsp_headers[H_TOKEN] = lsf_decrypt_RSA(
+                                            AgentMsslRest._crypto_api,
+                                            rsp_headers[H_TOKEN])
                 else:
                     #ARIA
                     rsp_body = lsf_decrypt_ARIA(
@@ -221,8 +224,7 @@ class AgentMsslRest:
                                             self.aria_key, 
                                             self.aria_iv, 
                                             rsp_body['enc_msg'])
-                #rsp_body = json.loads(rsp_body)
-                #print('(R)={}'.format(rsp_body))
+                #print('(R) headers={}\nbody={}'.format(rsp_headers, rsp_body))
 
         except SOCKET_TIMEOUT:
             self.data_center.increase_timeout_cnt()
