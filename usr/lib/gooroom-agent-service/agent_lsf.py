@@ -4,7 +4,7 @@
 import ctypes
 import os
 
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig, AgentLog, agent_format_exc
 from agent_define import *
 
 #-----------------------------------------------------------------------

@@ -21,6 +21,7 @@ import re
 
 from multiprocessing import Process
 import difflib
+import socket
 
 from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
@@ -56,6 +57,30 @@ def do_task(task, data_center):
         task[J_MOD][J_TASK].pop(J_RESPONSE)
 
     return task
+
+#-----------------------------------------------------------------------
+def task_svr_police_cmd(task, data_center):
+    """
+    svr_police_cmd
+    """
+
+    cmd_id = task[J_MOD][J_TASK][J_IN]['cmd_id']
+    if 'cmd_data' in task[J_MOD][J_TASK][J_IN]:
+        cmd_data = task[J_MOD][J_TASK][J_IN]['cmd_data']
+    else:
+        cmd_data = None
+    data_len = 1 if cmd_data else 0
+    packet = [0,0,0,int(cmd_id),0,0,0,data_len]
+    if data_len:
+        packet.append(int(cmd_data))
+    packet.extend([0x0D, 0x0A])
+
+    police_host = AgentConfig.get_config().get('EXTENSION', 'POLICE_CMD_HOST')
+    police_port = AgentConfig.get_config().get('EXTENSION', 'POLICE_CMD_PORT')
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sfd:
+        sfd.connect((police_host, int(police_port)))
+        sfd.sendall(bytes(packet))
 
 #-----------------------------------------------------------------------
 def task_get_usb_whitelist_max(task, data_center):
@@ -246,10 +271,8 @@ def task_get_secureapp_config(task, data_center):
     file_name = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name']
     file_contents = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_contents']
     signature = server_rsp[J_MOD][J_TASK][J_RESPONSE]['signature']
-    '''
     verify_signature(signature, file_contents)
     replace_file(file_name, file_contents, signature)
-    '''
 
     create_lsf_public_info(data_center, file_contents)
 
@@ -1700,14 +1723,14 @@ def create_lsf_public_info(data_center, contents):
     lsf_public_info_dir = '/'.join(LSF_PUBLIC_INFO_PATH.split('/')[:-1])
     if not os.path.isdir(lsf_public_info_dir):
         os.makedirs(lsf_public_info_dir)
-    '''
+
     with open(LSF_PUBLIC_INFO_PATH, 'w') as f:
         f.write(json.dumps(public_policy))
-    '''
 
     on_auth = True
     if not data_center.lsf_symm_key \
         or not data_center.lsf_access_token:
+
         r = lsf_auth(data_center);
         if r != 0:
             on_auth = False

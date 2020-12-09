@@ -7,7 +7,8 @@ import httplib2
 import datetime
 
 from socket import timeout as SOCKET_TIMEOUT
-from agent_util import AgentConfig, AgentLog
+from agent_util import AgentConfig, AgentLog,agent_format_exc
+from agent_lsf_crypto import *
 from agent_define import *
 from agent_error import *
 
@@ -19,12 +20,21 @@ class AgentMsslRest:
 
     _token = None
 
+    _crypto_api = None
+
     def __init__(self, data_center):
 
         self.conf = AgentConfig.get_config()
         self.logger = AgentLog.get_logger()
 
         self.data_center = data_center
+
+        try:
+            if not AgentMsslRest._crypto_api:
+                AgentMsslRest._crypto_api = get_crypto_api()
+        except:
+            AgentMsslRest._crypto_api = None
+            self.logger.error(agent_format_exc())
 
     def request(self, 
             rest_api, 
@@ -120,6 +130,10 @@ class AgentMsslRest:
             return False, agent_status_code, err_msg
 
         AgentMsslRest._token = rsp_headers[H_TOKEN]
+        if AgentMsslRest._crypto_api:
+            self.aria_key = AgentMsslRest._token[:32]
+            self.aria_iv = AgentMsslRest._token[-16:]
+
         self.logger.debug('new token=%s' % AgentMsslRest._token)
         return True, '200', None
 
@@ -151,12 +165,65 @@ class AgentMsslRest:
         parser.read('/etc/gooroom/gooroom-client-server-register/gcsr.conf')
         headers['agent_client_id'] = parser.get('certificate', 'client_name')
 
+        #KCMVP
+        try:
+            kcmvp_on_off = parser.get('certificate', 'kcmvp_on_off').lower()
+        except:
+            kcmvp_on_off = 'off'
+            AgentLog.get_logger().error(agent_format_exc())
+
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
         t = datetime.datetime.now().timestamp()
         try:
+            #print('NORMAL body={}'.format(body))
+            if kcmvp_on_off == 'on' \
+                and AgentMsslRest._crypto_api \
+                and body:
+                #ENCRYPT
+                body = {'enc_msg':body}
+                if rest_api == self.data_center.auth_api:
+                    #RSA
+                    body['enc_msg'] = lsf_encrypt_RSA(
+                                                    AgentMsslRest._crypto_api,
+                                                    body['enc_msg'])
+                else:
+                    #ARIA
+                    body['enc_msg'] = lsf_encrypt_ARIA(
+                                                    AgentMsslRest._crypto_api,
+                                                    self.aria_key, 
+                                                    self.aria_iv, 
+                                                    body['enc_msg'])
+                body = json.dumps(body)
+            
+            #print('ENC body={}'.format(body))
             rsp_headers, rsp_body = agent_http.request(
                 uri, method=method, headers=headers, body=body)
+
+            if rsp_headers['status'] == '200' \
+                and kcmvp_on_off == 'on' \
+                and AgentMsslRest._crypto_api \
+                and rsp_body:
+
+                rsp_body = json.loads(rsp_body)
+                #print('RSP={}'.format(rsp_body))
+
+                #DECRYPT
+                if rest_api == self.data_center.auth_api:
+                    #RSA
+                    rsp_body = lsf_decrypt_RSA(
+                                            AgentMsslRest._crypto_api,
+                                            rsp_body['enc_msg'])
+                else:
+                    #ARIA
+                    rsp_body = lsf_decrypt_ARIA(
+                                            AgentMsslRest._crypto_api,
+                                            self.aria_key, 
+                                            self.aria_iv, 
+                                            rsp_body['enc_msg'])
+                #rsp_body = json.loads(rsp_body)
+                #print('(R)={}'.format(rsp_body))
+
         except SOCKET_TIMEOUT:
             self.data_center.increase_timeout_cnt()
             raise
