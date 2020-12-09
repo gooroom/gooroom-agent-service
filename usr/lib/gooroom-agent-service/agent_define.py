@@ -211,7 +211,7 @@ LSF_INTERLOCK_SECTION='MAIN'
 LSF_INTERLOCK_KEY='interlock'
 LSF_INTERLOCK_ON='on'
 LSF_PHRASE= '0p7pqDJ1pN2UvBtF42qS5e8rLHaA+X2hp3N+uf02d10='
-LSF_LIB_PATH= '/usr/lib/liblsf.so'
+LSF_LIB_PATH= '/usr/lib/x86_64-linux-gnu/liblsf.so'
 
 #lsf glyph
 LSF_GLYPH_AUTH='?'

@@ -35,6 +35,14 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_svr_apt_update(task, data_center):
+    """
+    apt-get update
+    """
+
+    apt_exec('update', PKCON_TIMEOUT_DEFAULT, '', data_center)
+
+#-----------------------------------------------------------------------
 def task_profiling(task, data_center):
     """
     profiling
