@@ -227,7 +227,6 @@ def lsf_encrypt_ARIA(api, key, iv, plain_text):
     api.lsf_crypto_free(b64_encoded)
     api.lsf_crypto_free(crypto_error)
 
-    print('KEY={} IV={}'.format(key, iv))
     return result
 
 #-----------------------------------------------------------------------

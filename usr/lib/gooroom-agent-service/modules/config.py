@@ -59,6 +59,27 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_expire_passwd(task, data_center):
+    """
+    expire passwd
+    """
+
+    userid = task[J_MOD][J_TASK][J_IN]['id']
+    from pwd import getpwnam
+    gecos = getpwnam(userid).pw_gecos.split(',')
+    if len(gecos) >= 5 and gecos[4] == 'gooroom-account':
+        raise Exception('(expire_passwd) {} is online account'.format(userid))
+
+    #now_date = datetime.datetime.now().strftime('%Y-%m-%d')
+    pp = subprocess.Popen(
+        ['/usr/bin/chage', '-d', '0', userid],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    sout, serr = pp.communicate()
+    if serr:
+        raise Exception('(expire_passwd) chage failed:{}'.serr.decode('utf8'))
+
+#-----------------------------------------------------------------------
 def task_svr_police_cmd(task, data_center):
     """
     svr_police_cmd

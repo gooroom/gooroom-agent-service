@@ -704,4 +704,19 @@
         </out>
     </task>
 
+    <!-- EXPIRE PASSWD-->
+    <task name="expire_passwd">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="id" type="string"/>
+            <param name="tp" type="string"/>
+            <param name="tm" type="string"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
 </module>
