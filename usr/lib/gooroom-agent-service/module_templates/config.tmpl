@@ -719,4 +719,18 @@
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- EXPIRE PASSWD-->
+    <task name="change_passwd">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="idpw" type="map_array"/>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
 </module>

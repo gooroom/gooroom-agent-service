@@ -20,6 +20,7 @@ import os
 import re
 
 from multiprocessing import Process
+from pwd import getpwnam
 import difflib
 import socket
 
@@ -59,13 +60,63 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_change_passwd(task, data_center):
+    """
+    change local passwd
+    """
+
+    idpw = task[J_MOD][J_TASK][J_IN]['idpw']
+    idpw = json.loads(idpw)
+    errmsg = ''
+    for ip in idpw:
+        try:
+            userid = ip['id']
+            userpw = ip['pw']
+
+            gecos = getpwnam(userid).pw_gecos.split(',')
+            if len(gecos) >= 5 and gecos[4] == 'gooroom-account':
+                errmsg += '{} is online account'.format(userid) + '\n'
+                continue
+
+            p = subprocess.Popen(
+                #['/usr/sbin/chpasswd'], 
+                ['/usr/bin/passwd', userid], 
+                universal_newlines=True, 
+                shell=False,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+                )
+
+            #so, se = p.communicate(userid + ':' + userpw + '\n')
+            try:
+                so, se = p.communicate(userpw + '\n' + userpw + '\n')
+            except:
+                pass
+
+            '''
+            if so:
+                if not isinstance(so, str):
+                    so = so.decode('utf8')
+                AgentLog.get_logger().info('(change_passwd) sout={}'.format(so))
+            if se:
+                if not isinstance(se, str):
+                    se = se.decode('utf8')
+                errmsg += se + '\n'
+            '''
+        except Exception as e:
+            errmsg += e + '\n'
+
+    if errmsg:
+        raise Exception(errmsg)
+        
+#-----------------------------------------------------------------------
 def task_expire_passwd(task, data_center):
     """
-    expire passwd
+    expire local passwd
     """
 
     userid = task[J_MOD][J_TASK][J_IN]['id']
-    from pwd import getpwnam
     gecos = getpwnam(userid).pw_gecos.split(',')
     if len(gecos) >= 5 and gecos[4] == 'gooroom-account':
         raise Exception('(expire_passwd) {} is online account'.format(userid))
