@@ -1875,25 +1875,6 @@ def task_client_sync(task, data_center):
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
-    #HYPERVISOR
-    try:
-        hyper_operation = server_rsp[J_MOD][J_TASK][J_RESPONSE]['hyper_operation']
-        if hyper_operation != '':
-            svc = 'gop-daemon.service'
-            m = importlib.import_module('modules.daemon_control')
-
-            getattr(m, 'task_daemon_status')(
-                {J_MOD:{J_TASK:{J_IN:{'service':svc}, J_OUT:{}}}},
-                data_center)
-
-            tmp_task = \
-                {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation':hyper_operation}, J_OUT:{}}}}
-            getattr(m, 'task_daemon_able')(tmp_task, data_center)
-            JLOG(GRMCODE_HYPERVISOR, *(hyper_operation,))
-
-    except:
-        AgentLog.get_logger().error(agent_format_exc())
-
     #CERTIFICATE && FILES
     try:
         certificate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['certificate']
