@@ -479,6 +479,10 @@ def task_clear_security_alarm(task, data_center):
     with open(logparser_path, 'w') as f:
         f.write(seek_time)
     
+    VUL_PATH = '/var/tmp/GOOROOM-SECURITY-STATUS-VULNERABLE'
+    with open(VUL_PATH, 'w') as f2:
+        f2.write('0')
+
     lg = 'alert has been released'
     gc = GRMCODE_ALERT_RELEASE
     send_journallog(lg, JOURNAL_INFO, gc)
