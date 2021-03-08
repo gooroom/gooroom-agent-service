@@ -733,4 +733,40 @@
             <param name="message" type="string"/>
         </out>
     </task>
+
+    <!-- GET SLEEP INACTIVE TIME -->
+    <task name="get_sleep_inactive_time">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+            <param name="login_id" type="string"/>
+        </request>
+        <response>
+            <param name="sleep_inactive_time" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- SLEEP INACTIVE TIME -->
+    <task name="sleep_inactive_time" dbus="allow">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="login_id" type="string"/>
+        </in>
+
+        <out>
+            <param name="sleep_inactive_time" type="int"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

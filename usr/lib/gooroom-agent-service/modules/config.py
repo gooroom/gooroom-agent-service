@@ -60,6 +60,48 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_get_sleep_inactive_time(task, data_center):
+    """
+    get_sleep_inactive_time
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-':
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+    elif login_id[0] == '+':
+        login_id = ''
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    server_rsp = data_center.module_request(task)
+
+    sleep_inactive_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['sleep_inactive_time']
+    data_center.GOOROOM_AGENT.sleep_time(int(sleep_inactive_time))
+    jlog = 'sleep inactive time has been changed to $({})'.format(sleep_inactive_time)
+    send_journallog(jlog, JOURNAL_INFO, GRMCODE_SCREEN_SAVER)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
+def task_sleep_inactive_time(task, data_center):
+    """
+    sleep inactive time
+    """
+
+    login_id = catch_user_id()
+    if login_id == '-' or login_id[0] == '+':
+        login_id = ''
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
+    server_rsp = data_center.module_request(task)
+    sleep_inactive_time = server_rsp[J_MOD][J_TASK][J_RESPONSE]['sleep_inactive_time']
+    task[J_MOD][J_TASK][J_OUT]['sleep_inactive_time'] = int(sleep_inactive_time)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_change_passwd(task, data_center):
     """
     change local passwd

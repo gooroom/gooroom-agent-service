@@ -263,6 +263,15 @@ class Agent(dbus.service.Object):
         return pid
 
     @dbus.service.signal(DBUS_IFACE, signature='i')
+    def sleep_time(self, tm):
+        """
+        send signal to user session 
+        so as to set sleep_time
+        """
+
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='i')
     def dpms_on_x_off(self, tm):
         """
         send signal to user session 
