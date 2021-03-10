@@ -1,3 +1,19 @@
+gooroom-agent-service (0.3.7+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [eb544518] add KCMVP
+  * [fe2efb0a] fix kcmvp
+  * [4807892b] police issue(lightdm-autologin)
+  * [bc9f044a] add expired_passwd task
+  * [6063e0d0] add change_passwd task
+  * [79563d14] remove hypervisor in client_sync
+  * [05101fb9] write 0 into GOOROOM-SECURITY-STATUS-VULNERABLE
+  * [073620cc] add sleep_inactive_time task
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Wed, 10 Mar 2021 17:10:03 +0900
+
 gooroom-agent-service (0.3.6+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
