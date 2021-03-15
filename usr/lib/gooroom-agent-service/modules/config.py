@@ -572,6 +572,12 @@ def polkit_config(file_contents):
         else:
             AgentLog.get_logger().error(
                 '!! {} not found in agent configuration'.format(pk_name))
+
+    PRINTER_BY_AGENT = 'PRINTERBYAGENT'
+    if PRINTER_BY_AGENT in config['POLKIT']:
+        tmp_ids = config['POLKIT'][PRINTER_BY_AGENT]
+        contents += PKLA_TMPL.format(PRINTER_BY_AGENT, tmp_ids, 'yes')
+
     if contents:
         with open(PKLA_PATH, 'w') as f:
             f.write(contents)
