@@ -1,3 +1,15 @@
+gooroom-agent-service (0.3.8+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [ebb2bb5c] [Bug:1852] fix multiple printer polkit autentication
+
+  [ jongkyung.woo ]
+  * [f90e3018] Add override_dh_installdeb
+
+  [ Gooroom Autobuilder ]
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sun, 28 Mar 2021 13:18:32 +0900
+
 gooroom-agent-service (0.3.7+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
