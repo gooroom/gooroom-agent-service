@@ -12,7 +12,9 @@ class LSF_USER_DATA_T(ctypes.Structure):
     _fields_ = [('symm_key', ctypes.c_char * 1024),
                 ('access_token', ctypes.c_char * 1024),
                 ('dbus_name', ctypes.c_char * 256),
-                ('passphrase', ctypes.c_char * 256)]
+                ('password', ctypes.c_char * 256),
+                ('absolute_path', ctypes.c_char * 4096),
+                ('auth_type', ctypes.c_int)]
 
 #-----------------------------------------------------------------------
 def get_api():

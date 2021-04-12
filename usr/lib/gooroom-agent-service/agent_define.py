@@ -211,7 +211,7 @@ LSF_INTERLOCK_PATH='/etc/gooroom/lsf/lsf.conf'
 LSF_INTERLOCK_SECTION='MAIN'
 LSF_INTERLOCK_KEY='interlock'
 LSF_INTERLOCK_ON='on'
-LSF_PHRASE= '0p7pqDJ1pN2UvBtF42qS5e8rLHaA+X2hp3N+uf02d10='
+LSF_PHRASE= '3jhURcwACvFY1wZJmySOv6fM0+ex9SY5jHvKcuyver4='
 LSF_LIB_PATH= '/usr/lib/x86_64-linux-gnu/liblsf.so'
 
 #lsf glyph
