@@ -119,7 +119,8 @@ class AgentLog:
             filename = sys.argv[0].split('/')[-1].split('.')[0]
 
         #log fullpath
-        log_fullpath = '%s%s_%s.log' % (log_path, filename, today)
+        #log_fullpath = '%s%s_%s.log' % (log_path, filename, today)
+        log_fullpath = '%s%s.log' % (log_path, filename)
 
         #max_bytes, backup_count 
         max_bytes = int(conf.get('LOG', 'MAX_BYTES'))
