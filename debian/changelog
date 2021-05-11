@@ -1,3 +1,11 @@
+gooroom-agent-service (0.3.9+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [e05a97ad] change lsf passphrase and lsf structure
+  * [6b2b5e0b] remove datetime from log file name
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 11 May 2021 10:07:12 +0900
+
 gooroom-agent-service (0.3.8+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
