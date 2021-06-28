@@ -311,32 +311,20 @@ def apt_exec(cmd, timeout, pkg, data_center):
         cmd, 
         *pkg.strip().split()]
 
-    for looping_cnt in range(timeout):
-        if not data_center.serverjob_dispatcher_thread_on:
-            pp_result = 'agent is shutting down...'
-            break
+    pp = subprocess.Popen(
+        fullcmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
 
-        if looping_cnt % 5 == 0:
-            pp = subprocess.Popen(
-                fullcmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+    pp_out, pp_err = pp.communicate()
+    pp_err = pp_err.decode('utf8')
 
-            pp_out, pp_err = pp.communicate()
-            pp_out = pp_out.decode('utf8')
-            pp_err = pp_err.decode('utf8')
-
-            if pp.returncode != 0:
-                pp_result = pp_err
-                data_center.logger.error(pp_err)
-                break #IMSI FOR KEPCO
-            else:
-                pp_result = 'OK {}:{}'.format(cmd, pkg)
-                break
-        else:
-            time.sleep(1)
-    else:
+    if pp.returncode != 0:
+        pp_result = pp_err
+        data_center.logger.error(pp_result)
         raise Exception(pp_result)
+    else:
+        pp_result = 'OK {}:{}'.format(cmd, pkg)
 
     return pp_result
 

@@ -1565,6 +1565,18 @@ def task_set_authority_config(task, data_center):
     task[J_MOD][J_TASK].pop(J_IN)
     task[J_MOD][J_TASK][J_REQUEST] = {'login_id':login_id}
 
+    #MACHINE ID
+    machineid = ''
+    try:
+        FPATH = '/etc/machine-id'
+        with open(FPATH, 'r') as f:
+            machineid = f.read().strip()
+            AgentLog.get_logger().info('machine-id={}'.format(machineid))
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    task[J_MOD][J_TASK][J_REQUEST]['machineid'] = machineid
+
     server_rsp = data_center.module_request(task)
 
     file_name_list = server_rsp[J_MOD][J_TASK][J_RESPONSE]['file_name_list']
@@ -1573,6 +1585,7 @@ def task_set_authority_config(task, data_center):
 
     remove_previous_browser_policies()
 
+    #POLICY FILES
     for idx in range(len(file_name_list)):
         try:
             file_name = file_name_list[idx]
@@ -1595,6 +1608,7 @@ def task_set_authority_config(task, data_center):
         except:
             AgentLog.get_logger().error(agent_format_exc())
 
+    #POLKIT ADMIN
     try:
         response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
         polkit_admin = response['polkit_admin']
