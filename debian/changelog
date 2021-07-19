@@ -1,3 +1,11 @@
+gooroom-agent-service (0.4.0+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [8b0b0fd9] change apt-get to apt
+  * [5ae0cf8e] add machine-id task and modify apt_exec
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 19 Jul 2021 15:54:49 +0900
+
 gooroom-agent-service (0.3.9+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
