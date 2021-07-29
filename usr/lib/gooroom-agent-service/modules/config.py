@@ -60,6 +60,20 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_set_cleanmode_config(task, data_center):
+    """
+    set cleanmode config
+    """
+
+    clean_mode = task[J_MOD][J_TASK][J_IN]['cleanmode_use']
+    config = AgentConfig.get_config()
+    config.set('CLIENTJOB', 'CLEAN_MODE', clean_mode)
+    with open(CONFIG_FULLPATH, 'w') as f:
+        config.write(f)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_get_sleep_inactive_time(task, data_center):
     """
     get_sleep_inactive_time
@@ -2064,6 +2078,17 @@ def task_client_sync(task, data_center):
 
         with open(path, 'w') as f:
             f.write(wl_max)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #CLEAN MODE
+    try:
+        clean_mode = \
+            server_rsp[J_MOD][J_TASK][J_RESPONSE]['cleanmode_use']
+        config = AgentConfig.get_config()
+        config.set('CLIENTJOB', 'CLEAN_MODE', clean_mode)
+        with open(CONFIG_FULLPATH, 'w') as cm:
+            config.write(cm)
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
