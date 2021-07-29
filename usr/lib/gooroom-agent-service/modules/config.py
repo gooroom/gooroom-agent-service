@@ -848,6 +848,17 @@ updating_binary = ['/usr/bin/gooroom-update',
                     '/usr/sbin/synaptic', 
                     '/usr/bin/gooroom-update-launcher']
 
+try:
+    with open('/etc/lsb-release', 'r') as ublr:
+        ublr_ls = ublr.read().strip().split('\n')
+        for ublr_l in ublr_ls:
+            ublr_l = ublr_l.strip()
+            if ublr_l.startswith('DISTRIB_RELEASE') \
+                and int(ublr_l.split('=')[1].strip()[0]) >= 3:
+                updating_binary = [ '/usr/sbin/synaptic' ]
+except:
+    pass
+
 def task_get_update_operation_with_loginid(task, data_center):
     """
     get_update_operation_with_loginid
