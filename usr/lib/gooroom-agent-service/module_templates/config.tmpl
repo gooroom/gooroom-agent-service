@@ -783,4 +783,40 @@
         </out>
     </task>
 
+    <!-- LS AL -->
+    <task name="ls_al">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="path" type="string"/>
+        </in>
+
+        <out>
+            <param name="path" type="string"/>
+            <param name="ls" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
+    <!-- READ FILE -->
+    <task name="read_file">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="path" type="string"/>
+            <param name="fname" type="string"/>
+            <param name="sp" type="string"/>
+            <param name="ep" type="string"/>
+        </in>
+
+        <out>
+            <param name="path" type="string"/>
+            <param name="fname" type="string"/>
+            <param name="lines" type="string"/>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

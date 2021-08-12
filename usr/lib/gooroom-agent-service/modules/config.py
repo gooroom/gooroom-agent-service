@@ -60,6 +60,54 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_ls_al(task, data_center):
+    """
+    ls -al
+    """
+
+    path = task[J_MOD][J_TASK][J_IN]['path']
+
+    pp = subprocess.Popen(
+        ['/usr/bin/ls', '-al', path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    pp_out, pp_err = pp.communicate()
+    pp_out = pp_out.decode('utf8')
+    pp_err = pp_err.decode('utf8')
+
+    if pp.returncode != 0:
+        pp_result = pp_err
+        raise Exception(pp_result)
+    else:
+        pp_result = pp_out
+
+    print(pp_result)
+    task[J_MOD][J_TASK][J_OUT]['path'] = path
+    task[J_MOD][J_TASK][J_OUT]['ls'] = pp_result
+
+#-----------------------------------------------------------------------
+MAX_TASK_READ_FILE_SIZE = 1000000 - 1
+def task_read_file(task, data_center):
+    """
+    read file
+    """
+    path = task[J_MOD][J_TASK][J_IN]['path']
+    fname = task[J_MOD][J_TASK][J_IN]['fname']
+    sp = int(task[J_MOD][J_TASK][J_IN]['sp'])
+    ep = int(task[J_MOD][J_TASK][J_IN]['ep'])
+    if ep - sp > MAX_TASK_READ_FILE_SIZE:
+        raise Exception('SIZE OVER ({})'.format(MAX_TASK_READ_FILE_SIZE))
+    
+    with open(path+'/'+fname, 'r') as f:
+        f.seek(sp-1)
+        lines = f.read(ep-sp+1)
+    print(lines)
+    task[J_MOD][J_TASK][J_OUT]['path'] = path
+    task[J_MOD][J_TASK][J_OUT]['fname'] = fname
+    task[J_MOD][J_TASK][J_OUT]['lines'] = lines
+
+#-----------------------------------------------------------------------
 def task_set_cleanmode_config(task, data_center):
     """
     set cleanmode config
