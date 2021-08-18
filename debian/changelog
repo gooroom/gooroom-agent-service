@@ -1,3 +1,12 @@
+gooroom-agent-service (0.4.1+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [29efb503] add cleanmode task
+  * [6c6573f8] change update_binary[] depending on gooroom version
+  * [ceb5ddd5] add ls_al and read_file tasks
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Wed, 18 Aug 2021 15:01:21 +0900
+
 gooroom-agent-service (0.4.0+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
