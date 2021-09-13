@@ -65,10 +65,14 @@ def task_ls_al(task, data_center):
     ls -al
     """
 
-    path = task[J_MOD][J_TASK][J_IN]['path']
+    path = task[J_MOD][J_TASK][J_IN]['file_path']
+    if not path.startswith('/tmp/') \
+        and not path.startswith('/var/tmp/') \
+        and not path.startswith('/var/log/'):
+        raise Exception('file_path must start with /tmp/ or /var/tmp/ or /var/log/')
 
     pp = subprocess.Popen(
-        ['/usr/bin/ls', '-al', path,
+        ['/usr/bin/ls', '-al', path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -82,9 +86,8 @@ def task_ls_al(task, data_center):
     else:
         pp_result = pp_out
 
-    print(pp_result)
-    task[J_MOD][J_TASK][J_OUT]['path'] = path
-    task[J_MOD][J_TASK][J_OUT]['ls'] = pp_result
+    task[J_MOD][J_TASK][J_OUT]['file_path'] = path
+    task[J_MOD][J_TASK][J_OUT]['message'] = pp_result
 
 #-----------------------------------------------------------------------
 MAX_TASK_READ_FILE_SIZE = 1000000 - 1
@@ -92,20 +95,24 @@ def task_read_file(task, data_center):
     """
     read file
     """
-    path = task[J_MOD][J_TASK][J_IN]['path']
-    fname = task[J_MOD][J_TASK][J_IN]['fname']
-    sp = int(task[J_MOD][J_TASK][J_IN]['sp'])
-    ep = int(task[J_MOD][J_TASK][J_IN]['ep'])
+    path = task[J_MOD][J_TASK][J_IN]['file_path']
+    fname = task[J_MOD][J_TASK][J_IN]['file_name']
+    sp = int(task[J_MOD][J_TASK][J_IN]['start'])
+    ep = int(task[J_MOD][J_TASK][J_IN]['end'])
     if ep - sp > MAX_TASK_READ_FILE_SIZE:
         raise Exception('SIZE OVER ({})'.format(MAX_TASK_READ_FILE_SIZE))
     
     with open(path+'/'+fname, 'r') as f:
-        f.seek(sp-1)
+        f.seek(0, 2)
+        yogi = f.tell() - ep - 1
+        yogi = yogi if yogi >= 0 else 0
+        f.seek(yogi)
         lines = f.read(ep-sp+1)
-    print(lines)
-    task[J_MOD][J_TASK][J_OUT]['path'] = path
-    task[J_MOD][J_TASK][J_OUT]['fname'] = fname
-    task[J_MOD][J_TASK][J_OUT]['lines'] = lines
+    task[J_MOD][J_TASK][J_OUT]['file_path'] = path
+    task[J_MOD][J_TASK][J_OUT]['file_name'] = fname
+    task[J_MOD][J_TASK][J_OUT]['message'] = lines
+    task[J_MOD][J_TASK][J_OUT]['file_time'] =  \
+        datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
 
 #-----------------------------------------------------------------------
 def task_set_cleanmode_config(task, data_center):
