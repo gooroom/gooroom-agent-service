@@ -18,7 +18,7 @@ Depends: python3-dbus,
          python3-gnupg,
          packagekit-tools,
          python3-netifaces,
-         python3-crypto,
+         python3-cryptography,
          arp-scan
 Description: Gooroom Agent Service
  It is a Daemon that communicates with Gooroom Platform Management Server
