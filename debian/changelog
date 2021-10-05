@@ -1,3 +1,10 @@
+gooroom-agent-service (0.4.2+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [36757eef] add ls_al and read_file tasks #2
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 05 Oct 2021 15:50:57 +0900
+
 gooroom-agent-service (0.4.1+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
