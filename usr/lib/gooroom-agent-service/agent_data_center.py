@@ -51,6 +51,12 @@ class AgentDataCenter:
         #LSF ACCESS TOKEN
         self.lsf_access_token = None
 
+        #AUTO UPGRADE AND RECOVER
+        is_auto_update = None
+        auto_update_cycle = None
+        retry_count = None
+        is_recovery = None
+
         self.show(once=True)
 
     def show(self, once=False):

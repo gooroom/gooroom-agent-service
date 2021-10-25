@@ -1,11 +1,13 @@
 #! /usr/bin/env python3
 #-----------------------------------------------------------------------
+import subprocess
+import datetime
 import copy
 import apt
 import os
 
+from agent_util import apt_exec,dpkg_configure_a,send_journallog
 from agent_util import AgentConfig,AgentLog,agent_format_exc
-from agent_util import apt_exec,dpkg_configure_a
 from agent_define import *
 
 #-----------------------------------------------------------------------
@@ -33,6 +35,74 @@ def do_task(task, data_center):
             task[J_MOD][J_TASK].pop(useless)
 
     return task
+
+#-----------------------------------------------------------------------
+RECOVERY_ECODES = [
+    '[CODE-B-001]',
+    '[CODE-B-002]',
+    '[CODE-R-001]'
+    ]
+
+def task_auto_upgrade_and_recover(task, data_center):
+    """
+    auto_upgrade_and_recover
+    """
+
+    if not AgentConfig.get_config().has_option('MAIN', 'AUTO_UPGRADE') or \
+        AgentConfig.get_config().get('MAIN', 'AUTO_UPGRADE') != 'enable' or \
+        data_center.is_auto_update != 'true':
+        task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+        return
+
+    AUTO_UPDATE_SEEKTIME_PATH = '/var/tmp/AUTO_UPDATE_SEEKTIME'
+    if os.path.exists(AUTO_UPDATE_SEEKTIME_PATH):
+        with open(AUTO_UPDATE_SEEKTIME_PATH, 'r') as f:
+            fday = datetime.datetime.strptime(f.read().strip(), '%Y-%m-%d-%H-%M-%S')
+            today = datetime.datetime.now()
+            if int(today.timestamp() - fday.timestamp()) < int(data_center.auto_update_cycle):
+                task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+                return
+
+    result = None
+    log_upgrade = ''
+    for n in range(int(data_center.retry_count)):
+        try:
+            res_msg = apt_exec(
+                        'upgrade',
+                        PKCON_TIMEOUT_DEFAULT,
+                        '',
+                        data_center)
+
+            res_msg = 'DEBUG success'
+        except:
+            result = 'fail'
+            log_upgrade = agent_format_exc()
+        else:
+            result = 'success'
+            log_upgrade = res_msg
+            with open(AUTO_UPDATE_SEEKTIME_PATH, 'w') as f2:
+                f2.write(datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+            break
+
+    log_recovery = ''
+    if result != 'success' and data_center.is_recovery == 'true':
+        #recovery
+        pp = subprocess.Popen('/usr/lib/gooroom/gooroom-rollback/gpms-p-checker.py',
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+        pp_out, pp_err = pp.communicate()
+        pp_out = pp_out.decode('utf8')
+        pp_err = pp_err.decode('utf8')
+        #check resultcode
+        for l in pp_out.split('\n'):
+            for ecode in RECOVERY_ECODES:
+                if ecode in l:
+                    log_recovery += l + '\n'
+    m = 'upgrade={} : recovery={}'.format(log_upgrade, log_recovery)
+    send_journallog(m, JOURNAL_INFO, GRMCODE_AUTO_UPGRADE_AND_RECOVERY)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
 #-----------------------------------------------------------------------
 def task_svr_apt_update(task, data_center):

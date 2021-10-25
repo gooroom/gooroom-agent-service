@@ -172,4 +172,17 @@
         </out>
     </task>
 
+    <!-- auto_upgrade_and_recover -->
+    <task name="auto_upgrade_and_recover" mustok="no" priority="100" polltime="60">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

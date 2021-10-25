@@ -819,4 +819,26 @@
         </out>
     </task>
 
+    <!-- get_auto_upgrade_and_recover -->
+    <task name="get_auto_upgrade_and_recover">
+        <param name="task_name" type="string"/>
+
+        <in>
+        </in>
+
+        <request id='null' seq="null">
+        </request>
+        <response>
+            <param name="isAutoUpdate" type="string"/>
+            <param name="autoUpdateCycle" type="string"/>
+            <param name="retryCount" type="string"/>
+            <param name="isRecovery" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

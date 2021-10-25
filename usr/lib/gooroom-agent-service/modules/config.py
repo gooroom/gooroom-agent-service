@@ -60,6 +60,31 @@ def do_task(task, data_center):
     return task
 
 #-----------------------------------------------------------------------
+def task_get_auto_upgrade_and_recover(task, data_center):
+    """
+    get_auto_upgrade_and_recover
+    """
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+    server_rsp = data_center.module_request(task)
+
+    isAutoUpdate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['isAutoUpdate']
+    if isAutoUpdate == 'true':
+        autoUpdateCycle = server_rsp[J_MOD][J_TASK][J_RESPONSE]['autoUpdateCycle']
+    else:
+        autoUpdateCycle = None
+    retryCount = server_rsp[J_MOD][J_TASK][J_RESPONSE]['retryCount']
+    isRecovery = server_rsp[J_MOD][J_TASK][J_RESPONSE]['isRecovery']
+
+    data_center.is_auto_update = isAutoUpdate
+    data_center.auto_update_cycle = autoUpdateCycle
+    data_center.retry_count = retryCount
+    data_center.is_recovery = isRecovery
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+
+#-----------------------------------------------------------------------
 def task_ls_al(task, data_center):
     """
     ls -al
@@ -2155,6 +2180,23 @@ def task_client_sync(task, data_center):
         config.set('CLIENTJOB', 'CLEAN_MODE', clean_mode)
         with open(CONFIG_FULLPATH, 'w') as cm:
             config.write(cm)
+    except:
+        AgentLog.get_logger().error(agent_format_exc())
+
+    #AUTO UPDATE AND RECOVER
+    try:
+        isAutoUpdate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['isAutoUpdate']
+        if isAutoUpdate == 'true':
+            autoUpdateCycle = server_rsp[J_MOD][J_TASK][J_RESPONSE]['autoUpdateCycle']
+        else:
+            autoUpdateCycle = None
+        retryCount = server_rsp[J_MOD][J_TASK][J_RESPONSE]['retryCount']
+        isRecovery = server_rsp[J_MOD][J_TASK][J_RESPONSE]['isRecovery']
+
+        data_center.is_auto_update = isAutoUpdate
+        data_center.auto_update_cycle = autoUpdateCycle
+        data_center.retry_count = retryCount
+        data_center.is_recovery = isRecovery
     except:
         AgentLog.get_logger().error(agent_format_exc())
 
