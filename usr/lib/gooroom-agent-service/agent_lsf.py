@@ -14,7 +14,8 @@ class LSF_USER_DATA_T(ctypes.Structure):
                 ('dbus_name', ctypes.c_char * 256),
                 ('password', ctypes.c_char * 256),
                 ('absolute_path', ctypes.c_char * 4096),
-                ('auth_type', ctypes.c_int)]
+                ('auth_type', ctypes.c_int),
+                ('client_id', ctypes.c_char * 64)]
 
 #-----------------------------------------------------------------------
 def get_api():
