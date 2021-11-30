@@ -134,7 +134,7 @@ class AgentJobWorker(threading.Thread):
             rsp = do_task(req)
             value = ctypes.cast(rsp, ctypes.c_char_p).value.decode('utf-8')
             rsp = json.loads(value)
-            self._libc.free(rsp)
+            #self._libc.free(rsp)
 
         #python module
         else:

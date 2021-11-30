@@ -239,7 +239,7 @@ def task_expire_passwd(task, data_center):
         stderr=subprocess.PIPE)
     sout, serr = pp.communicate()
     if serr:
-        raise Exception('(expire_passwd) chage failed:{}'.serr.decode('utf8'))
+        raise Exception('(expire_passwd) chage failed:{}'.format(serr.decode('utf8')))
 
 #-----------------------------------------------------------------------
 def task_svr_police_cmd(task, data_center):
@@ -1267,7 +1267,7 @@ def task_get_password_cycle(task, data_center):
             stderr=subprocess.PIPE)
         sout, serr = pp.communicate()
         if serr:
-            raise Exception('local-count chage-cmd failed:{}'.serr.decode('utf8'))
+            raise Exception('local-count chage-cmd failed:{}'.format(serr.decode('utf8')))
 
         jlog = 'password cycle has been changed to $({})'.format(pwd_max_day)
         send_journallog(jlog, JOURNAL_INFO, GRMCODE_PASSWORD_CYCLE_LOCAL)
