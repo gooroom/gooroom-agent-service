@@ -169,13 +169,31 @@ class Agent(dbus.service.Object):
         except:
             self.logger.error(agent_format_exc())
 
-    @dbus.service.method(DBUS_IFACE)
-    def stop(self, args):
+    def watch_admin(self, sender):
+        """
+        """
+
+        pid = self.get_sender_pid(sender)
+
+        with open('/proc/{}/status'.format(pid), 'r') as f:
+            for l in f.readlines():
+                if l.startswith('Uid:'):
+                    if int(l.split()[2]) == 0:
+                        return True
+
+        return False
+
+    @dbus.service.method(DBUS_IFACE, sender_keyword='sender')
+    def stop(self, args, sender=None):
         """
         dbus stop
         """
 
         try:
+            if not self.watch_admin(sender):
+                self.logger.error('!! TRY TO STOP BY NO-ADMIN')
+                return
+
             self.logger.info('AGENT STOPPING BY DBUS')
 
             #dispatcher 중지한 후
@@ -212,13 +230,17 @@ class Agent(dbus.service.Object):
 
         return eval('bus_interface.stop(target)')
         
-    @dbus.service.method(DBUS_IFACE)
-    def reload(self, args):
+    @dbus.service.method(DBUS_IFACE, sender_keyword='sender')
+    def reload(self, args, sender=None):
         """
         reload
         """
 
         try:
+            if not self.watch_admin(sender):
+                self.logger.error('!! TRY TO RELOAD BY NO-ADMIN')
+                return
+
             self.logger.info('AGENT RELOADING BY DBUS')
             self.data_center.show()
             self.logger.info('AGENT RELOADED BY DBUS')
