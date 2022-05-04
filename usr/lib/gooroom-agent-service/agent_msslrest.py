@@ -7,20 +7,23 @@ import httplib2
 import datetime
 
 from socket import timeout as SOCKET_TIMEOUT
-from agent_util import AgentConfig, AgentLog,agent_format_exc
+from agent_util import AgentConfig, AgentLog, agent_format_exc
 from agent_lsf_crypto import *
 from agent_define import *
 from agent_error import *
-
+from agent_wscp import *
 #-----------------------------------------------------------------------
+
 class AgentMsslRest:
     """
-    M-SSL RESTFULL
+    M-SSL RESTFUL
     """
 
     _token = None
 
     _crypto_api = None
+
+    _wscp = None
 
     def __init__(self, data_center):
 
@@ -36,10 +39,10 @@ class AgentMsslRest:
             AgentMsslRest._crypto_api = None
             self.logger.error(agent_format_exc())
 
-    def request(self, 
-            rest_api, 
+    def request(self,
+            rest_api,
             body=None,
-            method='POST', 
+            method='POST',
             headers={'Content-Type':'application/json; charset=utf-8'},
             need_new_http=True,
             expired=False):
@@ -47,18 +50,16 @@ class AgentMsslRest:
         request
         """
 
-        #token
         if not AgentMsslRest._token or expired:
             is_ok, status_code, err_msg = self.auth()
             if not is_ok:
                 return None, status_code, err_msg
-            
+
         rsp_headers, rsp_body = \
             self.shoot(rest_api, body, method, headers, need_new_http=need_new_http)
 
-        #http status
         http_status_code = rsp_headers['status']
-        if http_status_code != '200':
+        if '200' != http_status_code:
             err_msg = '!! request [http] status %s' % http_status_code
             self.logger.error(err_msg)
             return None, http_status_code, err_msg
@@ -66,24 +67,14 @@ class AgentMsslRest:
         result = json.loads(rsp_body)
         agent_status = result[J_AGENT_STATUS]
 
-        #check to be prevAccessDiffTime value or not
         prev_access_difftime = ''
         if J_AGENT_STATUS_PREV_ACCESS_DIFFTIME in agent_status:
             prev_access_difftime = \
                 agent_status[J_AGENT_STATUS_PREV_ACCESS_DIFFTIME]
             self.data_center.prev_access_difftime = prev_access_difftime
 
-        #check visa status
-        visa_status = ''
-        if J_AGENT_STATUS_VISA_STATUS in agent_status:
-            visa_status = \
-                agent_status[J_AGENT_STATUS_VISA_STATUS]
-            if visa_status:
-                self.data_center.visa_status = visa_status
-
-        #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
-        if agent_status_code == AGENT_OK:
+        if AGENT_OK == agent_status_code:
             err_msg = ''
 
             if J_AGENT_DATA in result:
@@ -91,11 +82,9 @@ class AgentMsslRest:
             else:
                 return [], agent_status_code, None
         else:
-            #token expired
-            if not expired and agent_status_code == '401':
-                #ask for new token and resume
-                return self.request(rest_api, 
-                    body, method, headers, 
+            if not expired and '401' == agent_status_code:
+                return self.request(rest_api,
+                    body, method, headers,
                     need_new_http=need_new_http, expired=True)
             else:
                 err_msg = '!! request [agent] status %s' % agent_status_code
@@ -104,7 +93,7 @@ class AgentMsslRest:
 
     def auth(self):
         """
-        authenticate and get token
+        auth
         """
 
         body = {H_AUTH:{H_CID:self.data_center.get_client_id()}}
@@ -112,9 +101,8 @@ class AgentMsslRest:
         rsp_headers, rsp_body = self.shoot(
             self.data_center.auth_api, body=json.dumps(body))
 
-        #http status 
         http_status_code = rsp_headers['status']
-        if http_status_code != '200':
+        if '200' != http_status_code:
             err_msg = '!! auth [http] status %s' % http_status_code
             self.logger.error(err_msg)
             return False, http_status_code, err_msg
@@ -122,9 +110,8 @@ class AgentMsslRest:
         result = json.loads(rsp_body)
         agent_status = result[J_AGENT_STATUS]
 
-        #agent status
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
-        if agent_status_code != AGENT_OK:
+        if AGENT_OK != agent_status_code:
             err_msg = '!! auth [agent] status %s' % agent_status_code
             self.logger.error(err_msg)
             return False, agent_status_code, err_msg
@@ -135,12 +122,12 @@ class AgentMsslRest:
             self.aria_iv = AgentMsslRest._token[-16:]
 
         self.logger.debug('new token=%s' % AgentMsslRest._token)
-        return True, '200', None
+        return True, AGENT_OK, None
 
-    def shoot(self, 
-            rest_api, 
+    def shoot(self,
+            rest_api,
             body=None,
-            method='POST', 
+            method='POST',
             headers={'Content-Type':'application/json; charset=utf-8'},
             need_new_http=True):
         """
@@ -165,72 +152,78 @@ class AgentMsslRest:
         parser.read('/etc/gooroom/gooroom-client-server-register/gcsr.conf')
         headers['agent_client_id'] = parser.get('certificate', 'client_name')
 
-        #KCMVP
-        try:
-            kcmvp_on_off = parser.get('certificate', 'kcmvp_on_off').lower()
-        except:
-            kcmvp_on_off = 'off'
+        kcmvp_on_off = parser.get('certificate', 'kcmvp_on_off', fallback='off').lower()
+        kcmvp_vendor = parser.get('certificate', 'kcmvp_vendor', fallback='unknown').lower()
 
         uri = 'https://%s%s' % (self.data_center.server_domain, rest_api)
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
         t = datetime.datetime.now().timestamp()
         try:
-            #print('NORMAL headers={}\nbody={}'.format(headers, body))
-            if kcmvp_on_off == 'on' \
-                and AgentMsslRest._crypto_api \
+            if 'on' == kcmvp_on_off \
                 and body:
-                #ENCRYPT
+
                 body = {'enc_msg':body}
-                if rest_api == self.data_center.auth_api:
-                    #RSA
-                    body['enc_msg'] = lsf_encrypt_RSA(
-                                                    AgentMsslRest._crypto_api,
-                                                    body['enc_msg'])
+                if 'penta' == kcmvp_vendor:
+                    if not self._wscp:
+                        self._wscp = WrappedSCP(1024)
+                    code, body['enc_msg'] = self._wscp.scp_encrypt(body['enc_msg'])
+                    if code:
+                        err_msg = '!! shoot [encrypt] status %d' % code
+                        self.logger.error(err_msg)
+                elif 'dream' == kcmvp_vendoor \
+                    and AgentMsslRest._crypto_api:
+                    if rest_api == self.data_center.auth_api:
+                        body['enc_msg'] = lsf_encrypt_RSA(
+                                                        AgentMsslRest._crypto_api,
+                                                        body['enc_msg'])
+                    else:
+                        body['enc_msg'] = lsf_encrypt_ARIA(
+                                                        AgentMsslRest._crypto_api,
+                                                        self.aria_key,
+                                                        self.aria_iv,
+                                                        body['enc_msg'])
                 else:
-                    #ARIA
-                    body['enc_msg'] = lsf_encrypt_ARIA(
-                                                    AgentMsslRest._crypto_api,
-                                                    self.aria_key, 
-                                                    self.aria_iv, 
-                                                    body['enc_msg'])
+                    err_msg = '!! shoot [encrypt] invalid vendor %s' % kcmvp_vendor
+                    self.logger.error(err_msg)
                 body = json.dumps(body)
-            
-            #print('ENC headers={}\nbody={}'.format(headers, body))
+
             rsp_headers, rsp_body = agent_http.request(
                 uri, method=method, headers=headers, body=body)
 
-            if rsp_headers['status'] == '200' \
-                and kcmvp_on_off == 'on' \
-                and AgentMsslRest._crypto_api \
+            if '200' == rsp_headers['status'] \
+                and 'on' == kcmvp_on_off \
                 and rsp_body:
 
                 rsp_body = json.loads(rsp_body)
-                #print('RSP={}'.format(rsp_body))
-
-                #DECRYPT
-                if rest_api == self.data_center.auth_api:
-                    #RSA
-                    rsp_body = lsf_decrypt_RSA(
-                                            AgentMsslRest._crypto_api,
-                                            rsp_body['enc_msg'])
-                    #print('***** headers={}'.format(rsp_headers))
-                    rsp_headers[H_TOKEN] = lsf_decrypt_RSA(
-                                            AgentMsslRest._crypto_api,
-                                            rsp_headers[H_TOKEN])
+                if 'penta' == kcmvp_vendor:
+                    if not self._wscp:
+                        self._wscp = WrappedSCP(1024)
+                    code, rsp_body = self._wscp.scp_decrypt(rsp_body['enc_msg'])
+                    if code:
+                        err_msg = '!! shoot [decrypt] status %d' % code
+                        self.logger.error(err_msg)
+                elif 'dream' == kcmvp_vendor \
+                    and AgentMsslRest._crypto_api:
+                    if self.data_center.auth_api == rest_api:
+                        rsp_body = lsf_decrypt_RSA(
+                                                AgentMsslRest._crypto_api,
+                                                rsp_body['enc_msg'])
+                        rsp_headers[H_TOKEN] = lsf_decrypt_RSA(
+                                                AgentMsslRest._crypto_api,
+                                                rsp_headers[H_TOKEN])
+                    else:
+                        rsp_body = lsf_decrypt_ARIA(
+                                                AgentMsslRest._crypto_api,
+                                                self.aria_key,
+                                                self.aria_iv,
+                                                rsp_body['enc_msg'])
                 else:
-                    #ARIA
-                    rsp_body = lsf_decrypt_ARIA(
-                                            AgentMsslRest._crypto_api,
-                                            self.aria_key, 
-                                            self.aria_iv, 
-                                            rsp_body['enc_msg'])
-                #print('(R) headers={}\nbody={}'.format(rsp_headers, rsp_body))
-
+                    err_msg = '!! shoot [decrypt] invalid vendor %s' % kcmvp_vendor
+                    self.logger.error(err_msg)
         except SOCKET_TIMEOUT:
             self.data_center.increase_timeout_cnt()
             raise
         except httplib2.ServerNotFoundError:
-            #단말이 재등록되어 grm url이 변경되었을 경우
             self.data_center.reload_server_domain()
             raise
 
