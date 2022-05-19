@@ -1,3 +1,15 @@
+gooroom-agent-service (0.4.3+grm2u1) unstable; urgency=medium
+
+  [ hmkim ]
+  * [8f06d2b6] add auto-upgrade and recovery task.
+  * [1fdc1fe1] add client_id in agent_lsf
+  * [5f023013] prevent user privilege from stopping|reloading agent
+
+  [ byunghui.jeun ]
+  * [3cccc662] Add Wrapped SCP Class.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Thu, 19 May 2022 10:02:51 +0900
+
 gooroom-agent-service (0.4.2+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
