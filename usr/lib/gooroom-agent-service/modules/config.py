@@ -2086,6 +2086,7 @@ def task_client_sync(task, data_center):
                     send_config_diff(c)
 
                 if n == '/etc/apt/sources.list.d/official-package-repositories.list' \
+                    or n == '/etc/apt/sources.list' \
                     or n == '/etc/apt/preferences.d/gooroom.pref':
                     with open(n, 'r') as f:
                         if c != f.read():
