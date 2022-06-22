@@ -2246,3 +2246,7 @@ def task_client_user_sync(task, data_center):
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
+#-----------------------------------------------------------------------
+def task_client_reboot(task, data_center):
+    shell_cmd('/usr/sbin/reboot')
+
