@@ -6,13 +6,14 @@
     <!-- CONFIG_FILE TYPE -->
     <simpleType name="CONFIG_FILE">
         <restriction base="string">
-			<enum value="/etc/gooroom/agent/server_certificate.crt"/>
+            <enum value="/etc/gooroom/agent/server_certificate.crt"/>
             <enum value="/usr/lib/gooroom-agent-service/module_templates/config.tmpl"/>
+            <enum value="/etc/apt/sources.list"/>
             <enum value="/etc/apt/sources.list.d/official-package-repositories.list"/>
             <enum value="/etc/apt/preferences.d/gooroom.pref"/>
             <enum value="/etc/hosts"/>
             <!--<enum value="/etc/gooroom/*/.grac.conf"/> -->
-            <enum value="/etc/gooroom/grac.d/user.rules"/> 
+            <enum value="/etc/gooroom/grac.d/user.rules"/>
             <enum value="/usr/share/gooroom/browser/policies/mainpref.json"/>
             <enum value="/usr/share/gooroom/browser/policies/trust/managed/policy.json"/>
             <enum value="/usr/share/gooroom/browser/policies/untrust/managed/policy.json"/>
