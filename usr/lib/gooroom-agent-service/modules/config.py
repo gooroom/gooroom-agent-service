@@ -2250,3 +2250,22 @@ def task_client_user_sync(task, data_center):
 def task_client_reboot(task, data_center):
     shell_cmd('/usr/sbin/reboot')
 
+#-----------------------------------------------------------------------
+def task_get_theme_info(task, data_center):
+    theme_id = task[J_MOD][J_TASK][J_IN]['theme_id']
+    theme_action = int(task[J_MOD][J_TASK][J_IN]['theme_action'])
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {'theme_id':theme_id}
+    server_rsp = data_center.module_request(task)
+
+    theme_info = server_rsp[J_MOD][J_TASK][J_RESPONSE]['theme_info']
+    if 0 == theme_action:
+        data_center.GOOROOM_AGENT.add_theme(theme_info)
+    elif 1 == theme_action:
+        data_center.GOOROOM_AGENT.delete_theme(theme_info)
+    elif 2 == theme_action:
+        data_center.GOOROOM_AGENT.modify_theme(theme_info)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
+

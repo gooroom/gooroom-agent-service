@@ -267,7 +267,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='i')
     def sleep_time(self, tm):
         """
-        send signal to user session 
+        send signal to user session
         so as to set sleep_time
         """
 
@@ -276,7 +276,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='i')
     def dpms_on_x_off(self, tm):
         """
-        send signal to user session 
+        send signal to user session
         so as to set dpms_on_ac_off and dpms_on_battery_off
         """
 
@@ -285,7 +285,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='i')
     def update_operation(self, tm):
         """
-        send signal to user session 
+        send signal to user session
         so as to set update-operation
         """
 
@@ -294,7 +294,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='v')
     def app_black_list(self, tm):
         """
-        send signal to user session 
+        send signal to user session
         so as to set app-black-list
         """
 
@@ -303,7 +303,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='v')
     def set_noti(self, noti):
         """
-        send signal to user session 
+        send signal to user session
         so as to set noti
         """
 
@@ -312,7 +312,7 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='v')
     def agent_msg(self, msg):
         """
-        send signal to user session 
+        send signal to user session
         so as to send agent-msg
         """
 
@@ -321,10 +321,22 @@ class Agent(dbus.service.Object):
     @dbus.service.signal(DBUS_IFACE, signature='v')
     def controlcenter_items(self, tm):
         """
-        send signal to user session 
+        send signal to user session
         so as to set controlcenter-items
         """
 
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def add_theme(self, theme_info):
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def modify_theme(self, theme_info):
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def delete_theme(self, theme_info):
         pass
 
 #-----------------------------------------------------------------------
