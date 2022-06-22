@@ -347,6 +347,18 @@ class Agent(dbus.service.Object):
 
         pass
 
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def add_theme(self, theme_info):
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def modify_theme(self, theme_info):
+        pass
+
+    @dbus.service.signal(DBUS_IFACE, signature='v')
+    def delete_theme(self, theme_info):
+        pass
+
 #-----------------------------------------------------------------------
 if __name__ == '__main__':
     """

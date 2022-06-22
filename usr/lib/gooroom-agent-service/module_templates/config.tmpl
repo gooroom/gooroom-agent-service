@@ -852,4 +852,25 @@
         </out>
     </task>
 
+    <task name="get_theme_info">
+        <param name="task_name" type="string"/>
+
+        <in>
+            <param name="theme_id" type="string"/>
+            <param name="action" type="string"/>
+        </in>
+
+        <request id="null" seq="null">
+            <param name="theme_id" type="string"/>
+        </request>
+        <response>
+            <param name="theme_info" type="string"/>
+        </response>
+
+        <out>
+            <param name="status" type="string"/>
+            <param name="message" type="string"/>
+        </out>
+    </task>
+
 </module>

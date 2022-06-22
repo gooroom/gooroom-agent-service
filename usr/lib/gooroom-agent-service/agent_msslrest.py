@@ -20,16 +20,12 @@ class AgentMsslRest:
     """
 
     _token = None
-
     _crypto_api = None
-
     _wscp = None
 
     def __init__(self, data_center):
-
         self.conf = AgentConfig.get_config()
         self.logger = AgentLog.get_logger()
-
         self.data_center = data_center
 
         try:
@@ -76,7 +72,6 @@ class AgentMsslRest:
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
         if AGENT_OK == agent_status_code:
             err_msg = ''
-
             if J_AGENT_DATA in result:
                 return result[J_AGENT_DATA], agent_status_code, None
             else:
@@ -109,7 +104,6 @@ class AgentMsslRest:
 
         result = json.loads(rsp_body)
         agent_status = result[J_AGENT_STATUS]
-
         agent_status_code = agent_status[J_AGENT_STATUS_RESULTCODE]
         if AGENT_OK != agent_status_code:
             err_msg = '!! auth [agent] status %s' % agent_status_code
@@ -159,9 +153,7 @@ class AgentMsslRest:
         self.logger.debug('REQUEST=%s\n%s' % (uri, str(body)[:LOG_TEXT_LIMIT]))
         t = datetime.datetime.now().timestamp()
         try:
-            if 'on' == kcmvp_on_off \
-                and body:
-
+            if 'on' == kcmvp_on_off and body:
                 body = {'enc_msg':body}
                 if 'penta' == kcmvp_vendor:
                     if not self._wscp:
@@ -170,8 +162,7 @@ class AgentMsslRest:
                     if code:
                         err_msg = '!! shoot [encrypt] status %d' % code
                         self.logger.error(err_msg)
-                elif 'dream' == kcmvp_vendoor \
-                    and AgentMsslRest._crypto_api:
+                elif 'dream' == kcmvp_vendor and AgentMsslRest._crypto_api:
                     if rest_api == self.data_center.auth_api:
                         body['enc_msg'] = lsf_encrypt_RSA(
                                                         AgentMsslRest._crypto_api,

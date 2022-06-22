@@ -222,3 +222,9 @@ LSF_GLYPH_RELOAD='O'
 
 #lsf log
 LSF_MAX_APP_LOG_SIZE=10240
+
+THEME_HELPER='/usr/lib/x86_64-linux-gnu/gooroom-session-manager/gooroom-theme-helper'
+THEME_DELETE_HELPER='/usr/lib/x86_64-linux-gnu/gooroom-session-manager/gooroom-theme-delete-helper'
+THEME_ADD=0
+THEME_MODIFY=1
+THEME_DELETE=2
