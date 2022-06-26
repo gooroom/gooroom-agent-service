@@ -1,3 +1,20 @@
+gooroom-agent-service (0.4.4+grm3u1) unstable; urgency=medium
+
+  [ jongkyung.woo ]
+  * [00575d79] Rebuild on gooroom-3.0
+
+  [ hmkim ]
+  * [36757eef] add ls_al and read_file tasks #2
+  * [3029d1ce] change crypto to cryptography and comment watch_process.
+  * [876e1663] gooroom-3.0 static-code-analysis
+
+  [ haru ]
+  * [bdd9d144] Add update server config feature.
+  * [5cefc157] Implement client_reboot task.
+  * [a3f34b64] Implement get_theme_info task.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 27 Jun 2022 08:05:29 +0900
+
 gooroom-agent-service (0.4.1+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
