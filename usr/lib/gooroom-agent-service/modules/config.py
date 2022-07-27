@@ -8,6 +8,7 @@ import subprocess
 import importlib
 import httplib2
 import datetime
+import psutil
 import shutil
 import ctypes
 import gnupg
@@ -2255,17 +2256,40 @@ def task_get_theme_info(task, data_center):
     theme_id = task[J_MOD][J_TASK][J_IN]['theme_id']
     theme_action = int(task[J_MOD][J_TASK][J_IN]['theme_action'])
 
-    task[J_MOD][J_TASK].pop(J_IN)
-    task[J_MOD][J_TASK][J_REQUEST] = {'theme_id':theme_id}
-    server_rsp = data_center.module_request(task)
+    if THEME_DELETE != theme_action:
+        task[J_MOD][J_TASK].pop(J_IN)
+        task[J_MOD][J_TASK][J_REQUEST] = {'theme_id':theme_id}
+        server_rsp = data_center.module_request(task)
 
-    theme_info = server_rsp[J_MOD][J_TASK][J_RESPONSE]['theme_info']
-    if 0 == theme_action:
-        data_center.GOOROOM_AGENT.add_theme(theme_info)
-    elif 1 == theme_action:
-        data_center.GOOROOM_AGENT.delete_theme(theme_info)
-    elif 2 == theme_action:
-        data_center.GOOROOM_AGENT.modify_theme(theme_info)
+        theme_info = str(server_rsp[J_MOD][J_TASK][J_RESPONSE]['theme_info'])
+
+    sm_running = False
+    for process in psutil.process_iter():
+        if 'gooroom-session-manager' == process.name():
+            sm_running = True
+            break
+
+    if sm_running:
+        if THEME_ADD == theme_action:
+            data_center.GOOROOM_AGENT.add_theme(theme_info)
+        elif THEME_MODIFY == theme_action:
+            data_center.GOOROOM_AGENT.modify_theme(theme_info)
+        elif THEME_DELETE == theme_action:
+            data_center.GOOROOM_AGENT.delete_theme(theme_id)
+    else:
+        if THEME_DELETE != theme_action:
+            proc = subprocess.Popen(
+                       [THEME_HELPER,
+                        str(theme_action),
+                        theme_info],
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
+        else:
+            proc = subprocess.Popen(
+                       [THEME_DELETE_HELPER,
+                        theme_id],
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
