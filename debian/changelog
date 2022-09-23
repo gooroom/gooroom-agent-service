@@ -1,3 +1,12 @@
+gooroom-agent-service (0.4.4+grm2u1) unstable; urgency=medium
+
+  [ haru ]
+  * [1d801b6a] Add update server config feature.
+  * [61eca14d] Implement client_reboot task.
+  * [5cce8d5d] Implement get_theme_info task.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 23 Sep 2022 09:00:53 +0900
+
 gooroom-agent-service (0.4.3+grm2u1) unstable; urgency=medium
 
   [ hmkim ]
