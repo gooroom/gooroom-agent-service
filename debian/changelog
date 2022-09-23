@@ -1,3 +1,10 @@
+gooroom-agent-service (0.4.5+grm3u1) unstable; urgency=medium
+
+  [ haru ]
+  * [83194fe3] theme protocol changed.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 23 Sep 2022 11:42:58 +0900
+
 gooroom-agent-service (0.4.4+grm3u1) unstable; urgency=medium
 
   [ jongkyung.woo ]
