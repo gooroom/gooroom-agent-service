@@ -61,12 +61,12 @@ class AgentClientJobDispatcher(threading.Thread):
                     #self.data_center.center_lock.acquire()
 
                     for polltime in self.data_center.clientjob_book.keys():
-                        if intervals % polltime is 0:
+                        if intervals % polltime == 0:
                             #clientjob은 task 단위로 처리
                             for task in self.data_center.clientjob_book[polltime]:
                                 self._job_manager.put_job(copy.deepcopy(task))
 
-                    if intervals % 60 is 0:
+                    if intervals % 60 == 0:
                         self.data_center.clear_max_response_time()
                         self.data_center.clear_timeout_cnt()
                 except:
