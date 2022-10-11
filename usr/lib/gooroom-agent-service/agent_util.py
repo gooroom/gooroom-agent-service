@@ -410,7 +410,7 @@ def pkcon_exec(cmd, timeout, pkg_list, data_center, profile=None):
                     pp_result = 'agent says:패키지가 이미 설치되어 있습니다'
                     break
                 if profile and profile == 'yes':
-                    raise
+                    raise Exception(pp_result)
                 data_center.logger.error(pp_result)
             else:
                 break

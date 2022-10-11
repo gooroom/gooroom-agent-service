@@ -344,7 +344,7 @@ class AgentDataCenter:
             dt = float(self.conf.get(SERVERJOB, 'DISPATCH_TIME'))
             if (dt < min_dt):
                 self.logger.error('!! invalid dispatch_time=%f.\
-                    replace it from default value' % self.dispatch_time)
+                    replace it from default value' % min_dt)
                 dt = min_dt
         except Exception as e:
             self.logger.error(e)

@@ -83,7 +83,7 @@ class AgentJobManager:
         except:
             self.logger.error(agent_format_exc())
         
-    def allkill(cls):
+    def allkill(self):
         """
         WORKER를 모두 해고함
         """
