@@ -89,6 +89,8 @@ class Agent(dbus.service.Object):
         if len(cmds) > 0:
             cmds[0] = path
             self.logger.debug('path -> cmds[0]')
+        else:
+            return False
 
         for wl in white_process:
             if len(wl) <= len(path) and all(x == y for x, y in zip(wl, cmds)):
