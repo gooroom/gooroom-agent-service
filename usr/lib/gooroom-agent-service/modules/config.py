@@ -100,6 +100,12 @@ def task_read_file(task, data_center):
     fname = task[J_MOD][J_TASK][J_IN]['file_name']
     sp = int(task[J_MOD][J_TASK][J_IN]['start'])
     ep = int(task[J_MOD][J_TASK][J_IN]['end'])
+
+    if not path.startswith('/tmp/') \
+        and not path.startswith('/var/tmp/') \
+        and not path.startswith('/var/log/'):
+        raise Exception('file_path must start with /tmp/ or /var/tmp/ or /var/log/')
+
     if ep - sp > MAX_TASK_READ_FILE_SIZE:
         raise Exception('SIZE OVER ({})'.format(MAX_TASK_READ_FILE_SIZE))
     
