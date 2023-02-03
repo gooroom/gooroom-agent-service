@@ -1,3 +1,14 @@
+gooroom-agent-service (0.4.6+grm3u1) unstable; urgency=medium
+
+  [ haru ]
+  * [10bbe30d] Minor changes for Static Code Analysis.
+
+  [ seolhee.sun ]
+  * [124185e6] Add watch_process and case of not found process cmd
+  * [baffc36a] Filtering file path in task_read_file
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 03 Feb 2023 16:18:24 +0900
+
 gooroom-agent-service (0.4.5+grm3u1) unstable; urgency=medium
 
   [ haru ]
