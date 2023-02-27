@@ -1,3 +1,14 @@
+gooroom-agent-service (0.4.5+grm2u1) unstable; urgency=medium
+
+  [ haru ]
+  * [c6228381] Minor changes for Static Code Analysis.
+
+  [ seolhee.sun ]
+  * [39f4c87a] Add exception when process path not found in cmd
+  * [2fe1dce0] Filtering file path in task_read_file
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 27 Feb 2023 15:57:22 +0900
+
 gooroom-agent-service (0.4.4+grm2u1) unstable; urgency=medium
 
   [ haru ]
