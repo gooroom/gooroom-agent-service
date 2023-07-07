@@ -1,3 +1,10 @@
+gooroom-agent-service (0.4.7+grm3u1) unstable; urgency=medium
+
+  [ heejun.jang ]
+  * [a53e67a9] Update apt command for --force-confnew option
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 07 Jul 2023 16:03:14 +0900
+
 gooroom-agent-service (0.4.6+grm3u1) unstable; urgency=medium
 
   [ haru ]
