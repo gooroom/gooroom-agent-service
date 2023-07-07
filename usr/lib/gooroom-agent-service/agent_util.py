@@ -307,7 +307,7 @@ def apt_exec(cmd, timeout, pkg, data_center):
         'env',
         'DEBIAN_FRONTEND=noninteractive',
         'DEBIAN_PRIORITY=critical',
-        '/usr/bin/apt', '-q', '-y', '-o Dpkg::Option::="--force-confnew"', 
+        '/usr/bin/apt', '-q', '-y', '-o', 'Dpkg::Options::="--force-confnew"', 
         cmd, 
         *pkg.strip().split()]
 
@@ -339,7 +339,7 @@ def apt_exec(cmd, timeout, pkg, data_center):
         'env',
         'DEBIAN_FRONTEND=noninteractive',
         'DEBIAN_PRIORITY=critical',
-        '/usr/bin/apt-get', '-q', '-y', '-o Dpkg::Option::="--force-confnew"', 
+        '/usr/bin/apt-get', '-q', '-y', '-o', 'Dpkg::Options::="--force-confnew"', 
         cmd, 
         *pkg.strip().split()]
 
