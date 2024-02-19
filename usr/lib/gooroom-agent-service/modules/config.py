@@ -2299,3 +2299,51 @@ def task_get_theme_info(task, data_center):
 
     task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST
 
+#-----------------------------------------------------------------------
+def task_create_auto_regi_conf(task, data_center):
+
+    task[J_MOD][J_TASK].pop(J_IN)
+    task[J_MOD][J_TASK][J_REQUEST] = {}
+
+    server_rsp = data_center.module_request(task)
+    response = server_rsp[J_MOD][J_TASK][J_RESPONSE]
+    gkm_server = response['gkm_server']
+    reg_key = response['reg_key']
+
+    content_fmt = '\
+#!/bin/bash\n\
+\n\
+# Configuration for automatic GPMS registration script\n\
+#\n\
+# Use this configuration to create gcsr_auto.conf in the same directory\n\
+# to enable automatic registration to Gooroom Platform Management Server\n\
+#\n\
+\n\
+#\n\
+# set \'Yes\' to enable automatic GPMS registration\n\
+ENABLE_AUTO_REGI=Yes\n\
+\n\
+#\n\
+# Domain of your GKM(Gooroom Key Management) server\n\
+GKM_SERVER=%s\n\
+\n\
+#\n\
+# Registration key for the client given from gpms admin\n\
+REG_KEY=%s\n\
+\n\
+# If you want to set your client NAME manually, do it!\n\
+#CLIENT_NAME=YOUR_CLIENT_NAME\n'
+
+    file_content = content_fmt % (gkm_server, reg_key)
+
+    with open('/etc/gooroom/gooroom-client-server-register/gcsr_auto.conf', 'w') as f:
+        f.write(file_content)
+
+        #disable agent self
+        svc = 'gooroom-agent.service'
+        m = importlib.import_module('modules.daemon_control')
+        tmp_task = \
+            {J_MOD:{J_TASK:{J_IN:{'service':svc, 'operation': 'disable'}, J_OUT:{}}}}
+        getattr(m, 'task_daemon_able')(tmp_task, data_center)
+
+    task[J_MOD][J_TASK][J_OUT][J_MESSAGE] = SKEEP_SERVER_REQUEST

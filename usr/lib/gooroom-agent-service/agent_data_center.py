@@ -309,7 +309,7 @@ class AgentDataCenter:
 
         agent_data[0][J_AGENT_DATA_JOBNO] = job_no
         agent_data[0][J_AGENT_DATA_CLIENTID] = self.get_client_id()
-        agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp)
+        agent_data[0][J_AGENT_DATA_JOBDATA] = json.dumps(module_rsp, ensure_ascii=False)
 
         return agent_data
 

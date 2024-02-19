@@ -4,6 +4,7 @@
 import simplejson as json
 import threading
 import copy
+import time
 
 from agent_util import AgentConfig,AgentLog,agent_format_exc
 from agent_job_worker import AgentJobManager,AgentJobWorker
@@ -26,10 +27,7 @@ class AgentClientJobDispatcher(threading.Thread):
         #DATA CENTER
         self.data_center = data_center
 
-        #THREAD EVENT
-        #시스템 시간을 변경했을 때 문제가 있어서 교체
-        self._collect_event = threading.Event()
-        self._collect_event.clear()
+        self.is_exiting = False
 
         #WORKER MANAGER
         self._job_manager = AgentJobManager(CLIENTJOB, self.data_center)
@@ -76,7 +74,8 @@ class AgentClientJobDispatcher(threading.Thread):
                     #self.data_center.center_lock.release()
                     pass
 
-            self._collect_event.wait(timeout=1.0)
+            if not self.is_exiting:
+                time.sleep(1)
 
         self.logger.debug('(client) dispatcher turnoff')
 
@@ -86,7 +85,7 @@ class AgentClientJobDispatcher(threading.Thread):
         """
 
         self.data_center.clientjob_dispatcher_thread_on = False
-        self._collect_event.set()
+        self.is_exiting = True
         self.join()
 
         self._job_manager.allkill()

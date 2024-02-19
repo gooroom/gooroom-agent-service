@@ -32,9 +32,7 @@ class AgentServerJobDispatcher(threading.Thread):
         #DATA CENTER
         self.data_center = data_center
 
-        #시스템 시간을 변경했을 때 문제가 있어서 교체필요함
-        self._dispatch_event = threading.Event()
-        self._dispatch_event.clear()
+        self.is_exiting = False
 
         #서버와의 통신장애 횟수
         self.timeout_cnt = 0
@@ -110,7 +108,10 @@ class AgentServerJobDispatcher(threading.Thread):
 
             #start clientjob
             self.data_center.clientjob_looping_on[0] = True
-            self._dispatch_event.wait(timeout=self.data_center.serverjob_dispatch_time)
+            count = 0
+            while not self.is_exiting and count < self.data_center.serverjob_dispatch_time:
+                time.sleep (1)
+                count = count + 1
 
         self.logger.debug('(server) dispatcher turnoff')
 
@@ -120,7 +121,8 @@ class AgentServerJobDispatcher(threading.Thread):
         """
 
         self.data_center.serverjob_dispatcher_thread_on = False
-        self._dispatch_event.set()
+        self.is_exiting = True
+
         self.join()
 
         self._job_manager.allkill()
