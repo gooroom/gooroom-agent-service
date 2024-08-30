@@ -1,3 +1,13 @@
+gooroom-agent-service (4.1.0+grm4u1) unstable; urgency=medium
+
+  [ jongkyung.woo ]
+  * [4f5f95c5] Rebuild on gooroom-4.0
+
+  [ seolhee.sun ]
+  * [48416430] task_client_info change to bootable task
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 30 Aug 2024 16:28:18 +0900
+
 gooroom-agent-service (0.4.8+grm4u1) unstable; urgency=medium
 
   * Release gooroom-4.0
