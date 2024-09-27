@@ -1,3 +1,13 @@
+gooroom-agent-service (0.4.9+grm3u1) unstable; urgency=medium
+
+  [ seolhee.sun ]
+  * [1f26d97f] Changed agent job dispatcher event waiting way, added task for client auto registration
+
+  [ cjheo ]
+  * [95dcc8bb] Let gooroom-agent run after gooroomsystem service
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Fri, 27 Sep 2024 11:57:28 +0900
+
 gooroom-agent-service (0.4.8+grm3u1) unstable; urgency=medium
 
   [ heejun.jang ]
