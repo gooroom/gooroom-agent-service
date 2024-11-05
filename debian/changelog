@@ -1,3 +1,10 @@
+gooroom-agent-service (4.2.0+grm4u1) unstable; urgency=medium
+
+  [ cjheo ]
+  * [06600938] Let gooroom-agent run after gooroomsystem service
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Tue, 05 Nov 2024 17:47:12 +0900
+
 gooroom-agent-service (4.1.0+grm4u1) unstable; urgency=medium
 
   [ jongkyung.woo ]
