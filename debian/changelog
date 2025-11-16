@@ -1,3 +1,10 @@
+gooroom-agent-service (4.2.0+grm5~alpha1) unstable; urgency=medium
+
+  * Initial release for Gooroom 5.0 (based on Debian Trixie)
+  * Rebased from gooroom-4.0 branch
+
+ -- jongkyung.woo <jkwoo@gooroom.kr>  Sat, 16 Nov 2025 00:00:00 +0900
+
 gooroom-agent-service (4.2.0+grm4u1) unstable; urgency=medium
 
   [ cjheo ]
