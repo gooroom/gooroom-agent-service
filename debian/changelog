@@ -1,3 +1,9 @@
+gooroom-agent-service (4.2.0+grm5u1) gooroom-5.0; urgency=medium
+
+  * local package: Release for gooroom-5.0
+
+ -- jongkyung.woo <jkwoo@gooroom.kr>  Fri, 08 May 2026 13:04:12 +0900
+
 gooroom-agent-service (4.2.0+grm5~alpha1) unstable; urgency=medium
 
   * Initial release for Gooroom 5.0 (based on Debian Trixie)

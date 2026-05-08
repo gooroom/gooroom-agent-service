@@ -1,0 +1,4 @@
+gooroom-agent-service source: no-nmu-in-changelog
+gooroom-agent-service source: source-nmu-has-incorrect-version-number
+gooroom-agent-service source: latest-debian-changelog-entry-without-new-date
+gooroom-agent-service source: unknown-field Original-Maintainer
