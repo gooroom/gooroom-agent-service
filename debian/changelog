@@ -1,3 +1,9 @@
+gooroom-agent-service (4.2.0+grm5u2) gooroom-5.0; urgency=medium
+
+  * usr 아래에만 담는다
+
+ -- jongkyung.woo <jkwoo@gooroom.kr>  Sat, 26 Sep 2026 15:02:27 +0900
+
 gooroom-agent-service (4.2.0+grm5u1) gooroom-5.0; urgency=medium
 
   * local package: Release for gooroom-5.0
