@@ -1,3 +1,10 @@
+gooroom-agent-service (4.3.0+grm5u1) gooroom-5.0; urgency=medium
+
+  * [#1424] Only root may stop or reload the agent over D-Bus.
+  * [#1443] Accept calls from session-manager at its 5.0 path and from the blacklist helper.
+
+ -- jongkyung.woo <jkwoo@gooroom.kr>  Sat, 03 Oct 2026 18:39:04 +0900
+
 gooroom-agent-service (4.2.0+grm5u2) gooroom-5.0; urgency=medium
 
   * usr 아래에만 담는다
