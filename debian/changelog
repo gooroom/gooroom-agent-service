@@ -1,3 +1,10 @@
+gooroom-agent-service (4.3.0+grm4u1) unstable; urgency=medium
+
+  * [#1425] Only root may stop or reload the agent over D-Bus.
+  * [#1445] Accept calls from the blacklist helper.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Sat, 03 Oct 2026 18:49:33 +0900
+
 gooroom-agent-service (4.2.0+grm4u1) unstable; urgency=medium
 
   [ cjheo ]
