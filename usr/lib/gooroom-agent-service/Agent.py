@@ -171,11 +171,25 @@ class Agent(dbus.service.Object):
         except:
             self.logger.error(agent_format_exc())
 
-    @dbus.service.method(DBUS_IFACE)
-    def stop(self, args):
+    def _caller_is_root(self, sender):
+        """Only root (systemd ExecStop/ExecReload) may stop or reload the agent."""
+        try:
+            bus = dbus.SystemBus()
+            dbus_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+            uid = dbus.Interface(dbus_obj, 'org.freedesktop.DBus').GetConnectionUnixUser(sender)
+            return int(uid) == 0
+        except Exception:
+            return False
+
+    @dbus.service.method(DBUS_IFACE, sender_keyword='sender')
+    def stop(self, args, sender=None):
         """
         dbus stop
         """
+
+        if not self._caller_is_root(sender):
+            self.logger.error('AGENT STOP DENIED: caller is not root')
+            return 'permission denied'
 
         try:
             self.logger.info('AGENT STOPPING BY DBUS')
@@ -214,11 +228,15 @@ class Agent(dbus.service.Object):
 
         return eval('bus_interface.stop(target)')
         
-    @dbus.service.method(DBUS_IFACE)
-    def reload(self, args):
+    @dbus.service.method(DBUS_IFACE, sender_keyword='sender')
+    def reload(self, args, sender=None):
         """
         reload
         """
+
+        if not self._caller_is_root(sender):
+            self.logger.error('AGENT RELOAD DENIED: caller is not root')
+            return 'permission denied'
 
         try:
             self.logger.info('AGENT RELOADING BY DBUS')
