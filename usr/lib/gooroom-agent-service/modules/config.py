@@ -26,6 +26,7 @@ import difflib
 import socket
 
 from agent_util import pkcon_exec,verify_signature,send_journallog,apt_exec
+from agent_util import trusted_server_certificate,SERVER_CERT_PATH
 from agent_util import AgentConfig,AgentLog,agent_format_exc,catch_user_id
 from agent_util import shell_cmd,JLOG
 from agent_modfunc import *
@@ -42,7 +43,12 @@ def do_task(task, data_center):
         {J_STATUS : AGENT_OK, J_MESSAGE : AGENT_DEFAULT_MESSAGE}
 
     try:
-        eval('task_%s(task,data_center)' % task[J_MOD][J_TASK][J_TASKN])
+        task_name = task[J_MOD][J_TASK][J_TASKN]
+        task_func = globals().get('task_%s' % task_name) \
+            if isinstance(task_name, str) and task_name.isidentifier() else None
+        if not callable(task_func):
+            raise Exception('invalid task name: %r' % (task_name,))
+        task_func(task, data_center)
 
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
@@ -1767,11 +1773,24 @@ def allowed_filename(fname, allowed_list):
     """
 
     import fnmatch
+    if not os.path.isabs(fname) or os.path.normpath(fname) != fname:
+        return False
     for allowed in allowed_list:
         if fnmatch.fnmatch(fname, allowed):
             return True
     return False
         
+#-----------------------------------------------------------------------
+def write_server_certificate(certificate):
+    """
+    write the trust anchor outside the server-pushable file list
+    """
+
+    tmp_path = SERVER_CERT_PATH + '.tmp'
+    with open(tmp_path, 'w') as f:
+        f.write(certificate)
+    os.replace(tmp_path, SERVER_CERT_PATH)
+
 #-----------------------------------------------------------------------
 def replace_file(file_name, file_contents, signature=None):
     """
@@ -2028,7 +2047,9 @@ def task_client_sync(task, data_center):
     try:
         certificate = server_rsp[J_MOD][J_TASK][J_RESPONSE]['certificate']
         if certificate != '':
-            replace_file('/etc/gooroom/agent/server_certificate.crt', certificate)
+            if not trusted_server_certificate(certificate):
+                raise Exception('untrusted server certificate: kept the current one')
+            write_server_certificate(certificate)
             JLOG(GRMCODE_CERTIFICATE, *('',))
     except:
         AgentLog.get_logger().error(agent_format_exc())

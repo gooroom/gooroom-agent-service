@@ -21,7 +21,12 @@ def do_task(task, data_center):
         {J_STATUS : AGENT_OK, J_MESSAGE : AGENT_DEFAULT_MESSAGE}
 
     try:
-        eval('task_{}(task, data_center)'.format(task[J_MOD][J_TASK][J_TASKN]))
+        task_name = task[J_MOD][J_TASK][J_TASKN]
+        task_func = globals().get('task_%s' % task_name) \
+            if isinstance(task_name, str) and task_name.isidentifier() else None
+        if not callable(task_func):
+            raise Exception('invalid task name: %r' % (task_name,))
+        task_func(task, data_center)
     except:
         task[J_MOD][J_TASK][J_OUT][J_STATUS] = AGENT_NOK
         e = agent_format_exc()
