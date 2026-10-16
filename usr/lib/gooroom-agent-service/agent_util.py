@@ -435,6 +435,39 @@ def verify_signature(signature, data):
         data.encode('utf8'), 'sha256')
 
 #-----------------------------------------------------------------------
+SERVER_CERT_PATH = '/etc/gooroom/agent/server_certificate.crt'
+ROOT_CERT_PATH = '/usr/local/share/ca-certificates/gooroom_root.crt'
+
+def trusted_server_certificate(certificate):
+    """
+    a pushed server certificate replaces the signature trust anchor,
+    so accept it only if it keeps the current key or is issued by the
+    root CA given at registration
+    """
+
+    pem = OpenSSL.crypto.FILETYPE_PEM
+    new_cert = OpenSSL.crypto.load_certificate(pem, certificate)
+
+    if os.path.exists(SERVER_CERT_PATH):
+        with open(SERVER_CERT_PATH) as f:
+            cur_cert = OpenSSL.crypto.load_certificate(pem, f.read())
+        if OpenSSL.crypto.dump_publickey(pem, cur_cert.get_pubkey()) == \
+            OpenSSL.crypto.dump_publickey(pem, new_cert.get_pubkey()):
+            return True
+
+    if not os.path.exists(ROOT_CERT_PATH):
+        return False
+    with open(ROOT_CERT_PATH) as f:
+        root_cert = OpenSSL.crypto.load_certificate(pem, f.read())
+    store = OpenSSL.crypto.X509Store()
+    store.add_cert(root_cert)
+    try:
+        OpenSSL.crypto.X509StoreContext(store, new_cert).verify_certificate()
+    except OpenSSL.crypto.X509StoreContextError:
+        return False
+    return True
+
+#-----------------------------------------------------------------------
 DBUS_NAME = 'kr.gooroom.agent'
 DBUS_OBJ = '/kr/gooroom/agent'
 DBUS_IFACE = 'kr.gooroom.agent'
