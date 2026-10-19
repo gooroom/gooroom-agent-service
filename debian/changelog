@@ -1,3 +1,15 @@
+gooroom-agent-service (4.3.1+grm4u1) unstable; urgency=medium
+
+  [ Security ]
+  * [#1550] KVE-2026-2767: server task names are looked up instead of being
+    evaluated as code.
+  * [#1550] KVE-2026-2847: a server certificate pushed by the server is
+    accepted only if it keeps the current key or is issued by the registered
+    root CA, and the server can no longer overwrite the trust anchor or the
+    config template itself.
+
+ -- Gooroom Autobuilder <jenkins@gooroom.kr>  Mon, 19 Oct 2026 17:07:18 +0900
+
 gooroom-agent-service (4.3.0+grm4u1) unstable; urgency=medium
 
   * [#1425] Only root may stop or reload the agent over D-Bus.
